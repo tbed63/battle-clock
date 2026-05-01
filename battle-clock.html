@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Battle Clock!</title>
+  <style>
+    :root {
+      --bg: #101018;
+      --panel: #1b1b29;
+      --panel2: #252538;
+      --text: #f5f5f5;
+      --muted: #b8b8c8;
+      --p1: #20d7ff;
+      --p2: #ff4dd8;
+      --gold: #ffd166;
+      --danger: #ff5c5c;
+      --green: #7bed9f;
+      --locked: #66667a;
+      --neutral: #3b3b52;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, #2b1f45 0%, #101018 45%, #050509 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    .game {
+      width: min(1200px, 100%);
+      padding: 18px;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+    }
+
+    @media (max-width: 900px) {
+      .game {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .main {
+      background: rgba(20, 20, 34, 0.92);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 4rem);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      line-height: 0.95;
+      text-shadow: 0 0 18px rgba(255, 209, 102, 0.35);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .clock-wrap {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 610px;
+    }
+
+    svg {
+      width: min(620px, 94vw);
+      height: auto;
+      display: block;
+      overflow: visible;
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel {
+      background: rgba(27, 27, 41, 0.94);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+    }
+
+    .time-card {
+      text-align: center;
+      background:
+        linear-gradient(135deg, rgba(255, 209, 102, 0.13), rgba(32, 215, 255, 0.08)),
+        rgba(27, 27, 41, 0.94);
+    }
+
+    .time-label {
+      color: var(--muted);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      letter-spacing: 1.3px;
+    }
+
+    .digital-time {
+      font-size: 3rem;
+      font-weight: 950;
+      margin: 2px 0 4px;
+      letter-spacing: 1px;
+    }
+
+    .concept {
+      color: var(--gold);
+      font-weight: 800;
+      line-height: 1.35;
+      min-height: 44px;
+    }
+
+    .players {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .player {
+      border-radius: 18px;
+      padding: 14px;
+      background: var(--panel2);
+      border: 2px solid transparent;
+      transition: 0.2s;
+    }
+
+    .player.active.p1 {
+      border-color: var(--p1);
+      box-shadow: 0 0 22px rgba(32, 215, 255, 0.25);
+    }
+
+    .player.active.p2 {
+      border-color: var(--p2);
+      box-shadow: 0 0 22px rgba(255, 77, 216, 0.25);
+    }
+
+    .player h2 {
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+    }
+
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+      color: var(--muted);
+    }
+
+    .stat strong {
+      color: white;
+    }
+
+    .actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 14px;
+      font-weight: 900;
+      font-size: 0.98rem;
+      cursor: pointer;
+      color: white;
+      background: linear-gradient(135deg, #34344c, #242436);
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: transform 0.08s ease, filter 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.12);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, #ffb703, #fb8500);
+      color: #1c1200;
+    }
+
+    .danger {
+      background: linear-gradient(135deg, #ff5c5c, #b51730);
+    }
+
+    .blue {
+      background: linear-gradient(135deg, #20d7ff, #0077b6);
+      color: #06131a;
+    }
+
+    .pink {
+      background: linear-gradient(135deg, #ff4dd8, #9b2cff);
+    }
+
+    .green {
+      background: linear-gradient(135deg, #7bed9f, #2ecc71);
+      color: #06170b;
+    }
+
+    .log {
+      min-height: 185px;
+      max-height: 245px;
+      overflow-y: auto;
+      line-height: 1.45;
+      color: #e8e8ef;
+      font-size: 0.95rem;
+    }
+
+    .log p {
+      margin: 0 0 9px;
+      padding-bottom: 9px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .rules {
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.45;
+    }
+
+    .rules strong {
+      color: white;
+    }
+
+    .winner {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.78);
+      z-index: 20;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .winner-card {
+      width: min(560px, 100%);
+      background: linear-gradient(135deg, #262640, #11111f);
+      border: 2px solid var(--gold);
+      border-radius: 28px;
+      text-align: center;
+      padding: 34px;
+      box-shadow: 0 0 70px rgba(255, 209, 102, 0.35);
+    }
+
+    .winner-card h2 {
+      font-size: 3rem;
+      margin: 0 0 12px;
+    }
+
+    .small {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .territory-label {
+      font-size: 15px;
+      font-weight: 900;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      fill: white;
+      pointer-events: none;
+    }
+
+    .tick {
+      stroke: #d8d8e8;
+      stroke-linecap: round;
+      opacity: 0.78;
+    }
+
+    .tick.big {
+      stroke-width: 4;
+      opacity: 0.95;
+    }
+
+    .tick.small {
+      stroke-width: 1.5;
+    }
+
+    .territory {
+      stroke: rgba(255,255,255,0.18);
+      stroke-width: 2;
+      transition: 0.2s;
+    }
+
+    .territory.active-hour {
+      filter: drop-shadow(0 0 10px rgba(255, 209, 102, 0.8));
+      stroke: var(--gold);
+      stroke-width: 4;
+    }
+
+    .territory.next-locked {
+      stroke: var(--danger);
+      stroke-width: 3;
+      stroke-dasharray: 5 5;
+      filter: drop-shadow(0 0 6px rgba(255, 92, 92, 0.7));
+    }
+
+    .hand {
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 6px rgba(255,255,255,0.4));
+    }
+
+    .center-dot {
+      fill: var(--gold);
+      stroke: #111;
+      stroke-width: 4;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 0.78rem;
+    }
+
+    .badge.p1 {
+      color: #001217;
+      background: var(--p1);
+    }
+
+    .badge.p2 {
+      color: #1b0015;
+      background: var(--p2);
+    }
+
+    .badge.neutral {
+      background: var(--neutral);
+      color: white;
+    }
+
+    .territory-token {
+      font-size: 11px;
+      font-weight: 950;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      fill: #111;
+      pointer-events: none;
+    }
+
+    .late-warning {
+      color: var(--danger);
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game">
+    <main class="main">
+      <div class="title-row">
+        <div>
+          <h1>Battle Clock!</h1>
+          <div class="subtitle">Battle for clock territory.</div>
+        </div>
+        <button class="primary" onclick="newGame()">New Game</button>
+      </div>
+
+      <div class="clock-wrap">
+        <svg id="clock" viewBox="0 0 700 700" aria-label="Battle Clock game board"></svg>
+      </div>
+    </main>
+
+    <aside class="side">
+      <section class="panel time-card">
+        <div class="time-label">Current Battle Time</div>
+        <div class="digital-time" id="digitalTime">--:--</div>
+        <div class="concept" id="conceptText">Press New Game to begin.</div>
+      </section>
+
+      <section class="panel">
+        <div class="players">
+          <div class="player p1 active" id="p1Panel">
+            <h2>Player 1</h2>
+            <div class="stat"><span>Energy</span><strong id="p1Energy">2</strong></div>
+            <div class="stat"><span>Territories</span><strong id="p1Territories">0</strong></div>
+            <div class="stat"><span>Late Captures</span><strong id="p1Late">0</strong></div>
+          </div>
+
+          <div class="player p2" id="p2Panel">
+            <h2>Player 2</h2>
+            <div class="stat"><span>Energy</span><strong id="p2Energy">2</strong></div>
+            <div class="stat"><span>Territories</span><strong id="p2Territories">0</strong></div>
+            <div class="stat"><span>Late Captures</span><strong id="p2Late">0</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="time-label" style="margin-bottom:10px;">Choose Your Battle Move</div>
+        <div class="actions">
+          <button class="green" onclick="harvest()">Harvest Energy</button>
+          <button class="blue" onclick="capture()">Capture Current Hour</button>
+          <button class="danger" onclick="challenge()">Challenge Territory</button>
+          <button class="pink" id="blockBtn" onclick="blockNextHour()">Block Next Hour</button>
+          <button onclick="nextTurn()">Pass Turn</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="time-label" style="margin-bottom:10px;">Battle Log</div>
+        <div class="log" id="log"></div>
+      </section>
+
+      <section class="panel rules">
+        <strong>How to win:</strong> Control 4 hour territories. At least one must be captured during a late-hour time, like 5:48, 7:53, or 2:59.
+        <br><br>
+        <strong>Big idea:</strong> At 5:58, the active territory is still 5. The 6 territory opens only when the minute hand reaches the top.
+      </section>
+    </aside>
+  </div>
+
+  <div class="winner" id="winnerOverlay">
+    <div class="winner-card">
+      <h2 id="winnerText">Player Wins!</h2>
+      <p id="winnerSubtext"></p>
+      <button class="primary" onclick="newGame()">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+    const svg = document.getElementById("clock");
+
+    const state = {
+      currentPlayer: 1,
+      hour: 5,
+      minute: 58,
+      players: {
+        1: { energy: 2, lateCaptures: 0 },
+        2: { energy: 2, lateCaptures: 0 }
+      },
+      territories: {},
+      blocked: {},
+      gameOver: false
+    };
+
+    for (let h = 1; h <= 12; h++) {
+      state.territories[h] = 0;
+      state.blocked[h] = 0;
+    }
+
+    function polar(cx, cy, r, angleDeg) {
+      const angle = (angleDeg - 90) * Math.PI / 180;
+      return {
+        x: cx + r * Math.cos(angle),
+        y: cy + r * Math.sin(angle)
+      };
+    }
+
+    function sectorPath(cx, cy, rInner, rOuter, startAngle, endAngle) {
+      const p1 = polar(cx, cy, rOuter, startAngle);
+      const p2 = polar(cx, cy, rOuter, endAngle);
+      const p3 = polar(cx, cy, rInner, endAngle);
+      const p4 = polar(cx, cy, rInner, startAngle);
+      const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+
+      return [
+        `M ${p1.x} ${p1.y}`,
+        `A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${p2.x} ${p2.y}`,
+        `L ${p3.x} ${p3.y}`,
+        `A ${rInner} ${rInner} 0 ${largeArc} 0 ${p4.x} ${p4.y}`,
+        "Z"
+      ].join(" ");
+    }
+
+    function getHourTerritory(hour) {
+      return hour === 0 ? 12 : hour;
+    }
+
+    function getNextHour(hour) {
+      return hour === 12 ? 1 : hour + 1;
+    }
+
+    function isLateHour() {
+      return state.minute >= 45;
+    }
+
+    function hourPhase() {
+      if (state.minute < 20) return "Early";
+      if (state.minute < 40) return "Middle";
+      return "Late";
+    }
+
+    function randomTime() {
+      const hour = Math.floor(Math.random() * 12) + 1;
+      const minute = Math.floor(Math.random() * 60);
+      state.hour = hour;
+      state.minute = minute;
+    }
+
+    function formatTime() {
+      return `${state.hour}:${String(state.minute).padStart(2, "0")}`;
+    }
+
+    function activeName() {
+      return `Player ${state.currentPlayer}`;
+    }
+
+    function ownerBadge(owner) {
+      if (owner === 1) return `<span class="badge p1">P1</span>`;
+      if (owner === 2) return `<span class="badge p2">P2</span>`;
+      return `<span class="badge neutral">Open</span>`;
+    }
+
+    function log(message) {
+      const box = document.getElementById("log");
+      const p = document.createElement("p");
+      p.innerHTML = message;
+      box.prepend(p);
+    }
+
+    function render() {
+      svg.innerHTML = "";
+
+      const cx = 350;
+      const cy = 350;
+
+      const activeHour = getHourTerritory(state.hour);
+      const nextHour = getNextHour(activeHour);
+
+      // Background circles
+      svg.innerHTML += `
+        <circle cx="${cx}" cy="${cy}" r="322" fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.08)" stroke-width="3"/>
+        <circle cx="${cx}" cy="${cy}" r="270" fill="rgba(0,0,0,0.15)" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+      `;
+
+      // Territories
+      for (let h = 1; h <= 12; h++) {
+        const start = (h - 1) * 30;
+        const end = h * 30;
+        const owner = state.territories[h];
+
+        let fill = "rgba(70,70,95,0.42)";
+        if (owner === 1) fill = "rgba(32, 215, 255, 0.35)";
+        if (owner === 2) fill = "rgba(255, 77, 216, 0.35)";
+
+        let classes = "territory";
+        if (h === activeHour) classes += " active-hour";
+        if (h === nextHour && isLateHour()) classes += " next-locked";
+
+        svg.innerHTML += `
+          <path class="${classes}" d="${sectorPath(cx, cy, 112, 258, start, end)}" fill="${fill}"></path>
+        `;
+
+        const labelPoint = polar(cx, cy, 186, start + 15);
+        svg.innerHTML += `
+          <text class="territory-label" x="${labelPoint.x}" y="${labelPoint.y}">${h}</text>
+        `;
+
+        if (owner !== 0) {
+          const tokenPoint = polar(cx, cy, 225, start + 15);
+          const color = owner === 1 ? "var(--p1)" : "var(--p2)";
+          svg.innerHTML += `
+            <circle cx="${tokenPoint.x}" cy="${tokenPoint.y}" r="13" fill="${color}" stroke="white" stroke-width="2"></circle>
+            <text class="territory-token" x="${tokenPoint.x}" y="${tokenPoint.y + 1}">P${owner}</text>
+          `;
+        }
+
+        if (state.blocked[h] > 0) {
+          const b = polar(cx, cy, 145, start + 15);
+          svg.innerHTML += `
+            <text x="${b.x}" y="${b.y}" text-anchor="middle" dominant-baseline="middle" font-size="24">🔒</text>
+          `;
+        }
+      }
+
+      // Minute ticks
+      for (let m = 0; m < 60; m++) {
+        const angle = m * 6;
+        const outer = polar(cx, cy, 310, angle);
+        const inner = polar(cx, cy, m % 5 === 0 ? 286 : 296, angle);
+        const cls = m % 5 === 0 ? "tick big" : "tick small";
+        const isCurrent = m === state.minute;
+        const color = isCurrent ? "var(--gold)" : "#d8d8e8";
+        const width = isCurrent ? 6 : (m % 5 === 0 ? 4 : 1.5);
+
+        svg.innerHTML += `
+          <line class="${cls}" x1="${inner.x}" y1="${inner.y}" x2="${outer.x}" y2="${outer.y}" stroke="${color}" stroke-width="${width}"></line>
+        `;
+      }
+
+      // Hour hand: gradual movement
+      const hourAngle = ((activeHour % 12) * 30) + (state.minute * 0.5);
+      const minuteAngle = state.minute * 6;
+
+      const hourEnd = polar(cx, cy, 118, hourAngle);
+      const minuteEnd = polar(cx, cy, 278, minuteAngle);
+
+      svg.innerHTML += `
+        <line class="hand" x1="${cx}" y1="${cy}" x2="${hourEnd.x}" y2="${hourEnd.y}" stroke="#f5f5f5" stroke-width="14"></line>
+        <line class="hand" x1="${cx}" y1="${cy}" x2="${minuteEnd.x}" y2="${minuteEnd.y}" stroke="var(--gold)" stroke-width="7"></line>
+        <circle class="center-dot" cx="${cx}" cy="${cy}" r="15"></circle>
+      `;
+
+      // Active minute beam dot
+      const beamDot = polar(cx, cy, 318, minuteAngle);
+      svg.innerHTML += `
+        <circle cx="${beamDot.x}" cy="${beamDot.y}" r="10" fill="var(--gold)" stroke="white" stroke-width="2"></circle>
+      `;
+
+      // Center text
+      svg.innerHTML += `
+        <text x="${cx}" y="${cy + 58}" text-anchor="middle" fill="white" font-size="24" font-weight="950">${formatTime()}</text>
+        <text x="${cx}" y="${cy + 86}" text-anchor="middle" fill="#b8b8c8" font-size="15" font-weight="800">${hourPhase()} ${activeHour} Territory</text>
+      `;
+
+      document.getElementById("digitalTime").textContent = formatTime();
+
+      const minuteLeft = 60 - state.minute;
+      let concept = `The minute hand has traveled ${state.minute} tick${state.minute === 1 ? "" : "s"}. `;
+      concept += `The active hour territory is ${activeHour}.`;
+
+      if (isLateHour()) {
+        concept += `<br><span class="late-warning">${nextHour} is still locked until the minute hand reaches the top.</span>`;
+      } else {
+        concept += `<br>The next hour is not active yet.`;
+      }
+
+      document.getElementById("conceptText").innerHTML = concept;
+
+      updateStats();
+      updateButtons();
+    }
+
+    function updateStats() {
+      for (let p = 1; p <= 2; p++) {
+        const territoryCount = Object.values(state.territories).filter(owner => owner === p).length;
+        document.getElementById(`p${p}Energy`).textContent = state.players[p].energy;
+        document.getElementById(`p${p}Territories`).textContent = territoryCount;
+        document.getElementById(`p${p}Late`).textContent = state.players[p].lateCaptures;
+        document.getElementById(`p${p}Panel`).classList.toggle("active", state.currentPlayer === p);
+      }
+    }
+
+    function updateButtons() {
+      const activeHour = getHourTerritory(state.hour);
+      const nextHour = getNextHour(activeHour);
+      const p = state.currentPlayer;
+      const opponent = p === 1 ? 2 : 1;
+
+      document.querySelectorAll("button").forEach(btn => {
+        if (!btn.textContent.includes("New Game") && !btn.textContent.includes("Play Again")) {
+          btn.disabled = state.gameOver;
+        }
+      });
+
+      const blockBtn = document.getElementById("blockBtn");
+      blockBtn.disabled = state.gameOver || !isLateHour() || state.players[p].energy < 1;
+    }
+
+    function checkWin() {
+      for (let p = 1; p <= 2; p++) {
+        const territoryCount = Object.values(state.territories).filter(owner => owner === p).length;
+        if (territoryCount >= 4 && state.players[p].lateCaptures >= 1) {
+          state.gameOver = true;
+          document.getElementById("winnerText").textContent = `Player ${p} Wins!`;
+          document.getElementById("winnerSubtext").textContent =
+            `Player ${p} controls ${territoryCount} territories and made a late-hour capture.`;
+          document.getElementById("winnerOverlay").style.display = "flex";
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function nextTurn() {
+      if (state.gameOver) return;
+
+      // Blocks count down each full turn
+      for (let h = 1; h <= 12; h++) {
+        if (state.blocked[h] > 0) state.blocked[h]--;
+      }
+
+      state.currentPlayer = state.currentPlayer === 1 ? 2 : 1;
+      randomTime();
+      render();
+      log(`<strong>${activeName()}</strong>'s turn. The battle time is <strong>${formatTime()}</strong>.`);
+    }
+
+    function harvest() {
+      if (state.gameOver) return;
+
+      const p = state.currentPlayer;
+      const minute = state.minute;
+      const countdown = minute === 0 ? 0 : 60 - minute;
+
+      let gain = 1;
+
+      // Strategic reward: late hour gives countdown advantage.
+      if (isLateHour()) gain = 2;
+
+      // Exact-minute bonus for tricky non-5 times.
+      if (minute % 5 !== 0) gain += 1;
+
+      state.players[p].energy += gain;
+
+      let note = `<strong>${activeName()}</strong> harvested <strong>${gain} energy</strong>. `;
+      note += `The minute hand has traveled ${minute} ticks`;
+      if (minute !== 0) note += `, with ${countdown} tick${countdown === 1 ? "" : "s"} left before the next hour opens`;
+      note += `.`;
+
+      log(note);
+      nextTurn();
+    }
+
+    function capture() {
+      if (state.gameOver) return;
+
+      const p = state.currentPlayer;
+      const activeHour = getHourTerritory(state.hour);
+      const owner = state.territories[activeHour];
+
+      if (state.blocked[activeHour] > 0) {
+        log(`<strong>${activeName()}</strong> tried to capture Territory ${activeHour}, but it is blocked this turn.`);
+        nextTurn();
+        return;
+      }
+
+      if (owner === p) {
+        log(`<strong>${activeName()}</strong> already controls Territory ${activeHour}. Use Fortify in a future version! For now, no energy spent.`);
+        nextTurn();
+        return;
+      }
+
+      if (state.players[p].energy < 3) {
+        log(`<strong>${activeName()}</strong> needs 3 energy to capture Territory ${activeHour}. Harvest first.`);
+        return;
+      }
+
+      state.players[p].energy -= 3;
+      state.territories[activeHour] = p;
+
+      if (isLateHour()) {
+        state.players[p].lateCaptures++;
+        log(`<strong>${activeName()}</strong> captured <strong>Late ${activeHour} Territory</strong>! Huge move. The next hour was close, but not open yet.`);
+      } else {
+        log(`<strong>${activeName()}</strong> captured <strong>Territory ${activeHour}</strong>.`);
+      }
+
+      render();
+
+      if (!checkWin()) {
+        nextTurn();
+      }
+    }
+
+    function challenge() {
+      if (state.gameOver) return;
+
+      const p = state.currentPlayer;
+      const opponent = p === 1 ? 2 : 1;
+      const activeHour = getHourTerritory(state.hour);
+
+      if (state.territories[activeHour] !== opponent) {
+        log(`<strong>${activeName()}</strong> can only challenge Territory ${activeHour} if the opponent controls it. No challenge available.`);
+        return;
+      }
+
+      if (state.players[p].energy < 2) {
+        log(`<strong>${activeName()}</strong> needs 2 energy to challenge Territory ${activeHour}.`);
+        return;
+      }
+
+      state.players[p].energy -= 2;
+      state.territories[activeHour] = 0;
+
+      log(`<strong>${activeName()}</strong> challenged Territory ${activeHour} and knocked it back to open territory. At ${formatTime()}, the active territory is still ${activeHour}.`);
+      render();
+      nextTurn();
+    }
+
+    function blockNextHour() {
+      if (state.gameOver) return;
+
+      const p = state.currentPlayer;
+
+      if (!isLateHour()) {
+        log(`<strong>${activeName()}</strong> can only block the next hour during late-hour times.`);
+        return;
+      }
+
+      if (state.players[p].energy < 1) {
+        log(`<strong>${activeName()}</strong> needs 1 energy to block the next hour.`);
+        return;
+      }
+
+      const activeHour = getHourTerritory(state.hour);
+      const nextHour = getNextHour(activeHour);
+
+      state.players[p].energy -= 1;
+      state.blocked[nextHour] = 2;
+
+      log(`<strong>${activeName()}</strong> blocked Territory ${nextHour}. Smart move: at ${formatTime()}, ${nextHour} is close, but it is not active yet.`);
+      render();
+      nextTurn();
+    }
+
+    function newGame() {
+      state.currentPlayer = 1;
+      state.gameOver = false;
+
+      state.players = {
+        1: { energy: 2, lateCaptures: 0 },
+        2: { energy: 2, lateCaptures: 0 }
+      };
+
+      for (let h = 1; h <= 12; h++) {
+        state.territories[h] = 0;
+        state.blocked[h] = 0;
+      }
+
+      document.getElementById("log").innerHTML = "";
+      document.getElementById("winnerOverlay").style.display = "none";
+
+      randomTime();
+      render();
+
+      log(`<strong>Battle Clock begins!</strong> Player 1 starts at <strong>${formatTime()}</strong>.`);
+      log(`Win by controlling <strong>4 territories</strong>, including at least <strong>one Late-Hour Capture</strong>.`);
+    }
+
+    newGame();
+  </script>
+</body>
+</html>
