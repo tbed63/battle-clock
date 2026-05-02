@@ -321,6 +321,7 @@
     .green { background: linear-gradient(135deg, #7bed9f, #2ecc71); color: #06170b; }
     .shield { background: linear-gradient(135deg, #ffd166, #8ecae6); color: #141414; }
     .dash { background: linear-gradient(135deg, #c77dff, #5a189a); color: #ffffff; }
+    .quarter { background: linear-gradient(135deg, #fff200, #ff006e); color: #190014; }
 
     .log {
       min-height: 165px;
@@ -638,6 +639,7 @@
       <section class="panel">
         <div class="time-label" style="margin-bottom:10px;">Choose Your Battle Move</div>
         <div class="actions">
+          <button class="quarter" onclick="startQuarterPower()">Quarter Power Up</button>
           <button class="green" onclick="startAction('harvest')">Harvest Minute Energy</button>
           <button class="dash" onclick="startAction('countdown')">Countdown Dash</button>
           <button class="blue" onclick="startAction('capture')">Capture Current Hour — 1500 Energy</button>
@@ -695,6 +697,7 @@
 
       <h3>Battle Moves</h3>
       <ul>
+        <li><strong>Quarter Power Up:</strong> If the clock shows :15 or :45, choose the correct quarter phrase and hour. Correct answers add 25% of your current energy. If you try it when the clock is not :15 or :45, you lose 25% of your current energy. This bonus does not use up your regular turn.</li>
         <li><strong>Harvest Minute Energy:</strong> Type how many minute ticks the long hand has traveled. The farther after the hour, the more energy you earn.</li>
         <li><strong>Capture Current Hour:</strong> Choose the active Hour Territory. Spend <strong>1500</strong> energy to capture it.</li>
         <li><strong>Challenge Territory:</strong> Choose the active Hour Territory. If your opponent owns it, spend <strong>2200</strong> energy to attack it. If it is fortified, the shield breaks but the opponent keeps the territory.</li>
@@ -729,7 +732,8 @@
       gameOver: false,
       pendingNextTurn: true,
       audioStarted: false,
-      pendingVictory: null
+      pendingVictory: null,
+      quarterUsedThisTurn: false
     };
 
     for (let h = 1; h <= 12; h++) {
@@ -926,7 +930,149 @@
       setTimeout(() => document.getElementById("numberAnswer").focus(), 50);
     }
 
+    function showQuarterChoices() {
+      document.getElementById("answerTitle").textContent = "Quarter Power Up";
+      document.getElementById("answerPrompt").innerHTML = "Choose the quarter phrase and the hour it belongs with.";
+      const hourButtons = Array.from({length: 12}, (_, i) => `<button onclick="chooseQuarterHour(${i + 1})">${i + 1}</button>`).join("");
+      document.getElementById("answerArea").innerHTML = `
+        <div class="answer-row">
+          <button class="primary" id="qpPast" onclick="chooseQuarterType('past')">Quarter Past</button>
+          <button class="primary" id="qpTo" onclick="chooseQuarterType('to')">Quarter To</button>
+        </div>
+        <div class="choice-grid">${hourButtons}</div>
+        <p class="small" style="margin-top:12px;">Pick a phrase first, then pick the matching hour.</p>
+      `;
+      quarterPick.type = null;
+      quarterPick.hour = null;
+      document.getElementById("answerModal").style.display = "flex";
+    }
+
     function closeAnswerModal() { document.getElementById("answerModal").style.display = "none"; }
+
+    const quarterPick = { type: null, hour: null };
+
+    function roundToNearest50(value) {
+      return Math.round(value / 50) * 50;
+    }
+
+    function quarterCorrectType() {
+      if (state.minute === 15) return "past";
+      if (state.minute === 45) return "to";
+      return null;
+    }
+
+    function quarterCorrectHour() {
+      const activeHour = getHourTerritory(state.hour);
+      if (state.minute === 15) return activeHour;
+      if (state.minute === 45) return getNextHour(activeHour);
+      return null;
+    }
+
+    function startQuarterPower() {
+      ensureAudio();
+      if (state.gameOver) return;
+
+      if (state.quarterUsedThisTurn) {
+        showBonusFeedback(
+          "Quarter Power Already Used",
+          `<strong>${activeName()}</strong> already tried Quarter Power Up on this clock. Choose your regular move now.`,
+          `Quarter Power Up can only be attempted once per turn.`,
+          false
+        );
+        return;
+      }
+
+      if (state.minute !== 15 && state.minute !== 45) {
+        state.quarterUsedThisTurn = true;
+        const p = state.currentPlayer;
+        const loss = Math.min(state.players[p].energy, roundToNearest50(state.players[p].energy * 0.25));
+        state.players[p].energy -= loss;
+        playWrong();
+        render();
+        log(`<strong>${activeName()}</strong> tried Quarter Power Up when it was not quarter past or quarter to and lost <strong>${loss} energy</strong>.`);
+        showBonusFeedback(
+          "Quarter Power Miss!",
+          `<strong>${activeName()}</strong> lost <strong>${loss} energy</strong> because the clock was not showing :15 or :45. You still get your regular turn.`,
+          quarterRevealExplanation(false),
+          false
+        );
+        return;
+      }
+
+      showQuarterChoices();
+    }
+
+    function chooseQuarterType(type) {
+      quarterPick.type = type;
+      document.getElementById("qpPast").style.filter = type === "past" ? "brightness(1.35)" : "brightness(0.75)";
+      document.getElementById("qpTo").style.filter = type === "to" ? "brightness(1.35)" : "brightness(0.75)";
+    }
+
+    function chooseQuarterHour(hour) {
+      if (!quarterPick.type) return;
+      quarterPick.hour = hour;
+      submitQuarterAnswer();
+    }
+
+    function submitQuarterAnswer() {
+      closeAnswerModal();
+      state.quarterUsedThisTurn = true;
+      const p = state.currentPlayer;
+      const correctType = quarterCorrectType();
+      const correctHour = quarterCorrectHour();
+      const correct = quarterPick.type === correctType && quarterPick.hour === correctHour;
+
+      if (correct) {
+        const bonus = roundToNearest50(state.players[p].energy * 0.25);
+        state.players[p].energy += bonus;
+        playCorrect();
+        render();
+        log(`<strong>${activeName()}</strong> nailed the Quarter Power Up and gained <strong>${bonus} energy</strong>.`);
+        showBonusFeedback(
+          "Quarter Power Up!",
+          `<strong>${activeName()}</strong> identified <strong>${formatQuarterPhrase(correctType, correctHour)}</strong> and gained <strong>${bonus} energy</strong>. You still get your regular turn.`,
+          quarterRevealExplanation(true),
+          true
+        );
+      } else {
+        playWrong();
+        render();
+        log(`<strong>${activeName()}</strong> missed the Quarter Power Up. Correct answer: <strong>${formatQuarterPhrase(correctType, correctHour)}</strong>.`);
+        showBonusFeedback(
+          "Quarter Power Miss!",
+          `<strong>${activeName()}</strong> chose <strong>${formatQuarterPhrase(quarterPick.type, quarterPick.hour)}</strong>, but the correct answer was <strong>${formatQuarterPhrase(correctType, correctHour)}</strong>. No bonus, but you still get your regular turn.`,
+          quarterRevealExplanation(true),
+          false
+        );
+      }
+    }
+
+    function formatQuarterPhrase(type, hour) {
+      if (!type || !hour) return "no complete answer";
+      return type === "past" ? `Quarter Past ${hour}` : `Quarter To ${hour}`;
+    }
+
+    function quarterRevealExplanation(isQuarterTime) {
+      const activeHour = getHourTerritory(state.hour);
+      const nextHour = getNextHour(activeHour);
+      if (!isQuarterTime) {
+        return `<strong>Actual time:</strong> ${formatTime()}<br>This is not :15 or :45, so Quarter Power Up was not available. The player loses 25% of current energy for taking the risk.`;
+      }
+      if (state.minute === 15) {
+        return `<strong>Actual time:</strong> ${formatTime()}<br>The minute hand has traveled 15 ticks, so this is <strong>Quarter Past ${activeHour}</strong>. The active hour territory is still ${activeHour}.`;
+      }
+      return `<strong>Actual time:</strong> ${formatTime()}<br>The minute hand has traveled 45 ticks. That means 15 minutes remain before the next hour, so this is <strong>Quarter To ${nextHour}</strong>. The active hour territory is still ${activeHour}.`;
+    }
+
+    function showBonusFeedback(title, message, reveal, isCorrect) {
+      document.getElementById("feedbackTitle").textContent = title;
+      document.getElementById("feedbackTitle").className = `feedback-title ${isCorrect ? "correct" : "wrong"}`;
+      document.getElementById("feedbackMessage").innerHTML = message;
+      document.getElementById("revealBox").innerHTML = reveal;
+      document.getElementById("feedbackModal").style.display = "flex";
+      state.pendingNextTurn = false;
+      state.pendingVictory = null;
+    }
 
     function startAction(type) {
       ensureAudio();
@@ -1142,6 +1288,7 @@
       if (state.gameOver) return;
       for (let h = 1; h <= 12; h++) if (state.blocked[h] > 0) state.blocked[h]--;
       state.currentPlayer = state.currentPlayer === 1 ? 2 : 1;
+      state.quarterUsedThisTurn = false;
       randomTime();
       render();
       log(`<strong>${activeName()}</strong>'s turn. Read the clock and choose your move.`);
@@ -1153,6 +1300,7 @@
       state.gameOver = false;
       state.pendingNextTurn = true;
       state.pendingVictory = null;
+      state.quarterUsedThisTurn = false;
       state.players = { 1: { energy: 500, lateCaptures: 0 }, 2: { energy: 500, lateCaptures: 0 } };
       for (let h = 1; h <= 12; h++) {
         state.territories[h] = 0;
