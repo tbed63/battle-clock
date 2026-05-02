@@ -682,9 +682,9 @@
         if (owner === 1) fill = "rgba(32, 215, 255, 0.35)";
         if (owner === 2) fill = "rgba(255, 77, 216, 0.35)";
 
+        // Do NOT highlight the current or next territory during play.
+        // Players must read the hands to identify the active hour territory.
         let classes = "territory";
-        if (h === activeHour) classes += " active-hour";
-        if (h === nextHour && isLateHour()) classes += " next-locked";
 
         svg.innerHTML += `<path class="${classes}" d="${sectorPath(cx, cy, 112, 258, start, end)}" fill="${fill}"></path>`;
 
