@@ -185,6 +185,7 @@
     .blue { background: linear-gradient(135deg, #20d7ff, #0077b6); color: #06131a; }
     .pink { background: linear-gradient(135deg, #ff4dd8, #9b2cff); }
     .green { background: linear-gradient(135deg, #7bed9f, #2ecc71); color: #06170b; }
+    .shield { background: linear-gradient(135deg, #ffd166, #8ecae6); color: #141414; }
 
     .log {
       min-height: 165px;
@@ -212,7 +213,6 @@
       padding: 20px;
     }
 
-    /* The answer popup sits to the right so players can still see the clock. */
     #answerModal {
       justify-content: flex-end;
       align-items: center;
@@ -413,19 +413,6 @@
       transition: 0.2s;
     }
 
-    .territory.active-hour {
-      filter: drop-shadow(0 0 10px rgba(255, 209, 102, 0.8));
-      stroke: var(--gold);
-      stroke-width: 4;
-    }
-
-    .territory.next-locked {
-      stroke: var(--danger);
-      stroke-width: 3;
-      stroke-dasharray: 5 5;
-      filter: drop-shadow(0 0 6px rgba(255, 92, 92, 0.7));
-    }
-
     .hand { stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(255,255,255,0.4)); }
     .center-dot { fill: var(--gold); stroke: #111; stroke-width: 4; }
 
@@ -469,14 +456,14 @@
         <div class="players">
           <div class="player p1 active" id="p1Panel">
             <h2>Player 1</h2>
-            <div class="stat"><span>Energy</span><strong id="p1Energy">2</strong></div>
+            <div class="stat"><span>Energy</span><strong id="p1Energy">500</strong></div>
             <div class="stat"><span>Territories</span><strong id="p1Territories">0</strong></div>
             <div class="stat"><span>Late Captures</span><strong id="p1Late">0</strong></div>
           </div>
 
           <div class="player p2" id="p2Panel">
             <h2>Player 2</h2>
-            <div class="stat"><span>Energy</span><strong id="p2Energy">2</strong></div>
+            <div class="stat"><span>Energy</span><strong id="p2Energy">500</strong></div>
             <div class="stat"><span>Territories</span><strong id="p2Territories">0</strong></div>
             <div class="stat"><span>Late Captures</span><strong id="p2Late">0</strong></div>
           </div>
@@ -489,6 +476,7 @@
           <button class="green" onclick="startAction('harvest')">Harvest Minute Energy</button>
           <button class="blue" onclick="startAction('capture')">Capture Current Hour</button>
           <button class="danger" onclick="startAction('challenge')">Challenge Territory</button>
+          <button class="shield" onclick="startAction('fortify')">Fortify Territory</button>
           <button class="pink" onclick="startAction('block')">Block Next Gate</button>
           <button onclick="startAction('countdown')">Countdown Dash</button>
           <button onclick="nextTurn()">Pass Turn</button>
@@ -542,11 +530,12 @@
 
       <h3>Battle Moves</h3>
       <ul>
-        <li><strong>Harvest Minute Energy:</strong> Type how many minute ticks the long hand has traveled. Exact answers earn the most energy.</li>
-        <li><strong>Capture Current Hour:</strong> Choose the active Hour Territory. Spend 3 energy to capture it.</li>
-        <li><strong>Challenge Territory:</strong> Choose the active Hour Territory. If your opponent owns it, spend 2 energy to knock it open.</li>
-        <li><strong>Block Next Gate:</strong> Choose the next hour that is about to open. Works only during late-hour times.</li>
-        <li><strong>Countdown Dash:</strong> Type how many minutes remain until the next hour opens.</li>
+        <li><strong>Harvest Minute Energy:</strong> Type how many minute ticks the long hand has traveled. The farther after the hour, the more energy you earn.</li>
+        <li><strong>Capture Current Hour:</strong> Choose the active Hour Territory. Spend <strong>1500</strong> energy to capture it.</li>
+        <li><strong>Challenge Territory:</strong> Choose the active Hour Territory. If your opponent owns it, spend <strong>2200</strong> energy to attack it. If it is fortified, the shield breaks but the opponent keeps the territory.</li>
+        <li><strong>Fortify Territory:</strong> Choose the active Hour Territory. If you control it, spend <strong>1000</strong> energy to protect it from one successful challenge.</li>
+        <li><strong>Block Next Gate:</strong> Choose the next hour that is about to open. Spend <strong>600</strong> energy. Works only during late-hour times.</li>
+        <li><strong>Countdown Dash:</strong> Type how many minutes remain until the next hour opens. This is harder, so it pays about double compared to Harvest Minute Energy.</li>
       </ul>
 
       <h3>Wrong Answers</h3>
@@ -566,11 +555,12 @@
       hour: 5,
       minute: 58,
       players: {
-        1: { energy: 2, lateCaptures: 0 },
-        2: { energy: 2, lateCaptures: 0 }
+        1: { energy: 500, lateCaptures: 0 },
+        2: { energy: 500, lateCaptures: 0 }
       },
       territories: {},
       blocked: {},
+      fortified: {},
       gameOver: false,
       pendingNextTurn: true,
       audioStarted: false
@@ -579,6 +569,7 @@
     for (let h = 1; h <= 12; h++) {
       state.territories[h] = 0;
       state.blocked[h] = 0;
+      state.fortified[h] = false;
     }
 
     let audioCtx = null;
@@ -646,7 +637,6 @@
     function getNextHour(hour) { return hour === 12 ? 1 : hour + 1; }
     function isLateHour() { return state.minute >= 45; }
     function countdownValue() { return state.minute === 0 ? 0 : 60 - state.minute; }
-    function hourPhase() { if (state.minute < 20) return "Early"; if (state.minute < 40) return "Middle"; return "Late"; }
 
     function randomTime() {
       state.hour = Math.floor(Math.random() * 12) + 1;
@@ -667,7 +657,6 @@
       svg.innerHTML = "";
       const cx = 350, cy = 350;
       const activeHour = getHourTerritory(state.hour);
-      const nextHour = getNextHour(activeHour);
 
       svg.innerHTML += `
         <circle cx="${cx}" cy="${cy}" r="322" fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.08)" stroke-width="3"/>
@@ -682,11 +671,7 @@
         if (owner === 1) fill = "rgba(32, 215, 255, 0.35)";
         if (owner === 2) fill = "rgba(255, 77, 216, 0.35)";
 
-        // Do NOT highlight the current or next territory during play.
-        // Players must read the hands to identify the active hour territory.
-        let classes = "territory";
-
-        svg.innerHTML += `<path class="${classes}" d="${sectorPath(cx, cy, 112, 258, start, end)}" fill="${fill}"></path>`;
+        svg.innerHTML += `<path class="territory" d="${sectorPath(cx, cy, 112, 258, start, end)}" fill="${fill}"></path>`;
 
         if (owner !== 0) {
           const tokenPoint = polar(cx, cy, 205, start + 15);
@@ -697,6 +682,11 @@
         if (state.blocked[h] > 0) {
           const b = polar(cx, cy, 154, start + 15);
           svg.innerHTML += `<text x="${b.x}" y="${b.y}" text-anchor="middle" dominant-baseline="middle" font-size="24">🔒</text>`;
+        }
+
+        if (state.fortified[h]) {
+          const f = polar(cx, cy, 176, start + 15);
+          svg.innerHTML += `<text x="${f.x}" y="${f.y}" text-anchor="middle" dominant-baseline="middle" font-size="24">🛡️</text>`;
         }
       }
 
@@ -777,6 +767,7 @@
       if (state.gameOver) return;
       if (type === "capture") showHourChoices("Declare the Territory", "Which <strong>Hour Territory</strong> is active right now?", "capture");
       if (type === "challenge") showHourChoices("Declare the Battle Zone", "Which <strong>Hour Territory</strong> is active right now?", "challenge");
+      if (type === "fortify") showHourChoices("Fortify Your Territory", "Which <strong>Hour Territory</strong> is active right now?", "fortify");
       if (type === "block") showHourChoices("Name the Next Gate", "Which <strong>next Hour Gate</strong> is about to open?", "block");
       if (type === "harvest") showNumberInput("Harvest Minute Energy", "How many <strong>minute ticks</strong> has the long hand traveled from the top?", "harvest");
       if (type === "countdown") showNumberInput("Countdown Dash", "How many <strong>minutes remain</strong> until the next hour opens?", "countdown");
@@ -791,7 +782,7 @@
     function submitAnswer(actionType, answer) {
       closeAnswerModal();
       let correct;
-      if (actionType === "capture" || actionType === "challenge") correct = getHourTerritory(state.hour);
+      if (actionType === "capture" || actionType === "challenge" || actionType === "fortify") correct = getHourTerritory(state.hour);
       if (actionType === "block") correct = getNextHour(getHourTerritory(state.hour));
       if (actionType === "harvest") correct = state.minute;
       if (actionType === "countdown") correct = countdownValue();
@@ -800,12 +791,12 @@
       resolveAction(actionType, Number(answer), correct, isCorrect);
     }
 
-    function revealExplanation(actionType, correct) {
+    function revealExplanation(actionType) {
       const activeHour = getHourTerritory(state.hour);
       const nextHour = getNextHour(activeHour);
       const base = `<strong>Actual time:</strong> ${formatTime()}<br><strong>Active Hour Territory:</strong> ${activeHour}<br><strong>Minute ticks traveled:</strong> ${state.minute}<br><strong>Minutes until next hour:</strong> ${countdownValue()}`;
       let why = "";
-      if (actionType === "capture" || actionType === "challenge") why = `The correct territory is <strong>${activeHour}</strong>. Even if the short hand is close to ${nextHour}, the next hour does not open until the minute hand reaches the top.`;
+      if (actionType === "capture" || actionType === "challenge" || actionType === "fortify") why = `The correct territory is <strong>${activeHour}</strong>. Even if the short hand is close to ${nextHour}, the next hour does not open until the minute hand reaches the top.`;
       if (actionType === "block") why = `The next gate is <strong>${nextHour}</strong>, but it is only worth blocking during late-hour times.`;
       if (actionType === "harvest") why = `The long hand has traveled <strong>${state.minute}</strong> minute tick${state.minute === 1 ? "" : "s"} from the top.`;
       if (actionType === "countdown") why = `There are <strong>${countdownValue()}</strong> minute tick${countdownValue() === 1 ? "" : "s"} left before the next hour opens.`;
@@ -827,30 +818,29 @@
         message = `<strong>${activeName()}</strong> answered <strong>${answer}</strong>, but the correct answer was <strong>${correct}</strong>. The move does not work this turn.`;
         log(`<strong>${activeName()}</strong> missed the clock reading. Correct answer: <strong>${correct}</strong>.`);
       } else if (actionType === "harvest") {
-        let gain = 2;
-        if (state.minute % 5 !== 0) gain += 1;
-        if (isLateHour()) gain += 1;
+        let gain = 100 + (state.minute * 10);
         state.players[p].energy += gain;
-        message = `<strong>${activeName()}</strong> read the minute hand correctly and harvested <strong>${gain} energy</strong>.`;
+        message = `<strong>${activeName()}</strong> read the minute hand correctly and harvested <strong>${gain} energy</strong>. The farther the minute hand travels after the hour, the more energy it creates.`;
         log(message);
       } else if (actionType === "countdown") {
-        let gain = countdownValue() <= 5 ? 3 : 2;
+        let gain = 200 + (countdownValue() * 20);
         state.players[p].energy += gain;
-        message = `<strong>${activeName()}</strong> nailed the countdown and dashed for <strong>${gain} energy</strong>.`;
+        message = `<strong>${activeName()}</strong> nailed the Countdown Dash and earned <strong>${gain} energy</strong>. This harder move pays about double compared to harvesting minutes after the hour.`;
         log(message);
       } else if (actionType === "capture") {
         if (state.blocked[activeHour] > 0) {
           message = `Territory ${activeHour} is blocked this turn, so the capture fails even though the clock reading was correct.`;
           log(`<strong>${activeName()}</strong> read the clock correctly, but Territory ${activeHour} was blocked.`);
         } else if (state.territories[activeHour] === p) {
-          message = `You already control Territory ${activeHour}. No energy spent.`;
+          message = `You already control Territory ${activeHour}. Try fortifying it if you want to protect it.`;
           log(`<strong>${activeName()}</strong> already controls Territory ${activeHour}.`);
-        } else if (state.players[p].energy < 3) {
-          message = `You need 3 energy to capture Territory ${activeHour}. Harvest more energy first.`;
+        } else if (state.players[p].energy < 1500) {
+          message = `You need 1500 energy to capture Territory ${activeHour}. Build more energy first.`;
           log(`<strong>${activeName()}</strong> read the clock correctly but needs more energy to capture.`);
         } else {
-          state.players[p].energy -= 3;
+          state.players[p].energy -= 1500;
           state.territories[activeHour] = p;
+          state.fortified[activeHour] = false;
           if (isLateHour()) state.players[p].lateCaptures++;
           message = `<strong>${activeName()}</strong> captured <strong>${isLateHour() ? "Late " : ""}${activeHour} Territory</strong>!`;
           log(message);
@@ -860,24 +850,45 @@
         if (state.territories[activeHour] !== opponent) {
           message = `You read the active territory correctly, but Player ${opponent} does not control Territory ${activeHour}. No challenge available.`;
           log(`<strong>${activeName()}</strong> read the clock correctly, but there was no opponent territory to challenge.`);
-        } else if (state.players[p].energy < 2) {
-          message = `You need 2 energy to challenge Territory ${activeHour}.`;
+        } else if (state.players[p].energy < 2200) {
+          message = `You need 2200 energy to challenge Territory ${activeHour}.`;
           log(`<strong>${activeName()}</strong> read the clock correctly but needs more energy to challenge.`);
         } else {
-          state.players[p].energy -= 2;
-          state.territories[activeHour] = 0;
-          message = `<strong>${activeName()}</strong> challenged Territory ${activeHour} and knocked it back to open territory.`;
+          state.players[p].energy -= 2200;
+          if (state.fortified[activeHour]) {
+            state.fortified[activeHour] = false;
+            message = `<strong>${activeName()}</strong> challenged Territory ${activeHour} and broke its shield. Player ${opponent} still controls the territory.`;
+          } else {
+            state.territories[activeHour] = 0;
+            message = `<strong>${activeName()}</strong> challenged Territory ${activeHour} and knocked it back to open territory.`;
+          }
+          log(message);
+        }
+      } else if (actionType === "fortify") {
+        if (state.territories[activeHour] !== p) {
+          message = `You read the active territory correctly, but you can only fortify Territory ${activeHour} if you already control it.`;
+          log(`<strong>${activeName()}</strong> read the clock correctly, but did not control Territory ${activeHour}.`);
+        } else if (state.fortified[activeHour]) {
+          message = `Territory ${activeHour} is already fortified.`;
+          log(`<strong>${activeName()}</strong> already has a shield on Territory ${activeHour}.`);
+        } else if (state.players[p].energy < 1000) {
+          message = `You need 1000 energy to fortify Territory ${activeHour}.`;
+          log(`<strong>${activeName()}</strong> needs more energy to fortify Territory ${activeHour}.`);
+        } else {
+          state.players[p].energy -= 1000;
+          state.fortified[activeHour] = true;
+          message = `<strong>${activeName()}</strong> fortified Territory ${activeHour}. The next successful challenge will break the shield instead of removing control.`;
           log(message);
         }
       } else if (actionType === "block") {
         if (!isLateHour()) {
           message = `You named the next gate correctly, but blocking only works during late-hour times (:45 to :59).`;
           log(`<strong>${activeName()}</strong> named the next gate correctly, but it was not late enough to block.`);
-        } else if (state.players[p].energy < 1) {
-          message = `You need 1 energy to block the next gate.`;
+        } else if (state.players[p].energy < 600) {
+          message = `You need 600 energy to block the next gate.`;
           log(`<strong>${activeName()}</strong> needs more energy to block.`);
         } else {
-          state.players[p].energy -= 1;
+          state.players[p].energy -= 600;
           state.blocked[nextHour] = 2;
           message = `<strong>${activeName()}</strong> blocked the upcoming <strong>${nextHour} Gate</strong>.`;
           log(message);
@@ -885,7 +896,7 @@
       }
 
       render();
-      showFeedback(title, message, revealExplanation(actionType, correct), isCorrect, shouldCheckWin);
+      showFeedback(title, message, revealExplanation(actionType), isCorrect, shouldCheckWin);
     }
 
     function showFeedback(title, message, reveal, isCorrect, shouldCheckWin) {
@@ -950,8 +961,12 @@
       state.currentPlayer = 1;
       state.gameOver = false;
       state.pendingNextTurn = true;
-      state.players = { 1: { energy: 2, lateCaptures: 0 }, 2: { energy: 2, lateCaptures: 0 } };
-      for (let h = 1; h <= 12; h++) { state.territories[h] = 0; state.blocked[h] = 0; }
+      state.players = { 1: { energy: 500, lateCaptures: 0 }, 2: { energy: 500, lateCaptures: 0 } };
+      for (let h = 1; h <= 12; h++) {
+        state.territories[h] = 0;
+        state.blocked[h] = 0;
+        state.fortified[h] = false;
+      }
       document.getElementById("log").innerHTML = "";
       document.getElementById("winnerOverlay").style.display = "none";
       document.getElementById("feedbackModal").style.display = "none";
@@ -961,7 +976,6 @@
       log(`<strong>Battle Clock begins!</strong> Player 1 starts. Read the clock and choose your move.`);
     }
 
-    // Start visually without requiring audio until first user click.
     randomTime();
     render();
     log(`<strong>Battle Clock is ready!</strong> Click New Game to start with sound enabled.`);
