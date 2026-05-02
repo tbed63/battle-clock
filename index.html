@@ -905,8 +905,13 @@
       document.getElementById("feedbackMessage").innerHTML = message;
       document.getElementById("revealBox").innerHTML = reveal;
       document.getElementById("feedbackModal").style.display = "flex";
-      state.pendingNextTurn = !shouldCheckWin;
-      if (shouldCheckWin && checkWin(true)) state.pendingNextTurn = false;
+
+      // After feedback, the game should advance to the next player
+      // unless the move created a win. This fixes the capture-turn freeze.
+      state.pendingNextTurn = true;
+      if (shouldCheckWin && checkWin(true)) {
+        state.pendingNextTurn = false;
+      }
     }
 
     function continueAfterFeedback() {
