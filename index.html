@@ -186,6 +186,7 @@
     .pink { background: linear-gradient(135deg, #ff4dd8, #9b2cff); }
     .green { background: linear-gradient(135deg, #7bed9f, #2ecc71); color: #06170b; }
     .shield { background: linear-gradient(135deg, #ffd166, #8ecae6); color: #141414; }
+    .dash { background: linear-gradient(135deg, #c77dff, #5a189a); color: #ffffff; }
 
     .log {
       min-height: 165px;
@@ -213,14 +214,16 @@
       padding: 20px;
     }
 
-    #answerModal {
+    #answerModal,
+    #feedbackModal {
       justify-content: flex-end;
       align-items: center;
       padding-right: clamp(12px, 4vw, 54px);
       pointer-events: none;
     }
 
-    #answerModal .modal-card {
+    #answerModal .modal-card,
+    #feedbackModal .modal-card {
       pointer-events: auto;
       width: min(390px, 92vw);
       background: rgba(24, 24, 38, 0.86);
@@ -229,13 +232,15 @@
     }
 
     @media (max-width: 900px) {
-      #answerModal {
+      #answerModal,
+      #feedbackModal {
         align-items: flex-end;
         justify-content: center;
         padding: 12px;
       }
 
-      #answerModal .modal-card {
+      #answerModal .modal-card,
+      #feedbackModal .modal-card {
         width: min(680px, 96vw);
         max-height: 42vh;
         padding: 16px;
@@ -474,11 +479,11 @@
         <div class="time-label" style="margin-bottom:10px;">Choose Your Battle Move</div>
         <div class="actions">
           <button class="green" onclick="startAction('harvest')">Harvest Minute Energy</button>
+          <button class="dash" onclick="startAction('countdown')">Countdown Dash</button>
           <button class="blue" onclick="startAction('capture')">Capture Current Hour — 1500 Energy</button>
           <button class="danger" onclick="startAction('challenge')">Challenge Territory — 2200 Energy</button>
           <button class="shield" onclick="startAction('fortify')">Fortify Territory — 1000 Energy</button>
           <button class="pink" onclick="startAction('block')">Block Next Gate — 600 Energy</button>
-          <button onclick="startAction('countdown')">Countdown Dash</button>
           <button onclick="nextTurn()">Pass Turn</button>
         </div>
       </section>
@@ -535,7 +540,7 @@
         <li><strong>Challenge Territory:</strong> Choose the active Hour Territory. If your opponent owns it, spend <strong>2200</strong> energy to attack it. If it is fortified, the shield breaks but the opponent keeps the territory.</li>
         <li><strong>Fortify Territory:</strong> Choose the active Hour Territory. If you control it, spend <strong>1000</strong> energy to protect it from one successful challenge.</li>
         <li><strong>Block Next Gate:</strong> Choose the next hour that is about to open. Spend <strong>600</strong> energy. Works only during late-hour times.</li>
-        <li><strong>Countdown Dash:</strong> Type how many minutes remain until the next hour opens. This is harder, so it pays about double compared to Harvest Minute Energy.</li>
+        <li><strong>Countdown Dash:</strong> Type how many minutes remain until the next hour opens. This is harder, so it pays about 1.5 times as much as Harvest Minute Energy.</li>
       </ul>
 
       <h3>Wrong Answers</h3>
@@ -823,9 +828,9 @@
         message = `<strong>${activeName()}</strong> read the minute hand correctly and harvested <strong>${gain} energy</strong>. The farther the minute hand travels after the hour, the more energy it creates.`;
         log(message);
       } else if (actionType === "countdown") {
-        let gain = 200 + (countdownValue() * 20);
+        let gain = 150 + (countdownValue() * 15);
         state.players[p].energy += gain;
-        message = `<strong>${activeName()}</strong> nailed the Countdown Dash and earned <strong>${gain} energy</strong>. This harder move pays about double compared to harvesting minutes after the hour.`;
+        message = `<strong>${activeName()}</strong> nailed the Countdown Dash and earned <strong>${gain} energy</strong>. This harder move pays about 1.5 times compared to harvesting minutes after the hour.`;
         log(message);
       } else if (actionType === "capture") {
         if (state.blocked[activeHour] > 0) {
