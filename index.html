@@ -205,11 +205,41 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.78);
+      background: rgba(0,0,0,0.42);
       z-index: 20;
       align-items: center;
       justify-content: center;
       padding: 20px;
+    }
+
+    /* The answer popup sits to the right so players can still see the clock. */
+    #answerModal {
+      justify-content: flex-end;
+      align-items: center;
+      padding-right: clamp(12px, 4vw, 54px);
+      pointer-events: none;
+    }
+
+    #answerModal .modal-card {
+      pointer-events: auto;
+      width: min(390px, 92vw);
+      background: rgba(24, 24, 38, 0.86);
+      backdrop-filter: blur(8px);
+      border-color: rgba(255, 209, 102, 0.8);
+    }
+
+    @media (max-width: 900px) {
+      #answerModal {
+        align-items: flex-end;
+        justify-content: center;
+        padding: 12px;
+      }
+
+      #answerModal .modal-card {
+        width: min(680px, 96vw);
+        max-height: 42vh;
+        padding: 16px;
+      }
     }
 
     .modal-card, .winner-card, .how-card {
