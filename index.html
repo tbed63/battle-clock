@@ -315,14 +315,39 @@
       font-weight: 800;
     }
 
-    .winner-card {
-      text-align: center;
-      width: min(640px, 100%);
-      position: relative;
-      overflow: hidden;
+    .winner {
+      background: rgba(0,0,0,0.28);
+      justify-content: flex-end;
+      align-items: center;
+      padding-right: clamp(12px, 4vw, 54px);
+      pointer-events: none;
     }
 
-    .winner-card h2 { font-size: 3.2rem; margin: 0 0 12px; text-transform: uppercase; }
+    .winner-card {
+      text-align: center;
+      width: min(390px, 92vw);
+      position: relative;
+      overflow: hidden;
+      pointer-events: auto;
+      background: rgba(24, 24, 38, 0.9);
+      backdrop-filter: blur(8px);
+    }
+
+    @media (max-width: 900px) {
+      .winner {
+        align-items: flex-end;
+        justify-content: center;
+        padding: 12px;
+      }
+
+      .winner-card {
+        width: min(680px, 96vw);
+        max-height: 48vh;
+        padding: 18px;
+      }
+    }
+
+    .winner-card h2 { font-size: clamp(2rem, 4vw, 3.2rem); margin: 0 0 12px; text-transform: uppercase; }
     .winner-card p { font-size: 1.08rem; color: #f2f2f7; }
 
     .victory-clock {
@@ -568,7 +593,8 @@
       fortified: {},
       gameOver: false,
       pendingNextTurn: true,
-      audioStarted: false
+      audioStarted: false,
+      pendingVictory: null
     };
 
     for (let h = 1; h <= 12; h++) {
@@ -914,31 +940,51 @@
       // After feedback, the game should advance to the next player
       // unless the move created a win. This fixes the capture-turn freeze.
       state.pendingNextTurn = true;
-      if (shouldCheckWin && checkWin(true)) {
-        state.pendingNextTurn = false;
+      if (shouldCheckWin) {
+        const winner = getWinner();
+        if (winner) {
+          state.gameOver = true;
+          state.pendingNextTurn = false;
+          state.pendingVictory = winner;
+        }
       }
     }
 
     function continueAfterFeedback() {
       document.getElementById("feedbackModal").style.display = "none";
+
+      if (state.pendingVictory) {
+        showVictory(state.pendingVictory);
+        state.pendingVictory = null;
+        return;
+      }
+
       if (!state.gameOver && state.pendingNextTurn) nextTurn();
     }
 
-    function checkWin(delayOverlay = false) {
+    function getWinner() {
       for (let p = 1; p <= 2; p++) {
         const territoryCount = Object.values(state.territories).filter(owner => owner === p).length;
-        if (territoryCount >= 4 && state.players[p].lateCaptures >= 1) {
-          state.gameOver = true;
-          const show = () => {
-            document.getElementById("winnerText").textContent = `Player ${p} Wins!`;
-            document.getElementById("winnerSubtext").innerHTML = `Player ${p} controls <strong>${territoryCount}</strong> territories and made a Late-Hour Capture.<br>Victory belongs to the player who mastered the clock!`;
-            buildConfetti();
-            document.getElementById("winnerOverlay").style.display = "flex";
-            playVictoryMusic();
-          };
-          if (delayOverlay) setTimeout(show, 250); else show();
-          return true;
-        }
+        if (territoryCount >= 4 && state.players[p].lateCaptures >= 1) return p;
+      }
+      return null;
+    }
+
+    function showVictory(playerNumber) {
+      const territoryCount = Object.values(state.territories).filter(owner => owner === playerNumber).length;
+      document.getElementById("winnerText").textContent = `Player ${playerNumber} Wins!`;
+      document.getElementById("winnerSubtext").innerHTML = `Player ${playerNumber} controls <strong>${territoryCount}</strong> territories and made a Late-Hour Capture.<br>Victory belongs to the player who mastered the clock!`;
+      buildConfetti();
+      document.getElementById("winnerOverlay").style.display = "flex";
+      playVictoryMusic();
+    }
+
+    function checkWin() {
+      const winner = getWinner();
+      if (winner) {
+        state.gameOver = true;
+        showVictory(winner);
+        return true;
       }
       return false;
     }
@@ -971,6 +1017,7 @@
       state.currentPlayer = 1;
       state.gameOver = false;
       state.pendingNextTurn = true;
+      state.pendingVictory = null;
       state.players = { 1: { energy: 500, lateCaptures: 0 }, 2: { energy: 500, lateCaptures: 0 } };
       for (let h = 1; h <= 12; h++) {
         state.territories[h] = 0;
