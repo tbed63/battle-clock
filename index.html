@@ -836,25 +836,40 @@
       for (let h = 1; h <= 12; h++) {
         const start = hourToAngle(h);
         const end = start + 30;
-        const owner = state.territories[h];
+        const owner = Number(state.territories[h]);
         let fill = "rgba(70,70,95,0.42)";
-        if (owner === 1) fill = "rgba(32, 215, 255, 0.35)";
-        if (owner === 2) fill = "rgba(255, 77, 216, 0.35)";
+        let stroke = "rgba(255,255,255,0.18)";
+        let strokeWidth = 2;
 
-        svg.innerHTML += `<path class="territory" d="${sectorPath(cx, cy, 112, 258, start, end)}" fill="${fill}"></path>`;
+        if (owner === 1) {
+          fill = "rgba(32, 215, 255, 0.58)";
+          stroke = "rgba(32, 215, 255, 0.95)";
+          strokeWidth = 5;
+        }
+
+        if (owner === 2) {
+          fill = "rgba(255, 77, 216, 0.58)";
+          stroke = "rgba(255, 77, 216, 0.95)";
+          strokeWidth = 5;
+        }
+
+        svg.innerHTML += `<path class="territory" d="${sectorPath(cx, cy, 112, 258, start, end)}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"></path>`;
 
         if (owner !== 0) {
           const tokenPoint = polar(cx, cy, 205, start + 15);
           const color = owner === 1 ? "var(--p1)" : "var(--p2)";
-          svg.innerHTML += `<circle cx="${tokenPoint.x}" cy="${tokenPoint.y}" r="13" fill="${color}" stroke="white" stroke-width="2"></circle><text class="territory-token" x="${tokenPoint.x}" y="${tokenPoint.y + 1}">P${owner}</text>`;
+          svg.innerHTML += `
+            <circle cx="${tokenPoint.x}" cy="${tokenPoint.y}" r="18" fill="${color}" stroke="white" stroke-width="3"></circle>
+            <text class="territory-token" x="${tokenPoint.x}" y="${tokenPoint.y + 1}">P${owner}</text>
+          `;
         }
 
-        if (state.blocked[h] > 0) {
+        if (Number(state.blocked[h]) > 0) {
           const b = polar(cx, cy, 154, start + 15);
           svg.innerHTML += `<text x="${b.x}" y="${b.y}" text-anchor="middle" dominant-baseline="middle" font-size="24">🔒</text>`;
         }
 
-        if (state.fortified[h]) {
+        if (Boolean(state.fortified[h])) {
           const f = polar(cx, cy, 176, start + 15);
           svg.innerHTML += `<text x="${f.x}" y="${f.y}" text-anchor="middle" dominant-baseline="middle" font-size="24">🛡️</text>`;
         }
@@ -890,7 +905,7 @@
 
     function updateStats() {
       for (let p = 1; p <= 2; p++) {
-        const territoryCount = Object.values(state.territories).filter(owner => owner === p).length;
+        const territoryCount = Object.values(state.territories).filter(owner => Number(owner) === p).length;
         document.getElementById(`p${p}Energy`).textContent = state.players[p].energy;
         document.getElementById(`p${p}Territories`).textContent = territoryCount;
         document.getElementById(`p${p}Late`).textContent = state.players[p].lateCaptures;
@@ -1151,7 +1166,7 @@
           log(`<strong>${activeName()}</strong> read the clock correctly but needs more energy to capture.`);
         } else {
           state.players[p].energy -= 1500;
-          state.territories[activeHour] = p;
+          state.territories[activeHour] = Number(p);
           state.fortified[activeHour] = false;
           if (isLateHour()) state.players[p].lateCaptures++;
           message = `<strong>${activeName()}</strong> captured <strong>${isLateHour() ? "Late " : ""}${activeHour} Territory</strong>!`;
@@ -1245,7 +1260,7 @@
 
     function getWinner() {
       for (let p = 1; p <= 2; p++) {
-        const territoryCount = Object.values(state.territories).filter(owner => owner === p).length;
+        const territoryCount = Object.values(state.territories).filter(owner => Number(owner) === p).length;
         if (territoryCount >= 4 && state.players[p].lateCaptures >= 1) return p;
       }
       return null;
