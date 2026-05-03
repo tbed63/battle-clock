@@ -3,1337 +3,550 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Battle Clock!</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='35%25' r='65%25'%3E%3Cstop offset='0%25' stop-color='%23ffe66d'/%3E%3Cstop offset='45%25' stop-color='%23ff9f1c'/%3E%3Cstop offset='100%25' stop-color='%235a189a'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%23101018'/%3E%3Ccircle cx='32' cy='32' r='25' fill='url(%23g)' stroke='%23ffffff' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='3.2' fill='%23101018'/%3E%3Cpath d='M32 32 L32 15' stroke='%23101018' stroke-width='4.5' stroke-linecap='round'/%3E%3Cpath d='M32 32 L45 39' stroke='%23101018' stroke-width='4.5' stroke-linecap='round'/%3E%3Ctext x='32' y='55' text-anchor='middle' font-family='Arial, sans-serif' font-size='14' font-weight='900' fill='%23ffffff'%3EBC!%3C/text%3E%3C/svg%3E" />
+  <title>Rock the Facts!</title>
   <style>
     :root {
-      --bg: #101018;
-      --panel: #1b1b29;
-      --panel2: #252538;
-      --text: #f5f5f5;
-      --muted: #b8b8c8;
-      --p1: #20d7ff;
-      --p2: #ff4dd8;
-      --gold: #ffd166;
-      --danger: #ff5c5c;
-      --green: #7bed9f;
-      --neutral: #3b3b52;
+      --bg: #101010;
+      --panel: #f7f3e8;
+      --ink: #181818;
+      --accent: #d72638;
+      --accent2: #f6c945;
+      --blue: #177ddc;
+      --red: #d72638;
+      --grid: #2a2a2a;
+      --muted: #6f6a60;
+      --cell: #fffaf0;
+      --cell2: #ece4d3;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
       background:
-        radial-gradient(circle at 18% 12%, rgba(255, 209, 102, 0.16) 0%, transparent 24%),
-        radial-gradient(circle at 88% 18%, rgba(255, 77, 216, 0.16) 0%, transparent 26%),
-        radial-gradient(circle at 50% 82%, rgba(32, 215, 255, 0.12) 0%, transparent 32%),
-        linear-gradient(135deg, #07070b 0%, #151522 42%, #050509 100%);
-      color: var(--text);
+        radial-gradient(circle at top left, rgba(215,38,56,.22), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(246,201,69,.18), transparent 30%),
+        var(--bg);
+      color: var(--panel);
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: stretch;
-      overflow-x: hidden;
-      position: relative;
+      padding: 18px;
     }
 
-    body::before,
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
+    .app {
+      max-width: 1160px;
+      margin: 0 auto;
     }
 
-    body::before {
-      opacity: 0.42;
-      background-image:
-        linear-gradient(112deg, transparent 0 16%, rgba(255,255,255,0.18) 16.2%, transparent 17%),
-        linear-gradient(25deg, transparent 0 38%, rgba(255,255,255,0.11) 38.2%, transparent 39%),
-        linear-gradient(145deg, transparent 0 62%, rgba(255,255,255,0.09) 62.2%, transparent 63%),
-        linear-gradient(75deg, transparent 0 78%, rgba(255,255,255,0.12) 78.2%, transparent 79%);
-      background-size: 420px 260px, 520px 310px, 370px 230px, 610px 350px;
-      background-position: 30px 20px, 180px 110px, 80px 320px, 330px 40px;
-      mix-blend-mode: screen;
-    }
-
-    body::after {
-      opacity: 0.20;
-      background-image:
-        radial-gradient(circle, rgba(255,255,255,0.45) 0 1px, transparent 1.4px),
-        radial-gradient(circle, rgba(255,209,102,0.32) 0 1px, transparent 1.6px),
-        linear-gradient(90deg, rgba(255,255,255,0.04), transparent 18%, rgba(0,0,0,0.12) 40%, transparent 72%);
-      background-size: 29px 31px, 47px 53px, 100% 7px;
-      filter: contrast(130%);
-    }
-
-    .game {
-      width: min(1120px, 100%);
-      padding: 14px;
+    header {
       display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 14px;
-      position: relative;
-      z-index: 1;
-    }
-
-    @media (max-width: 900px) {
-      .game { grid-template-columns: 1fr; }
-    }
-
-    .main {
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.04), transparent 24%, rgba(0,0,0,0.15) 60%),
-        rgba(15, 15, 25, 0.93);
-      border: 2px solid rgba(255,255,255,0.12);
-      border-radius: 24px;
-      padding: 14px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.58), inset 0 0 0 1px rgba(255,255,255,0.04);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .main::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      opacity: 0.30;
-      background-image:
-        linear-gradient(120deg, transparent 10%, rgba(255,255,255,0.22) 10.6%, transparent 11.4%),
-        linear-gradient(40deg, transparent 55%, rgba(255,255,255,0.12) 55.5%, transparent 56.2%),
-        radial-gradient(circle at 10% 20%, rgba(255,255,255,0.18) 0 1px, transparent 2px),
-        radial-gradient(circle at 90% 75%, rgba(255,209,102,0.18) 0 1px, transparent 2px);
-      background-size: 500px 240px, 440px 320px, 38px 38px, 54px 54px;
-    }
-
-    .title-row {
-      display: flex;
-      justify-content: space-between;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 6px;
-      flex-wrap: wrap;
+      margin-bottom: 14px;
     }
 
     h1 {
+      font-size: clamp(2.1rem, 5vw, 4.5rem);
       margin: 0;
-      font-size: clamp(1.8rem, 3.4vw, 3.4rem);
-      letter-spacing: 1px;
+      letter-spacing: 2px;
       text-transform: uppercase;
-      line-height: 0.95;
-      color: #fff1a8;
-      text-shadow:
-        3px 3px 0 #111,
-        -2px 2px 0 #5a189a,
-        0 0 18px rgba(255, 209, 102, 0.55),
-        0 0 34px rgba(255, 77, 216, 0.22);
-      transform: rotate(-1deg);
+      text-shadow: 4px 4px 0 #000;
+      line-height: .9;
     }
 
     .subtitle {
-      color: var(--muted);
+      font-family: Arial, sans-serif;
       font-weight: 700;
-      letter-spacing: 0.5px;
-      margin-top: 4px;
+      letter-spacing: .5px;
+      color: #f3e9cf;
+      margin-top: 6px;
     }
 
-    .brand-line {
-      display: inline-block;
-      margin-top: 7px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      color: #fff1a8;
-      font-weight: 900;
-      font-size: 0.82rem;
-      letter-spacing: 0.7px;
-      text-transform: uppercase;
-      background: rgba(255, 209, 102, 0.12);
-      border: 1px solid rgba(255, 209, 102, 0.34);
-      box-shadow: 0 0 14px rgba(255, 209, 102, 0.13);
-    }
-
-    .top-buttons {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .clock-wrap {
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 430px;
-    }
-
-    .clock-wrap::before {
-      content: "";
-      position: absolute;
-      width: min(480px, 96vw);
-      height: min(480px, 96vw);
-      border-radius: 50%;
-      background:
-        conic-gradient(from 12deg, rgba(255,209,102,0.0), rgba(255,209,102,0.24), rgba(32,215,255,0.10), rgba(255,77,216,0.20), rgba(255,209,102,0.0));
-      filter: blur(18px);
-      opacity: 0.45;
-      animation: arenaGlow 4s linear infinite;
-    }
-
-    @keyframes arenaGlow {
-      to { transform: rotate(360deg); }
-    }
-
-    svg {
-      width: min(435px, 94vw);
-      height: auto;
-      display: block;
-      overflow: visible;
-      position: relative;
-      z-index: 1;
-      filter: drop-shadow(0 18px 35px rgba(0,0,0,0.6));
-    }
-
-    .side { display: flex; flex-direction: column; gap: 12px; }
-
-    .panel {
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.045), transparent 28%, rgba(0,0,0,0.16) 70%),
-        rgba(23, 23, 36, 0.95);
-      border: 2px solid rgba(255,255,255,0.10);
-      border-radius: 20px;
-      padding: 14px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.42), inset 0 0 20px rgba(0,0,0,0.18);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .panel::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      opacity: 0.18;
-      background-image:
-        linear-gradient(105deg, transparent 0 20%, rgba(255,255,255,0.22) 20.5%, transparent 21%),
-        linear-gradient(35deg, transparent 0 70%, rgba(255,255,255,0.12) 70.4%, transparent 71%),
-        radial-gradient(circle, rgba(255,255,255,0.34) 0 1px, transparent 1.6px);
-      background-size: 240px 160px, 300px 180px, 31px 33px;
-      mix-blend-mode: screen;
-    }
-
-    .time-card {
-      text-align: center;
-      background: linear-gradient(135deg, rgba(255, 209, 102, 0.13), rgba(32, 215, 255, 0.08)), rgba(27, 27, 41, 0.94);
-    }
-
-    .time-label {
-      color: var(--muted);
-      font-weight: 800;
-      text-transform: uppercase;
-      font-size: 0.76rem;
-      letter-spacing: 1.3px;
-    }
-
-    .battle-status {
-      font-size: 1.35rem;
-      font-weight: 950;
-      margin: 8px 0 4px;
-    }
-
-    .concept {
-      color: var(--gold);
-      font-weight: 800;
-      line-height: 1.35;
-      min-height: 36px;
-      font-size: 0.94rem;
-    }
-
-    .players { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-    .player {
+    .controls {
+      background: #1b1b1b;
+      border: 2px solid #444;
       border-radius: 18px;
       padding: 12px;
-      background: var(--panel2);
-      border: 2px solid transparent;
-      transition: 0.2s;
-    }
-
-    .player.active.p1 { border-color: var(--p1); box-shadow: 0 0 22px rgba(32, 215, 255, 0.25); }
-    .player.active.p2 { border-color: var(--p2); box-shadow: 0 0 22px rgba(255, 77, 216, 0.25); }
-
-    .player h2 { margin: 0 0 8px; font-size: 1.05rem; }
-
-    .stat {
       display: flex;
-      justify-content: space-between;
-      margin: 5px 0;
-      color: var(--muted);
-      font-size: 0.93rem;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      box-shadow: 0 10px 28px rgba(0,0,0,.35);
     }
 
-    .stat strong { color: white; }
-
-    .actions { display: grid; gap: 9px; }
+    button, select {
+      font-family: Arial, sans-serif;
+      font-weight: 800;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
 
     button {
-      appearance: none;
-      border: 0;
-      border-radius: 14px;
-      padding: 12px 13px;
-      font-weight: 900;
-      font-size: 0.95rem;
-      cursor: pointer;
-      color: white;
-      background: linear-gradient(135deg, #34344c, #242436);
-      border: 2px solid rgba(255,255,255,0.10);
-      transition: transform 0.08s ease, filter 0.15s ease, opacity 0.15s ease;
-      box-shadow: 0 5px 0 rgba(0,0,0,0.35), inset 0 0 16px rgba(255,255,255,0.07);
-      text-transform: uppercase;
-      letter-spacing: 0.2px;
+      background: var(--accent2);
+      color: #111;
+      box-shadow: 0 4px 0 #8b6b11;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(2px); box-shadow: 0 2px 0 #8b6b11; }
+
+    select { background: #fff; color: #111; }
+
+    .game-wrap {
+      display: grid;
+      grid-template-columns: 92px 1fr 92px;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .factor-track {
+      background: var(--panel);
+      color: var(--ink);
+      border: 4px solid #000;
+      border-radius: 18px;
+      padding: 10px 8px;
+      display: grid;
+      grid-template-rows: repeat(9, 1fr);
+      gap: 7px;
       position: relative;
+      box-shadow: 8px 8px 0 rgba(0,0,0,.45);
+    }
+
+    .factor {
+      display: grid;
+      place-items: center;
+      border: 3px solid #111;
+      border-radius: 14px;
+      font-size: clamp(1.45rem, 3vw, 2.2rem);
+      background: #fffaf0;
+      cursor: pointer;
+      user-select: none;
+      min-height: 44px;
+    }
+
+    .factor:hover { outline: 4px solid var(--accent2); }
+    .factor.clipA { background: var(--red); color: #fff; }
+    .factor.clipB { background: var(--blue); color: #fff; }
+    .factor.both { background: linear-gradient(135deg, var(--red) 0 50%, var(--blue) 50% 100%); color: #fff; }
+
+    .board-panel {
+      background: var(--panel);
+      color: var(--ink);
+      border: 5px solid #000;
+      border-radius: 24px;
+      padding: 14px;
+      position: relative;
+      box-shadow: 10px 10px 0 rgba(0,0,0,.5);
       overflow: hidden;
     }
 
-    button::after {
+    .board-panel:before {
       content: "";
       position: absolute;
       inset: 0;
-      pointer-events: none;
-      opacity: 0.18;
-      background-image:
-        linear-gradient(110deg, transparent 0 30%, rgba(255,255,255,0.45) 31%, transparent 32%),
-        radial-gradient(circle, rgba(255,255,255,0.35) 0 1px, transparent 1.4px);
-      background-size: 180px 90px, 24px 25px;
-    }
-
-    button:hover:not(:disabled) { transform: translateY(-2px) rotate(-0.5deg); filter: brightness(1.14) saturate(1.12); }
-    button:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.35), inset 0 0 16px rgba(255,255,255,0.07); }
-    button:disabled { opacity: 0.38; cursor: not-allowed; }
-
-    .primary { background: linear-gradient(135deg, #ffb703, #fb8500); color: #1c1200; }
-    .danger { background: linear-gradient(135deg, #ff5c5c, #b51730); }
-    .blue { background: linear-gradient(135deg, #20d7ff, #0077b6); color: #06131a; }
-    .pink { background: linear-gradient(135deg, #ff4dd8, #9b2cff); }
-    .green { background: linear-gradient(135deg, #7bed9f, #2ecc71); color: #06170b; }
-    .shield { background: linear-gradient(135deg, #ffd166, #8ecae6); color: #141414; }
-    .dash { background: linear-gradient(135deg, #c77dff, #5a189a); color: #ffffff; }
-    .quarter { background: linear-gradient(135deg, #fff200, #ff006e); color: #190014; }
-
-    .log {
-      min-height: 165px;
-      max-height: 220px;
-      overflow-y: auto;
-      line-height: 1.42;
-      color: #e8e8ef;
-      font-size: 0.92rem;
-    }
-
-    .log p {
-      margin: 0 0 8px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-    }
-
-    .modal, .winner, .how-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.42);
-      z-index: 20;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    #answerModal,
-    #feedbackModal {
-      justify-content: flex-end;
-      align-items: center;
-      padding-right: clamp(12px, 4vw, 54px);
+      background:
+        linear-gradient(135deg, transparent 0 45%, rgba(0,0,0,.06) 45% 48%, transparent 48% 100%),
+        repeating-linear-gradient(-8deg, transparent 0 18px, rgba(0,0,0,.04) 18px 20px);
       pointer-events: none;
     }
 
-    #answerModal .modal-card,
-    #feedbackModal .modal-card {
-      pointer-events: auto;
-      width: min(390px, 92vw);
-      background: rgba(24, 24, 38, 0.86);
-      backdrop-filter: blur(8px);
-      border-color: rgba(255, 209, 102, 0.8);
-    }
-
-    @media (max-width: 900px) {
-      #answerModal,
-      #feedbackModal {
-        align-items: flex-end;
-        justify-content: center;
-        padding: 12px;
-      }
-
-      #answerModal .modal-card,
-      #feedbackModal .modal-card {
-        width: min(680px, 96vw);
-        max-height: 42vh;
-        padding: 16px;
-      }
-    }
-
-    .modal-card, .winner-card, .how-card {
-      width: min(680px, 100%);
-      max-height: 88vh;
-      overflow-y: auto;
-      background: linear-gradient(135deg, #262640, #11111f);
-      border: 2px solid var(--gold);
-      border-radius: 28px;
-      padding: 28px;
-      box-shadow: 0 0 70px rgba(255, 209, 102, 0.35);
-    }
-
-    .modal-card h2, .how-card h2 {
-      font-size: 2.1rem;
-      margin: 0 0 10px;
-      text-transform: uppercase;
-    }
-
-    .modal-card h3, .how-card h3 { margin: 18px 0 8px; color: var(--gold); }
-    .modal-card p, .how-card p, .how-card li { color: #e8e8ef; line-height: 1.45; }
-    .how-card ul, .how-card ol { padding-left: 22px; }
-
-    .choice-grid {
+    .scorebar {
+      position: relative;
+      z-index: 2;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-top: 18px;
+      gap: 8px;
+      font-family: Arial, sans-serif;
+      margin-bottom: 10px;
     }
 
-    @media (max-width: 500px) {
-      .choice-grid { grid-template-columns: repeat(3, 1fr); }
-    }
-
-    .choice-grid button { font-size: 1.2rem; padding: 14px 8px; }
-
-    .answer-input {
-      width: 100%;
-      border-radius: 16px;
-      border: 2px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.08);
-      color: white;
-      font-size: 2rem;
-      font-weight: 950;
-      padding: 14px;
-      margin-top: 12px;
+    .stat {
+      background: #111;
+      color: #fff;
+      padding: 9px 10px;
+      border-radius: 12px;
+      font-weight: 900;
       text-align: center;
-      outline: none;
+      border: 2px solid #444;
     }
 
-    .answer-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 14px;
-    }
+    .stat strong { color: var(--accent2); }
 
-    .answer-row button { flex: 1; }
-
-    .feedback-title.correct { color: var(--green); }
-    .feedback-title.wrong { color: var(--danger); }
-
-    .reveal-box {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 18px;
-      padding: 14px;
-      margin-top: 16px;
-      font-weight: 800;
-    }
-
-    .winner {
-      background: rgba(0,0,0,0.28);
-      justify-content: flex-end;
-      align-items: center;
-      padding-right: clamp(12px, 4vw, 54px);
-      pointer-events: none;
-    }
-
-    .winner-card {
-      text-align: center;
-      width: min(390px, 92vw);
+    .grid {
       position: relative;
-      overflow: hidden;
-      pointer-events: auto;
-      background: rgba(24, 24, 38, 0.9);
-      backdrop-filter: blur(8px);
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(7, minmax(44px, 1fr));
+      gap: 7px;
     }
 
-    @media (max-width: 900px) {
-      .winner {
-        align-items: flex-end;
-        justify-content: center;
-        padding: 12px;
-      }
-
-      .winner-card {
-        width: min(680px, 96vw);
-        max-height: 48vh;
-        padding: 18px;
-      }
-    }
-
-    .winner-card h2 { font-size: clamp(2rem, 4vw, 3.2rem); margin: 0 0 12px; text-transform: uppercase; }
-    .winner-card p { font-size: 1.08rem; color: #f2f2f7; }
-
-    .victory-clock {
-      width: 180px;
-      height: 180px;
-      margin: 18px auto;
+    .cell {
+      aspect-ratio: 1 / 1;
+      display: grid;
+      place-items: center;
+      font-size: clamp(1.35rem, 4vw, 2.75rem);
+      border: 3px solid var(--grid);
+      border-radius: 12px;
+      background: var(--cell);
       position: relative;
-      border: 10px solid var(--gold);
-      border-radius: 50%;
-      box-shadow: 0 0 28px rgba(255, 209, 102, 0.65), inset 0 0 20px rgba(255,255,255,0.08);
-      background: radial-gradient(circle, #262640, #11111f);
-      animation: pulseClock 1s infinite alternate ease-in-out;
+      cursor: pointer;
+      user-select: none;
+      font-weight: 900;
     }
 
-    .victory-clock::before, .victory-clock::after {
+    .cell.alt { background: var(--cell2); }
+    .cell.target { outline: 5px solid var(--accent2); }
+    .cell:hover { transform: scale(1.02); }
+
+    .cell.p1::after,
+    .cell.p2::after {
       content: "";
+      width: 66%;
+      height: 66%;
+      border-radius: 50%;
       position: absolute;
-      left: 50%;
-      top: 50%;
-      transform-origin: 0 0;
-      border-radius: 999px;
-      background: white;
+      opacity: .88;
+      border: 4px solid #111;
+      box-shadow: inset 0 0 0 4px rgba(255,255,255,.28);
     }
 
-    .victory-clock::before {
-      width: 58px;
-      height: 8px;
-      transform: rotate(-90deg);
-      animation: spinMinute 2s linear infinite;
+    .cell.p1::after { background: var(--red); }
+    .cell.p2::after { background: var(--blue); }
+
+    .cell.p1 span,
+    .cell.p2 span { position: relative; z-index: 2; color: #fff; text-shadow: 2px 2px 0 #000; }
+
+    .message {
+      margin-top: 14px;
+      background: #1d1d1d;
+      border: 2px solid #444;
+      border-left: 10px solid var(--accent);
+      border-radius: 16px;
+      padding: 13px 16px;
+      font-family: Arial, sans-serif;
+      font-weight: 800;
+      line-height: 1.35;
     }
 
-    .victory-clock::after {
-      width: 42px;
-      height: 12px;
-      background: var(--gold);
-      transform: rotate(-35deg);
-      animation: spinHour 8s linear infinite;
+    .rules {
+      margin-top: 14px;
+      font-family: Arial, sans-serif;
+      background: rgba(255,255,255,.08);
+      padding: 14px 16px;
+      border-radius: 16px;
+      line-height: 1.4;
     }
 
-    .confetti {
-      pointer-events: none;
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
+    .rules h2 { font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; margin: 0 0 6px; letter-spacing: 1px; }
 
-    .confetti span {
-      position: absolute;
-      width: 9px;
-      height: 15px;
-      top: -20px;
-      opacity: 0.95;
-      animation: fall linear infinite;
-    }
-
-    @keyframes fall {
-      0% { transform: translateY(-30px) rotate(0deg); }
-      100% { transform: translateY(620px) rotate(720deg); }
-    }
-
-    @keyframes pulseClock {
-      from { transform: scale(1); }
-      to { transform: scale(1.06); }
-    }
-
-    @keyframes spinMinute {
-      to { transform: rotate(270deg); }
-    }
-
-    @keyframes spinHour {
-      to { transform: rotate(325deg); }
-    }
-
-    .territory-label {
-      font-size: 18px;
-      font-weight: 950;
-      text-anchor: middle;
-      dominant-baseline: middle;
-      fill: white;
-      pointer-events: none;
-      paint-order: stroke;
-      stroke: rgba(0,0,0,0.75);
-      stroke-width: 4px;
-    }
-
-    .tick { stroke: #d8d8e8; stroke-linecap: round; opacity: 0.78; }
-    .tick.big { stroke-width: 4; opacity: 0.95; }
-    .tick.small { stroke-width: 1.5; }
-
-    .territory {
-      stroke: rgba(255,255,255,0.18);
-      stroke-width: 2;
-      transition: 0.2s;
-    }
-
-    .hand { stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(255,255,255,0.4)); }
-    .center-dot { fill: var(--gold); stroke: #111; stroke-width: 4; }
-
-    .territory-token {
-      font-size: 11px;
-      font-weight: 950;
-      text-anchor: middle;
-      dominant-baseline: middle;
-      fill: #111;
-      pointer-events: none;
+    @media (max-width: 760px) {
+      header { grid-template-columns: 1fr; }
+      .controls { justify-content: flex-start; }
+      .game-wrap { grid-template-columns: 54px 1fr 54px; gap: 6px; }
+      .factor-track { padding: 7px 5px; gap: 5px; border-radius: 14px; }
+      .factor { min-height: 34px; font-size: 1.15rem; border-radius: 10px; border-width: 2px; }
+      .board-panel { padding: 8px; border-radius: 16px; }
+      .scorebar { grid-template-columns: 1fr 1fr; font-size: .8rem; }
+      .grid { gap: 4px; }
+      .cell { border-width: 2px; border-radius: 8px; }
     }
   </style>
 </head>
 <body>
-  <div class="game">
-    <main class="main">
-      <div class="title-row">
-        <div>
-          <h1>Battle Clock!</h1>
-          <div class="subtitle">Battle for clock territory.</div>
-          <div class="brand-line">A Tim Bedley Learning Game</div>
-        </div>
-        <div class="top-buttons">
-          <button onclick="openHowToPlay()">How to Play</button>
-          <button class="primary" onclick="newGame()">New Game</button>
-        </div>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Rock the Facts!</h1>
+        <div class="subtitle">Move one clip. Make a product. Claim the square. First to 4 in a row wins.</div>
       </div>
-
-      <div class="clock-wrap">
-        <svg id="clock" viewBox="0 0 700 700" aria-label="Battle Clock game board"></svg>
+      <div class="controls">
+        <select id="mode">
+          <option value="human">2 Players</option>
+          <option value="computer">Play Computer</option>
+        </select>
+        <button id="newGame">New Game</button>
       </div>
-    </main>
+    </header>
 
-    <aside class="side">
-      <section class="panel time-card">
-        <div class="time-label">Current Battle</div>
-        <div class="battle-status" id="battleStatus">Read the clock</div>
-        <div class="concept" id="conceptText">Choose a move. The time is hidden until after your answer.</div>
-      </section>
-
-      <section class="panel">
-        <div class="players">
-          <div class="player p1 active" id="p1Panel">
-            <h2>Player 1</h2>
-            <div class="stat"><span>Energy</span><strong id="p1Energy">500</strong></div>
-            <div class="stat"><span>Territories</span><strong id="p1Territories">0</strong></div>
-            <div class="stat"><span>Late Captures</span><strong id="p1Late">0</strong></div>
-          </div>
-
-          <div class="player p2" id="p2Panel">
-            <h2>Player 2</h2>
-            <div class="stat"><span>Energy</span><strong id="p2Energy">500</strong></div>
-            <div class="stat"><span>Territories</span><strong id="p2Territories">0</strong></div>
-            <div class="stat"><span>Late Captures</span><strong id="p2Late">0</strong></div>
-          </div>
+    <div class="game-wrap">
+      <div class="factor-track" id="leftTrack" aria-label="Paperclip A factor track"></div>
+      <main class="board-panel">
+        <div class="scorebar">
+          <div class="stat">Turn: <strong id="turnLabel">Player 1</strong></div>
+          <div class="stat">Clip A: <strong id="clipA">?</strong></div>
+          <div class="stat">Clip B: <strong id="clipB">?</strong></div>
+          <div class="stat">Product: <strong id="productLabel">?</strong></div>
         </div>
-      </section>
-
-      <section class="panel">
-        <div class="time-label" style="margin-bottom:10px;">Choose Your Battle Move</div>
-        <div class="actions">
-          <button class="quarter" onclick="startQuarterPower()">Quarter Power Up</button>
-          <button class="green" onclick="startAction('harvest')">Harvest Minute Energy</button>
-          <button class="dash" onclick="startAction('countdown')">Countdown Dash</button>
-          <button class="blue" onclick="startAction('capture')">Capture Current Hour — 1500 Energy</button>
-          <button class="danger" onclick="startAction('challenge')">Challenge Territory — 2200 Energy</button>
-          <button class="shield" onclick="startAction('fortify')">Fortify Territory — 1000 Energy</button>
-          <button class="pink" onclick="startAction('block')">Block Next Gate — 600 Energy</button>
-          <button onclick="nextTurn()">Pass Turn</button>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="time-label" style="margin-bottom:10px;">Battle Log</div>
-        <div class="log" id="log"></div>
-      </section>
-    </aside>
-  </div>
-
-  <div class="modal" id="answerModal">
-    <div class="modal-card">
-      <h2 id="answerTitle">Declare Your Move</h2>
-      <p id="answerPrompt"></p>
-      <div id="answerArea"></div>
+        <div class="grid" id="grid"></div>
+      </main>
+      <div class="factor-track" id="rightTrack" aria-label="Paperclip B factor track"></div>
     </div>
-  </div>
 
-  <div class="modal" id="feedbackModal">
-    <div class="modal-card">
-      <h2 id="feedbackTitle" class="feedback-title">Result</h2>
-      <p id="feedbackMessage"></p>
-      <div class="reveal-box" id="revealBox"></div>
-      <div class="answer-row">
-        <button class="primary" onclick="continueAfterFeedback()">Continue</button>
-      </div>
-    </div>
-  </div>
+    <div class="message" id="message">Player 1: choose a number on the left and a number on the right. Then claim a matching product square.</div>
 
-  <div class="winner" id="winnerOverlay">
-    <div class="winner-card">
-      <div class="confetti" id="confetti"></div>
-      <h2 id="winnerText">Player Wins!</h2>
-      <div class="victory-clock"></div>
-      <p id="winnerSubtext"></p>
-      <button class="primary" onclick="newGame()">Play Again</button>
-    </div>
-  </div>
-
-  <div class="how-modal" id="howModal">
-    <div class="how-card">
-      <h2>How to Play Battle Clock!</h2>
-      <p><strong>Goal:</strong> Be the first player to control 4 Hour Territories. At least one capture must happen during a Late Hour time, such as 5:48, 7:53, or 2:59.</p>
-
-      <h3>The Big Clock Idea</h3>
-      <p>The time is hidden while you make your move. You have to read the analog clock to power your strategy.</p>
-      <p>At <strong>5:58</strong>, the short hand is close to 6, but the active territory is still <strong>5</strong>. The 6 Territory opens only when the minute hand reaches the top.</p>
-
-      <h3>Battle Moves</h3>
-      <ul>
-        <li><strong>Quarter Power Up:</strong> If the clock shows :15 or :45, choose the correct quarter phrase and hour. Correct answers add 25% of your current energy. If you try it when the clock is not :15 or :45, you lose 25% of your current energy. This bonus does not use up your regular turn.</li>
-        <li><strong>Harvest Minute Energy:</strong> Type how many minute ticks the long hand has traveled. The farther after the hour, the more energy you earn.</li>
-        <li><strong>Capture Current Hour:</strong> Choose the active Hour Territory. Spend <strong>1500</strong> energy to capture it.</li>
-        <li><strong>Challenge Territory:</strong> Choose the active Hour Territory. If your opponent owns it, spend <strong>2200</strong> energy to attack it. If it is fortified, the shield breaks but the opponent keeps the territory.</li>
-        <li><strong>Fortify Territory:</strong> Choose the active Hour Territory. If you control it, spend <strong>1000</strong> energy to protect it from one successful challenge.</li>
-        <li><strong>Block Next Gate:</strong> Choose the next hour that is about to open. Spend <strong>600</strong> energy. Works only during late-hour times.</li>
-        <li><strong>Countdown Dash:</strong> Type how many minutes remain until the next hour opens. This is harder, so it pays about 1.5 times as much as Harvest Minute Energy.</li>
-      </ul>
-
-      <h3>Wrong Answers</h3>
-      <p>Wrong answers show the correct answer and why. The explanation stays on screen until the player clicks Continue.</p>
-
-      <div class="answer-row">
-        <button class="primary" onclick="closeHowToPlay()">Close</button>
-      </div>
-    </div>
+    <section class="rules">
+      <h2>How to Play</h2>
+      <div>Pick one factor from each side. Multiply them. Click a matching product square to claim it. After the first turn, each player may change only one factor. First player to get 4 tokens in a row wins. Same factor is allowed, like 7 × 7.</div>
+    </section>
   </div>
 
   <script>
-    const svg = document.getElementById("clock");
+    const boardNumbers = [
+      [1, 14, 5, 30, 7, 20, 81],
+      [2, 45, 16, 40, 27, 35, 10],
+      [15, 28, 42, 54, 48, 32, 21],
+      [25, 56, 63, 72, 64, 49, 36],
+      [18, 35, 40, 28, 45, 42, 24],
+      [3, 49, 32, 54, 56, 72, 12],
+      [4, 6, 8, 9, 48, 63, 64]
+    ];
 
-    const state = {
-      currentPlayer: 1,
-      hour: 5,
-      minute: 58,
-      players: {
-        1: { energy: 500, lateCaptures: 0 },
-        2: { energy: 500, lateCaptures: 0 }
-      },
-      territories: {},
-      blocked: {},
-      fortified: {},
-      gameOver: false,
-      pendingNextTurn: true,
-      audioStarted: false,
-      pendingVictory: null,
-      quarterUsedThisTurn: false
-    };
+    const factors = [1,2,3,4,5,6,7,8,9];
+    const grid = document.getElementById('grid');
+    const leftTrack = document.getElementById('leftTrack');
+    const rightTrack = document.getElementById('rightTrack');
+    const turnLabel = document.getElementById('turnLabel');
+    const clipAEl = document.getElementById('clipA');
+    const clipBEl = document.getElementById('clipB');
+    const productLabel = document.getElementById('productLabel');
+    const message = document.getElementById('message');
+    const mode = document.getElementById('mode');
 
-    for (let h = 1; h <= 12; h++) {
-      state.territories[h] = 0;
-      state.blocked[h] = 0;
-      state.fortified[h] = false;
+    let clipA = null;
+    let clipB = null;
+    let currentPlayer = 1;
+    let claimed = Array(49).fill(0);
+    let lastMoveSet = { a: null, b: null };
+    let gameOver = false;
+
+    function init() {
+      grid.innerHTML = '';
+      leftTrack.innerHTML = '';
+      rightTrack.innerHTML = '';
+      claimed = Array(49).fill(0);
+      clipA = null;
+      clipB = null;
+      currentPlayer = 1;
+      lastMoveSet = { a: null, b: null };
+      gameOver = false;
+
+      factors.forEach(n => {
+        const left = document.createElement('div');
+        left.className = 'factor';
+        left.textContent = n;
+        left.dataset.value = n;
+        left.onclick = () => setClip('a', n);
+        leftTrack.appendChild(left);
+
+        const right = document.createElement('div');
+        right.className = 'factor';
+        right.textContent = n;
+        right.dataset.value = n;
+        right.onclick = () => setClip('b', n);
+        rightTrack.appendChild(right);
+      });
+
+      boardNumbers.flat().forEach((num, idx) => {
+        const cell = document.createElement('div');
+        cell.className = 'cell' + ((idx + Math.floor(idx / 7)) % 2 ? ' alt' : '');
+        cell.dataset.index = idx;
+        cell.dataset.value = num;
+        cell.innerHTML = `<span>${num}</span>`;
+        cell.onclick = () => claimCell(idx);
+        grid.appendChild(cell);
+      });
+
+      message.textContent = 'Player 1: choose a number on the left and a number on the right. Then claim a matching product square.';
+      updateUI();
     }
 
-    let audioCtx = null;
-
-    function ensureAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === "suspended") audioCtx.resume();
-      state.audioStarted = true;
+    function isFirstTurn() {
+      return lastMoveSet.a === null && lastMoveSet.b === null;
     }
 
-    function playTone(freq, duration, type = "sine", gainValue = 0.05, startOffset = 0) {
-      if (!audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startOffset);
-      gain.gain.setValueAtTime(0, audioCtx.currentTime + startOffset);
-      gain.gain.linearRampToValueAtTime(gainValue, audioCtx.currentTime + startOffset + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startOffset + duration);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(audioCtx.currentTime + startOffset);
-      osc.stop(audioCtx.currentTime + startOffset + duration + 0.03);
-    }
+    function setClip(which, value) {
+      if (gameOver) return;
+      if (mode.value === 'computer' && currentPlayer === 2) return;
 
-    function playVictoryMusic() {
-      ensureAudio();
-      const notes = [392, 494, 587, 784, 740, 784, 988, 1175, 988, 1175, 1568];
-      notes.forEach((n, i) => playTone(n, 0.22, i % 2 ? "sawtooth" : "square", 0.055, i * 0.18));
-      [196, 247, 294, 392].forEach((n, i) => playTone(n, 0.75, "sawtooth", 0.035, i * 0.36));
-    }
+      const proposedA = which === 'a' ? value : clipA;
+      const proposedB = which === 'b' ? value : clipB;
 
-    function playCorrect() {
-      ensureAudio();
-      playTone(523, 0.12, "sine", 0.04, 0);
-      playTone(659, 0.12, "sine", 0.04, 0.12);
-      playTone(784, 0.18, "sine", 0.04, 0.24);
-    }
-
-    function playWrong() {
-      ensureAudio();
-      playTone(190, 0.2, "sawtooth", 0.04, 0);
-      playTone(135, 0.28, "sawtooth", 0.04, 0.18);
-    }
-
-    function openHowToPlay() { document.getElementById("howModal").style.display = "flex"; }
-    function closeHowToPlay() { document.getElementById("howModal").style.display = "none"; }
-
-    function polar(cx, cy, r, angleDeg) {
-      const angle = (angleDeg - 90) * Math.PI / 180;
-      return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
-    }
-
-    function sectorPath(cx, cy, rInner, rOuter, startAngle, endAngle) {
-      const p1 = polar(cx, cy, rOuter, startAngle);
-      const p2 = polar(cx, cy, rOuter, endAngle);
-      const p3 = polar(cx, cy, rInner, endAngle);
-      const p4 = polar(cx, cy, rInner, startAngle);
-      const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-      return [`M ${p1.x} ${p1.y}`, `A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${p2.x} ${p2.y}`, `L ${p3.x} ${p3.y}`, `A ${rInner} ${rInner} 0 ${largeArc} 0 ${p4.x} ${p4.y}`, "Z"].join(" ");
-    }
-
-    function hourToAngle(hour) { return (hour % 12) * 30; }
-    function getHourTerritory(hour) { return hour === 0 ? 12 : hour; }
-    function getNextHour(hour) { return hour === 12 ? 1 : hour + 1; }
-    function isLateHour() { return state.minute >= 45; }
-    function countdownValue() { return state.minute === 0 ? 0 : 60 - state.minute; }
-
-    function randomTime() {
-      state.hour = Math.floor(Math.random() * 12) + 1;
-      state.minute = Math.floor(Math.random() * 60);
-    }
-
-    function formatTime() { return `${state.hour}:${String(state.minute).padStart(2, "0")}`; }
-    function activeName() { return `Player ${state.currentPlayer}`; }
-
-    function log(message) {
-      const box = document.getElementById("log");
-      const p = document.createElement("p");
-      p.innerHTML = message;
-      box.prepend(p);
-    }
-
-    function render() {
-      svg.innerHTML = "";
-      const cx = 350, cy = 350;
-      const activeHour = getHourTerritory(state.hour);
-
-      svg.innerHTML += `
-        <circle cx="${cx}" cy="${cy}" r="322" fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.08)" stroke-width="3"/>
-        <circle cx="${cx}" cy="${cy}" r="270" fill="rgba(0,0,0,0.15)" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
-      `;
-
-      for (let h = 1; h <= 12; h++) {
-        const start = hourToAngle(h);
-        const end = start + 30;
-        const owner = Number(state.territories[h]);
-        let fill = "rgba(70,70,95,0.42)";
-        let stroke = "rgba(255,255,255,0.18)";
-        let strokeWidth = 2;
-
-        if (owner === 1) {
-          fill = "rgba(32, 215, 255, 0.58)";
-          stroke = "rgba(32, 215, 255, 0.95)";
-          strokeWidth = 5;
+      if (!isFirstTurn()) {
+        const changedA = proposedA !== lastMoveSet.a;
+        const changedB = proposedB !== lastMoveSet.b;
+        if (changedA && changedB) {
+          message.textContent = 'After the first turn, you may move only one paperclip. Change just one side.';
+          return;
         }
-
-        if (owner === 2) {
-          fill = "rgba(255, 77, 216, 0.58)";
-          stroke = "rgba(255, 77, 216, 0.95)";
-          strokeWidth = 5;
-        }
-
-        svg.innerHTML += `<path class="territory" d="${sectorPath(cx, cy, 112, 258, start, end)}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"></path>`;
-
-        if (owner !== 0) {
-          const tokenPoint = polar(cx, cy, 205, start + 15);
-          const color = owner === 1 ? "var(--p1)" : "var(--p2)";
-          svg.innerHTML += `
-            <circle cx="${tokenPoint.x}" cy="${tokenPoint.y}" r="18" fill="${color}" stroke="white" stroke-width="3"></circle>
-            <text class="territory-token" x="${tokenPoint.x}" y="${tokenPoint.y + 1}">P${owner}</text>
-          `;
-        }
-
-        if (Number(state.blocked[h]) > 0) {
-          const b = polar(cx, cy, 154, start + 15);
-          svg.innerHTML += `<text x="${b.x}" y="${b.y}" text-anchor="middle" dominant-baseline="middle" font-size="24">🔒</text>`;
-        }
-
-        if (Boolean(state.fortified[h])) {
-          const f = polar(cx, cy, 176, start + 15);
-          svg.innerHTML += `<text x="${f.x}" y="${f.y}" text-anchor="middle" dominant-baseline="middle" font-size="24">🛡️</text>`;
+        if (!changedA && !changedB) {
+          message.textContent = 'Move one paperclip to make a new product.';
+          return;
         }
       }
 
-      for (let m = 0; m < 60; m++) {
-        const angle = m * 6;
-        const outer = polar(cx, cy, 310, angle);
-        const inner = polar(cx, cy, m % 5 === 0 ? 286 : 296, angle);
-        const cls = m % 5 === 0 ? "tick big" : "tick small";
-        svg.innerHTML += `<line class="${cls}" x1="${inner.x}" y1="${inner.y}" x2="${outer.x}" y2="${outer.y}" stroke="#d8d8e8" stroke-width="${m % 5 === 0 ? 4 : 1.5}"></line>`;
-      }
-
-      for (let h = 1; h <= 12; h++) {
-        const labelPoint = polar(cx, cy, 262, hourToAngle(h));
-        svg.innerHTML += `<text class="territory-label" x="${labelPoint.x}" y="${labelPoint.y}">${h}</text>`;
-      }
-
-      const hourAngle = hourToAngle(activeHour) + (state.minute * 0.5);
-      const minuteAngle = state.minute * 6;
-      const hourEnd = polar(cx, cy, 118, hourAngle);
-      const minuteEnd = polar(cx, cy, 278, minuteAngle);
-
-      svg.innerHTML += `
-        <line class="hand" x1="${cx}" y1="${cy}" x2="${hourEnd.x}" y2="${hourEnd.y}" stroke="#f5f5f5" stroke-width="14"></line>
-        <line class="hand" x1="${cx}" y1="${cy}" x2="${minuteEnd.x}" y2="${minuteEnd.y}" stroke="var(--gold)" stroke-width="7"></line>
-        <circle class="center-dot" cx="${cx}" cy="${cy}" r="15"></circle>
-      `;
-
-      updateStats();
-      updateButtons();
+      if (which === 'a') clipA = value;
+      if (which === 'b') clipB = value;
+      updateUI();
     }
 
-    function updateStats() {
-      for (let p = 1; p <= 2; p++) {
-        const territoryCount = Object.values(state.territories).filter(owner => Number(owner) === p).length;
-        document.getElementById(`p${p}Energy`).textContent = state.players[p].energy;
-        document.getElementById(`p${p}Territories`).textContent = territoryCount;
-        document.getElementById(`p${p}Late`).textContent = state.players[p].lateCaptures;
-        document.getElementById(`p${p}Panel`).classList.toggle("active", state.currentPlayer === p);
-      }
-      document.getElementById("battleStatus").textContent = `${activeName()}'s Turn`;
-      document.getElementById("conceptText").innerHTML = "Choose a move. The clock will reveal its secret after your answer.";
+    function currentProduct() {
+      if (!clipA || !clipB) return null;
+      return clipA * clipB;
     }
 
-    function updateButtons() {
-      document.querySelectorAll("button").forEach(btn => {
-        if (!btn.textContent.includes("New Game") && !btn.textContent.includes("Play Again") && !btn.textContent.includes("How to Play") && !btn.textContent.includes("Close") && !btn.textContent.includes("Continue")) {
-          btn.disabled = state.gameOver;
-        }
+    function claimCell(idx) {
+      if (gameOver) return;
+      if (mode.value === 'computer' && currentPlayer === 2) return;
+      const product = currentProduct();
+      if (!product) {
+        message.textContent = 'Choose one factor from each side first.';
+        return;
+      }
+      if (claimed[idx]) {
+        message.textContent = 'That square is already claimed. Choose another matching product if one is open.';
+        return;
+      }
+      if (Number(grid.children[idx].dataset.value) !== product) {
+        message.textContent = `${clipA} × ${clipB} = ${product}. Click a square with ${product}.`;
+        return;
+      }
+      makeClaim(idx);
+    }
+
+    function makeClaim(idx) {
+      claimed[idx] = currentPlayer;
+      lastMoveSet = { a: clipA, b: clipB };
+      const winner = checkWinner(currentPlayer);
+      if (winner) {
+        gameOver = true;
+        message.textContent = `${playerName(currentPlayer)} wins with 4 in a row!`;
+        updateUI();
+        return;
+      }
+      currentPlayer = currentPlayer === 1 ? 2 : 1;
+      updateUI();
+      if (mode.value === 'computer' && currentPlayer === 2) {
+        setTimeout(computerMove, 550);
+      } else {
+        message.textContent = `${playerName(currentPlayer)}: move one paperclip, then claim the product.`;
+      }
+    }
+
+    function playerName(p) {
+      if (mode.value === 'computer' && p === 2) return 'Computer';
+      return `Player ${p}`;
+    }
+
+    function updateUI() {
+      turnLabel.textContent = playerName(currentPlayer);
+      clipAEl.textContent = clipA || '?';
+      clipBEl.textContent = clipB || '?';
+      productLabel.textContent = currentProduct() || '?';
+
+      document.querySelectorAll('#leftTrack .factor').forEach(el => {
+        const n = Number(el.dataset.value);
+        el.className = 'factor' + (n === clipA ? ' clipA' : '');
+      });
+      document.querySelectorAll('#rightTrack .factor').forEach(el => {
+        const n = Number(el.dataset.value);
+        el.className = 'factor' + (n === clipB ? ' clipB' : '');
+      });
+
+      const product = currentProduct();
+      [...grid.children].forEach((cell, idx) => {
+        cell.classList.toggle('p1', claimed[idx] === 1);
+        cell.classList.toggle('p2', claimed[idx] === 2);
+        cell.classList.toggle('target', !claimed[idx] && product && Number(cell.dataset.value) === product);
       });
     }
 
-    function showHourChoices(title, prompt, actionType) {
-      document.getElementById("answerTitle").textContent = title;
-      document.getElementById("answerPrompt").innerHTML = prompt;
-      const area = document.getElementById("answerArea");
-      area.innerHTML = `<div class="choice-grid">${Array.from({length: 12}, (_, i) => `<button onclick="submitAnswer('${actionType}', ${i + 1})">${i + 1}</button>`).join("")}</div>`;
-      document.getElementById("answerModal").style.display = "flex";
-    }
-
-    function showNumberInput(title, prompt, actionType) {
-      document.getElementById("answerTitle").textContent = title;
-      document.getElementById("answerPrompt").innerHTML = prompt;
-      document.getElementById("answerArea").innerHTML = `
-        <input class="answer-input" id="numberAnswer" type="number" min="0" max="59" inputmode="numeric" />
-        <div class="answer-row">
-          <button onclick="closeAnswerModal()">Cancel</button>
-          <button class="primary" onclick="submitNumberAnswer('${actionType}')">Lock It In</button>
-        </div>
-      `;
-      document.getElementById("answerModal").style.display = "flex";
-      setTimeout(() => document.getElementById("numberAnswer").focus(), 50);
-    }
-
-    function showQuarterChoices() {
-      document.getElementById("answerTitle").textContent = "Quarter Power Up";
-      document.getElementById("answerPrompt").innerHTML = "Choose the quarter phrase and the hour it belongs with.";
-      const hourButtons = Array.from({length: 12}, (_, i) => `<button onclick="chooseQuarterHour(${i + 1})">${i + 1}</button>`).join("");
-      document.getElementById("answerArea").innerHTML = `
-        <div class="answer-row">
-          <button class="primary" id="qpPast" onclick="chooseQuarterType('past')">Quarter Past</button>
-          <button class="primary" id="qpTo" onclick="chooseQuarterType('to')">Quarter To</button>
-        </div>
-        <div class="choice-grid">${hourButtons}</div>
-        <p class="small" style="margin-top:12px;">Pick a phrase first, then pick the matching hour.</p>
-      `;
-      quarterPick.type = null;
-      quarterPick.hour = null;
-      document.getElementById("answerModal").style.display = "flex";
-    }
-
-    function closeAnswerModal() { document.getElementById("answerModal").style.display = "none"; }
-
-    const quarterPick = { type: null, hour: null };
-
-    function roundToNearest50(value) {
-      return Math.round(value / 50) * 50;
-    }
-
-    function quarterCorrectType() {
-      if (state.minute === 15) return "past";
-      if (state.minute === 45) return "to";
-      return null;
-    }
-
-    function quarterCorrectHour() {
-      const activeHour = getHourTerritory(state.hour);
-      if (state.minute === 15) return activeHour;
-      if (state.minute === 45) return getNextHour(activeHour);
-      return null;
-    }
-
-    function startQuarterPower() {
-      ensureAudio();
-      if (state.gameOver) return;
-
-      if (state.quarterUsedThisTurn) {
-        showBonusFeedback(
-          "Quarter Power Already Used",
-          `<strong>${activeName()}</strong> already tried Quarter Power Up on this clock. Choose your regular move now.`,
-          `Quarter Power Up can only be attempted once per turn.`,
-          false
-        );
-        return;
-      }
-
-      if (state.minute !== 15 && state.minute !== 45) {
-        state.quarterUsedThisTurn = true;
-        const p = state.currentPlayer;
-        const loss = Math.min(state.players[p].energy, roundToNearest50(state.players[p].energy * 0.25));
-        state.players[p].energy -= loss;
-        playWrong();
-        render();
-        log(`<strong>${activeName()}</strong> tried Quarter Power Up when it was not quarter past or quarter to and lost <strong>${loss} energy</strong>.`);
-        showBonusFeedback(
-          "Quarter Power Miss!",
-          `<strong>${activeName()}</strong> lost <strong>${loss} energy</strong> because the clock was not showing :15 or :45. You still get your regular turn.`,
-          quarterRevealExplanation(false),
-          false
-        );
-        return;
-      }
-
-      showQuarterChoices();
-    }
-
-    function chooseQuarterType(type) {
-      quarterPick.type = type;
-      document.getElementById("qpPast").style.filter = type === "past" ? "brightness(1.35)" : "brightness(0.75)";
-      document.getElementById("qpTo").style.filter = type === "to" ? "brightness(1.35)" : "brightness(0.75)";
-    }
-
-    function chooseQuarterHour(hour) {
-      if (!quarterPick.type) return;
-      quarterPick.hour = hour;
-      submitQuarterAnswer();
-    }
-
-    function submitQuarterAnswer() {
-      closeAnswerModal();
-      state.quarterUsedThisTurn = true;
-      const p = state.currentPlayer;
-      const correctType = quarterCorrectType();
-      const correctHour = quarterCorrectHour();
-      const correct = quarterPick.type === correctType && quarterPick.hour === correctHour;
-
-      if (correct) {
-        const bonus = roundToNearest50(state.players[p].energy * 0.25);
-        state.players[p].energy += bonus;
-        playCorrect();
-        render();
-        log(`<strong>${activeName()}</strong> nailed the Quarter Power Up and gained <strong>${bonus} energy</strong>.`);
-        showBonusFeedback(
-          "Quarter Power Up!",
-          `<strong>${activeName()}</strong> identified <strong>${formatQuarterPhrase(correctType, correctHour)}</strong> and gained <strong>${bonus} energy</strong>. You still get your regular turn.`,
-          quarterRevealExplanation(true),
-          true
-        );
-      } else {
-        playWrong();
-        render();
-        log(`<strong>${activeName()}</strong> missed the Quarter Power Up. Correct answer: <strong>${formatQuarterPhrase(correctType, correctHour)}</strong>.`);
-        showBonusFeedback(
-          "Quarter Power Miss!",
-          `<strong>${activeName()}</strong> chose <strong>${formatQuarterPhrase(quarterPick.type, quarterPick.hour)}</strong>, but the correct answer was <strong>${formatQuarterPhrase(correctType, correctHour)}</strong>. No bonus, but you still get your regular turn.`,
-          quarterRevealExplanation(true),
-          false
-        );
-      }
-    }
-
-    function formatQuarterPhrase(type, hour) {
-      if (!type || !hour) return "no complete answer";
-      return type === "past" ? `Quarter Past ${hour}` : `Quarter To ${hour}`;
-    }
-
-    function quarterRevealExplanation(isQuarterTime) {
-      const activeHour = getHourTerritory(state.hour);
-      const nextHour = getNextHour(activeHour);
-      if (!isQuarterTime) {
-        return `<strong>Actual time:</strong> ${formatTime()}<br>This is not :15 or :45, so Quarter Power Up was not available. The player loses 25% of current energy for taking the risk.`;
-      }
-      if (state.minute === 15) {
-        return `<strong>Actual time:</strong> ${formatTime()}<br>The minute hand has traveled 15 ticks, so this is <strong>Quarter Past ${activeHour}</strong>. The active hour territory is still ${activeHour}.`;
-      }
-      return `<strong>Actual time:</strong> ${formatTime()}<br>The minute hand has traveled 45 ticks. That means 15 minutes remain before the next hour, so this is <strong>Quarter To ${nextHour}</strong>. The active hour territory is still ${activeHour}.`;
-    }
-
-    function showBonusFeedback(title, message, reveal, isCorrect) {
-      document.getElementById("feedbackTitle").textContent = title;
-      document.getElementById("feedbackTitle").className = `feedback-title ${isCorrect ? "correct" : "wrong"}`;
-      document.getElementById("feedbackMessage").innerHTML = message;
-      document.getElementById("revealBox").innerHTML = reveal;
-      document.getElementById("feedbackModal").style.display = "flex";
-      state.pendingNextTurn = false;
-      state.pendingVictory = null;
-    }
-
-    function startAction(type) {
-      ensureAudio();
-      if (state.gameOver) return;
-      if (type === "capture") showHourChoices("Declare the Territory", "Which <strong>Hour Territory</strong> is active right now?", "capture");
-      if (type === "challenge") showHourChoices("Declare the Battle Zone", "Which <strong>Hour Territory</strong> is active right now?", "challenge");
-      if (type === "fortify") showHourChoices("Fortify Your Territory", "Which <strong>Hour Territory</strong> is active right now?", "fortify");
-      if (type === "block") showHourChoices("Name the Next Gate", "Which <strong>next Hour Gate</strong> is about to open?", "block");
-      if (type === "harvest") showNumberInput("Harvest Minute Energy", "How many <strong>minute ticks</strong> has the long hand traveled from the top?", "harvest");
-      if (type === "countdown") showNumberInput("Countdown Dash", "How many <strong>minutes remain</strong> until the next hour opens?", "countdown");
-    }
-
-    function submitNumberAnswer(actionType) {
-      const raw = document.getElementById("numberAnswer").value;
-      if (raw === "") return;
-      submitAnswer(actionType, Number(raw));
-    }
-
-    function submitAnswer(actionType, answer) {
-      closeAnswerModal();
-      let correct;
-      if (actionType === "capture" || actionType === "challenge" || actionType === "fortify") correct = getHourTerritory(state.hour);
-      if (actionType === "block") correct = getNextHour(getHourTerritory(state.hour));
-      if (actionType === "harvest") correct = state.minute;
-      if (actionType === "countdown") correct = countdownValue();
-
-      const isCorrect = Number(answer) === correct;
-      resolveAction(actionType, Number(answer), correct, isCorrect);
-    }
-
-    function revealExplanation(actionType) {
-      const activeHour = getHourTerritory(state.hour);
-      const nextHour = getNextHour(activeHour);
-      const base = `<strong>Actual time:</strong> ${formatTime()}<br><strong>Active Hour Territory:</strong> ${activeHour}<br><strong>Minute ticks traveled:</strong> ${state.minute}<br><strong>Minutes until next hour:</strong> ${countdownValue()}`;
-      let why = "";
-      if (actionType === "capture" || actionType === "challenge" || actionType === "fortify") why = `The correct territory is <strong>${activeHour}</strong>. Even if the short hand is close to ${nextHour}, the next hour does not open until the minute hand reaches the top.`;
-      if (actionType === "block") why = `The next gate is <strong>${nextHour}</strong>, but it is only worth blocking during late-hour times.`;
-      if (actionType === "harvest") why = `The long hand has traveled <strong>${state.minute}</strong> minute tick${state.minute === 1 ? "" : "s"} from the top.`;
-      if (actionType === "countdown") why = `There are <strong>${countdownValue()}</strong> minute tick${countdownValue() === 1 ? "" : "s"} left before the next hour opens.`;
-      return `${base}<br><br>${why}`;
-    }
-
-    function resolveAction(actionType, answer, correct, isCorrect) {
-      if (isCorrect) playCorrect(); else playWrong();
-
-      const p = state.currentPlayer;
-      const opponent = p === 1 ? 2 : 1;
-      const activeHour = getHourTerritory(state.hour);
-      const nextHour = getNextHour(activeHour);
-      let title = isCorrect ? "Correct!" : "Not Quite";
-      let message = "";
-      let shouldCheckWin = false;
-
-      if (!isCorrect) {
-        message = `<strong>${activeName()}</strong> answered <strong>${answer}</strong>, but the correct answer was <strong>${correct}</strong>. The move does not work this turn.`;
-        log(`<strong>${activeName()}</strong> missed the clock reading. Correct answer: <strong>${correct}</strong>.`);
-      } else if (actionType === "harvest") {
-        let gain = 100 + (state.minute * 10);
-        state.players[p].energy += gain;
-        message = `<strong>${activeName()}</strong> read the minute hand correctly and harvested <strong>${gain} energy</strong>. The farther the minute hand travels after the hour, the more energy it creates.`;
-        log(message);
-      } else if (actionType === "countdown") {
-        let gain = 150 + (countdownValue() * 15);
-        state.players[p].energy += gain;
-        message = `<strong>${activeName()}</strong> nailed the Countdown Dash and earned <strong>${gain} energy</strong>. This harder move pays about 1.5 times compared to harvesting minutes after the hour.`;
-        log(message);
-      } else if (actionType === "capture") {
-        if (state.blocked[activeHour] > 0) {
-          message = `Territory ${activeHour} is blocked this turn, so the capture fails even though the clock reading was correct.`;
-          log(`<strong>${activeName()}</strong> read the clock correctly, but Territory ${activeHour} was blocked.`);
-        } else if (state.territories[activeHour] === p) {
-          message = `You already control Territory ${activeHour}. Try fortifying it if you want to protect it.`;
-          log(`<strong>${activeName()}</strong> already controls Territory ${activeHour}.`);
-        } else if (state.players[p].energy < 1500) {
-          message = `You need 1500 energy to capture Territory ${activeHour}. Build more energy first.`;
-          log(`<strong>${activeName()}</strong> read the clock correctly but needs more energy to capture.`);
-        } else {
-          state.players[p].energy -= 1500;
-          state.territories[activeHour] = Number(p);
-          state.fortified[activeHour] = false;
-          if (isLateHour()) state.players[p].lateCaptures++;
-          message = `<strong>${activeName()}</strong> captured <strong>${isLateHour() ? "Late " : ""}${activeHour} Territory</strong>!`;
-          log(message);
-          shouldCheckWin = true;
-        }
-      } else if (actionType === "challenge") {
-        if (state.territories[activeHour] !== opponent) {
-          message = `You read the active territory correctly, but Player ${opponent} does not control Territory ${activeHour}. No challenge available.`;
-          log(`<strong>${activeName()}</strong> read the clock correctly, but there was no opponent territory to challenge.`);
-        } else if (state.players[p].energy < 2200) {
-          message = `You need 2200 energy to challenge Territory ${activeHour}.`;
-          log(`<strong>${activeName()}</strong> read the clock correctly but needs more energy to challenge.`);
-        } else {
-          state.players[p].energy -= 2200;
-          if (state.fortified[activeHour]) {
-            state.fortified[activeHour] = false;
-            message = `<strong>${activeName()}</strong> challenged Territory ${activeHour} and broke its shield. Player ${opponent} still controls the territory.`;
-          } else {
-            state.territories[activeHour] = 0;
-            message = `<strong>${activeName()}</strong> challenged Territory ${activeHour} and knocked it back to open territory.`;
+    function checkWinner(player) {
+      const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+      for (let r = 0; r < 7; r++) {
+        for (let c = 0; c < 7; c++) {
+          for (const [dr, dc] of dirs) {
+            let ok = true;
+            for (let k = 0; k < 4; k++) {
+              const rr = r + dr * k;
+              const cc = c + dc * k;
+              if (rr < 0 || rr >= 7 || cc < 0 || cc >= 7 || claimed[rr * 7 + cc] !== player) ok = false;
+            }
+            if (ok) return true;
           }
-          log(message);
         }
-      } else if (actionType === "fortify") {
-        if (state.territories[activeHour] !== p) {
-          message = `You read the active territory correctly, but you can only fortify Territory ${activeHour} if you already control it.`;
-          log(`<strong>${activeName()}</strong> read the clock correctly, but did not control Territory ${activeHour}.`);
-        } else if (state.fortified[activeHour]) {
-          message = `Territory ${activeHour} is already fortified.`;
-          log(`<strong>${activeName()}</strong> already has a shield on Territory ${activeHour}.`);
-        } else if (state.players[p].energy < 1000) {
-          message = `You need 1000 energy to fortify Territory ${activeHour}.`;
-          log(`<strong>${activeName()}</strong> needs more energy to fortify Territory ${activeHour}.`);
-        } else {
-          state.players[p].energy -= 1000;
-          state.fortified[activeHour] = true;
-          message = `<strong>${activeName()}</strong> fortified Territory ${activeHour}. The next successful challenge will break the shield instead of removing control.`;
-          log(message);
-        }
-      } else if (actionType === "block") {
-        if (!isLateHour()) {
-          message = `You named the next gate correctly, but blocking only works during late-hour times (:45 to :59).`;
-          log(`<strong>${activeName()}</strong> named the next gate correctly, but it was not late enough to block.`);
-        } else if (state.players[p].energy < 600) {
-          message = `You need 600 energy to block the next gate.`;
-          log(`<strong>${activeName()}</strong> needs more energy to block.`);
-        } else {
-          state.players[p].energy -= 600;
-          state.blocked[nextHour] = 2;
-          message = `<strong>${activeName()}</strong> blocked the upcoming <strong>${nextHour} Gate</strong>.`;
-          log(message);
-        }
-      }
-
-      render();
-      showFeedback(title, message, revealExplanation(actionType), isCorrect, shouldCheckWin);
-    }
-
-    function showFeedback(title, message, reveal, isCorrect, shouldCheckWin) {
-      document.getElementById("feedbackTitle").textContent = title;
-      document.getElementById("feedbackTitle").className = `feedback-title ${isCorrect ? "correct" : "wrong"}`;
-      document.getElementById("feedbackMessage").innerHTML = message;
-      document.getElementById("revealBox").innerHTML = reveal;
-      document.getElementById("feedbackModal").style.display = "flex";
-
-      // After feedback, the game should advance to the next player
-      // unless the move created a win. This fixes the capture-turn freeze.
-      state.pendingNextTurn = true;
-      if (shouldCheckWin) {
-        const winner = getWinner();
-        if (winner) {
-          state.gameOver = true;
-          state.pendingNextTurn = false;
-          state.pendingVictory = winner;
-        }
-      }
-    }
-
-    function continueAfterFeedback() {
-      document.getElementById("feedbackModal").style.display = "none";
-
-      if (state.pendingVictory) {
-        showVictory(state.pendingVictory);
-        state.pendingVictory = null;
-        return;
-      }
-
-      if (!state.gameOver && state.pendingNextTurn) nextTurn();
-    }
-
-    function getWinner() {
-      for (let p = 1; p <= 2; p++) {
-        const territoryCount = Object.values(state.territories).filter(owner => Number(owner) === p).length;
-        if (territoryCount >= 4 && state.players[p].lateCaptures >= 1) return p;
-      }
-      return null;
-    }
-
-    function showVictory(playerNumber) {
-      const territoryCount = Object.values(state.territories).filter(owner => owner === playerNumber).length;
-      document.getElementById("winnerText").textContent = `Player ${playerNumber} Wins!`;
-      document.getElementById("winnerSubtext").innerHTML = `Player ${playerNumber} controls <strong>${territoryCount}</strong> territories and made a Late-Hour Capture.<br>Victory belongs to the player who mastered the clock!`;
-      buildConfetti();
-      document.getElementById("winnerOverlay").style.display = "flex";
-      playVictoryMusic();
-    }
-
-    function checkWin() {
-      const winner = getWinner();
-      if (winner) {
-        state.gameOver = true;
-        showVictory(winner);
-        return true;
       }
       return false;
     }
 
-    function buildConfetti() {
-      const box = document.getElementById("confetti");
-      const colors = ["#ffd166", "#20d7ff", "#ff4dd8", "#7bed9f", "#ffffff", "#ff5c5c"];
-      box.innerHTML = "";
-      for (let i = 0; i < 70; i++) {
-        const s = document.createElement("span");
-        s.style.left = Math.random() * 100 + "%";
-        s.style.background = colors[i % colors.length];
-        s.style.animationDuration = (2.2 + Math.random() * 2.8) + "s";
-        s.style.animationDelay = (Math.random() * 1.6) + "s";
-        box.appendChild(s);
+    function possibleMoves() {
+      const moves = [];
+      for (const side of ['a','b']) {
+        for (const n of factors) {
+          const newA = side === 'a' ? n : clipA;
+          const newB = side === 'b' ? n : clipB;
+          if (!newA || !newB) continue;
+          if (!isFirstTurn() && newA === lastMoveSet.a && newB === lastMoveSet.b) continue;
+          if (!isFirstTurn() && newA !== lastMoveSet.a && newB !== lastMoveSet.b) continue;
+          const prod = newA * newB;
+          boardNumbers.flat().forEach((value, idx) => {
+            if (value === prod && !claimed[idx]) moves.push({ side, n, a: newA, b: newB, idx, prod });
+          });
+        }
       }
+      return moves;
     }
 
-    function nextTurn() {
-      if (state.gameOver) return;
-      for (let h = 1; h <= 12; h++) if (state.blocked[h] > 0) state.blocked[h]--;
-      state.currentPlayer = state.currentPlayer === 1 ? 2 : 1;
-      state.quarterUsedThisTurn = false;
-      randomTime();
-      render();
-      log(`<strong>${activeName()}</strong>'s turn. Read the clock and choose your move.`);
-    }
-
-    function newGame() {
-      ensureAudio();
-      state.currentPlayer = 1;
-      state.gameOver = false;
-      state.pendingNextTurn = true;
-      state.pendingVictory = null;
-      state.quarterUsedThisTurn = false;
-      state.players = { 1: { energy: 500, lateCaptures: 0 }, 2: { energy: 500, lateCaptures: 0 } };
-      for (let h = 1; h <= 12; h++) {
-        state.territories[h] = 0;
-        state.blocked[h] = 0;
-        state.fortified[h] = false;
+    function computerMove() {
+      if (gameOver) return;
+      const moves = possibleMoves();
+      if (!moves.length) {
+        gameOver = true;
+        message.textContent = 'No legal moves left. Game over!';
+        updateUI();
+        return;
       }
-      document.getElementById("log").innerHTML = "";
-      document.getElementById("winnerOverlay").style.display = "none";
-      document.getElementById("feedbackModal").style.display = "none";
-      document.getElementById("answerModal").style.display = "none";
-      randomTime();
-      render();
-      log(`<strong>Battle Clock begins!</strong> Player 1 starts. Read the clock and choose your move.`);
+
+      let best = null;
+      for (const m of moves) {
+        const temp = claimed.slice();
+        temp[m.idx] = 2;
+        if (wouldWin(temp, 2)) { best = m; break; }
+      }
+      if (!best) {
+        for (const m of moves) {
+          const temp = claimed.slice();
+          temp[m.idx] = 1;
+          if (wouldWin(temp, 1)) { best = m; break; }
+        }
+      }
+      if (!best) {
+        best = moves.sort((m1, m2) => centerScore(m2.idx) - centerScore(m1.idx))[0];
+      }
+
+      clipA = best.a;
+      clipB = best.b;
+      makeClaim(best.idx);
     }
 
-    randomTime();
-    render();
-    log(`<strong>Battle Clock is ready!</strong> Click New Game to start with sound enabled.`);
+    function wouldWin(tempClaimed, player) {
+      const old = claimed;
+      claimed = tempClaimed;
+      const result = checkWinner(player);
+      claimed = old;
+      return result;
+    }
+
+    function centerScore(idx) {
+      const r = Math.floor(idx / 7), c = idx % 7;
+      return 10 - (Math.abs(3-r) + Math.abs(3-c));
+    }
+
+    document.getElementById('newGame').onclick = init;
+    mode.onchange = init;
+    init();
   </script>
 </body>
 </html>
