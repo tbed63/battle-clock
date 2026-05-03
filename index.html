@@ -113,7 +113,7 @@
     }
 
     .board-panel {
-      padding: clamp(14px, 1.5vw, 24px);
+      padding: clamp(14px, 1.5vw, 24px) clamp(14px, 1.5vw, 24px) clamp(24px, 2.2vw, 38px);
       display: grid;
       grid-template-rows: auto 1fr;
       gap: clamp(8px, 1vw, 16px);
@@ -226,14 +226,15 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: clamp(4px, 1vw, 16px);
+      padding: clamp(26px, 3vw, 48px) clamp(18px, 2vw, 34px) clamp(42px, 4vw, 68px);
+      overflow: visible;
     }
 
     .clock-zone::before {
       content: "";
       position: absolute;
-      width: min(78vh, 68vw);
-      height: min(78vh, 68vw);
+      width: min(60vh, 52vw);
+      height: min(60vh, 52vw);
       border-radius: 50%;
       background:
         conic-gradient(from 12deg, rgba(255,209,102,0.0), rgba(255,209,102,0.24), rgba(32,215,255,0.10), rgba(255,77,216,0.20), rgba(255,209,102,0.0));
@@ -245,9 +246,9 @@
     @keyframes arenaGlow { to { transform: rotate(360deg); } }
 
     svg {
-      width: min(78vh, 68vw);
+      width: min(60vh, 52vw);
       max-width: 100%;
-      max-height: calc(100vh - 150px);
+      max-height: calc(100vh - 240px);
       height: auto;
       display: block;
       overflow: visible;
@@ -571,6 +572,28 @@
         font-size: 0.78rem;
       }
     }
+  
+    /* Desktop clock safety override: keeps the clock from touching/cutting off at the bottom. */
+    @media (min-width: 901px) {
+      .clock-zone {
+        padding-top: clamp(24px, 3vw, 46px) !important;
+        padding-right: clamp(18px, 2vw, 34px) !important;
+        padding-bottom: clamp(54px, 5vw, 86px) !important;
+        padding-left: clamp(18px, 2vw, 34px) !important;
+        overflow: visible !important;
+      }
+
+      .clock-zone::before {
+        width: min(60vh, 52vw) !important;
+        height: min(60vh, 52vw) !important;
+      }
+
+      svg#clock {
+        width: min(60vh, 52vw) !important;
+        max-height: calc(100vh - 250px) !important;
+      }
+    }
+
   </style>
 </head>
 <body>
