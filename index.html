@@ -527,7 +527,7 @@
     @keyframes spinHour { to { transform: rotate(325deg); } }
 
     .territory-label {
-      font-size: 18px;
+      font-size: 54px;
       font-weight: 950;
       text-anchor: middle;
       dominant-baseline: middle;
@@ -535,7 +535,7 @@
       pointer-events: none;
       paint-order: stroke;
       stroke: rgba(0,0,0,0.75);
-      stroke-width: 4px;
+      stroke-width: 9px;
     }
 
     .tick { stroke: #d8d8e8; stroke-linecap: round; opacity: 0.78; }
@@ -868,7 +868,7 @@
       }
 
       for (let h = 1; h <= 12; h++) {
-        const labelPoint = polar(cx, cy, 262, hourToAngle(h));
+        const labelPoint = polar(cx, cy, 238, hourToAngle(h));
         svg.innerHTML += `<text class="territory-label" x="${labelPoint.x}" y="${labelPoint.y}">${h}</text>`;
       }
 
