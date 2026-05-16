@@ -2,1281 +2,1305 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Battle Clock!</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='35%25' r='65%25'%3E%3Cstop offset='0%25' stop-color='%23ffe66d'/%3E%3Cstop offset='45%25' stop-color='%23ff9f1c'/%3E%3Cstop offset='100%25' stop-color='%235a189a'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%23101018'/%3E%3Ccircle cx='32' cy='32' r='25' fill='url(%23g)' stroke='%23ffffff' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='3.2' fill='%23101018'/%3E%3Cpath d='M32 32 L32 15' stroke='%23101018' stroke-width='4.5' stroke-linecap='round'/%3E%3Cpath d='M32 32 L45 39' stroke='%23101018' stroke-width='4.5' stroke-linecap='round'/%3E%3Ctext x='32' y='55' text-anchor='middle' font-family='Arial, sans-serif' font-size='14' font-weight='900' fill='%23ffffff'%3EBC!%3C/text%3E%3C/svg%3E" />
 
   <style>
     :root {
-      --bg: #101018;
-      --panel: #1b1b29;
-      --panel2: #252538;
-      --text: #f5f5f5;
-      --muted: #b8b8c8;
-      --p1: #20d7ff;
-      --p2: #ff4dd8;
+      --bg: #0a0a14;
+      --text: #f0f0ff;
+      --muted: #8888aa;
+      --p1: #00e5ff;
+      --p2: #ff2cf0;
       --gold: #ffd166;
-      --danger: #ff5c5c;
-      --green: #7bed9f;
-      --neutral: #3b3b52;
+      --danger: #ff4455;
+      --green: #39ff8a;
+      --font-display: 'Bangers', cursive;
+      --font-body: 'Nunito', sans-serif;
     }
 
-    * { box-sizing: border-box; }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-      -webkit-text-size-adjust: 100%;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; }
 
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: var(--font-body);
       color: var(--text);
-      background:
-        radial-gradient(circle at 18% 12%, rgba(255, 209, 102, 0.16) 0%, transparent 24%),
-        radial-gradient(circle at 88% 18%, rgba(255, 77, 216, 0.16) 0%, transparent 26%),
-        radial-gradient(circle at 50% 82%, rgba(32, 215, 255, 0.12) 0%, transparent 32%),
-        linear-gradient(135deg, #07070b 0%, #151522 42%, #050509 100%);
-      position: relative;
-    }
-
-    body::before,
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    body::before {
-      opacity: 0.42;
+      background: var(--bg);
       background-image:
-        linear-gradient(112deg, transparent 0 16%, rgba(255,255,255,0.18) 16.2%, transparent 17%),
-        linear-gradient(25deg, transparent 0 38%, rgba(255,255,255,0.11) 38.2%, transparent 39%),
-        linear-gradient(145deg, transparent 0 62%, rgba(255,255,255,0.09) 62.2%, transparent 63%),
-        linear-gradient(75deg, transparent 0 78%, rgba(255,255,255,0.12) 78.2%, transparent 79%);
-      background-size: 420px 260px, 520px 310px, 370px 230px, 610px 350px;
-      background-position: 30px 20px, 180px 110px, 80px 320px, 330px 40px;
-      mix-blend-mode: screen;
+        radial-gradient(ellipse at 15% 10%, rgba(0,229,255,0.09) 0%, transparent 45%),
+        radial-gradient(ellipse at 85% 15%, rgba(255,44,240,0.09) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 95%, rgba(255,209,102,0.06) 0%, transparent 40%);
+      min-height: 100%;
     }
 
-    body::after {
-      opacity: 0.20;
-      background-image:
-        radial-gradient(circle, rgba(255,255,255,0.45) 0 1px, transparent 1.4px),
-        radial-gradient(circle, rgba(255,209,102,0.32) 0 1px, transparent 1.6px),
-        linear-gradient(90deg, rgba(255,255,255,0.04), transparent 18%, rgba(0,0,0,0.12) 40%, transparent 72%);
-      background-size: 29px 31px, 47px 53px, 100% 7px;
-      filter: contrast(130%);
-    }
-
+    /* ═══════════════════════════════════
+       DESKTOP LAYOUT  (>= 700px)
+    ═══════════════════════════════════ */
     .app {
-      position: relative;
-      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 400px;
       width: 100vw;
       height: 100vh;
-      padding: clamp(12px, 1.4vw, 22px);
-      display: grid;
-      grid-template-columns: minmax(560px, 1fr) minmax(380px, 460px);
-      gap: clamp(14px, 1.4vw, 24px);
-    }
-
-    .board-panel,
-    .control-panel {
-      min-height: 0;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.04), transparent 24%, rgba(0,0,0,0.15) 60%),
-        rgba(15, 15, 25, 0.93);
-      border: 2px solid rgba(255,255,255,0.12);
-      border-radius: clamp(18px, 1.8vw, 28px);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.58), inset 0 0 0 1px rgba(255,255,255,0.04);
-      position: relative;
       overflow: hidden;
-    }
-
-    .board-panel::before,
-    .control-panel::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      opacity: 0.27;
-      background-image:
-        linear-gradient(120deg, transparent 10%, rgba(255,255,255,0.22) 10.6%, transparent 11.4%),
-        linear-gradient(40deg, transparent 55%, rgba(255,255,255,0.12) 55.5%, transparent 56.2%),
-        radial-gradient(circle at 10% 20%, rgba(255,255,255,0.18) 0 1px, transparent 2px),
-        radial-gradient(circle at 90% 75%, rgba(255,209,102,0.18) 0 1px, transparent 2px);
-      background-size: 500px 240px, 440px 320px, 38px 38px, 54px 54px;
     }
 
     .board-panel {
-      padding: clamp(14px, 1.5vw, 24px) clamp(14px, 1.5vw, 24px) clamp(24px, 2.2vw, 38px);
       display: grid;
       grid-template-rows: auto 1fr;
-      gap: clamp(8px, 1vw, 16px);
+      padding: 16px 10px 16px 16px;
+      gap: 8px;
+      min-height: 0;
+      overflow: hidden;
     }
 
     .topbar {
-      position: relative;
-      z-index: 2;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: start;
-      gap: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-shrink: 0;
     }
 
-    h1 {
-      margin: 0;
-      font-size: clamp(2.5rem, 5vw, 5.8rem);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      line-height: 0.88;
-      color: #fff1a8;
-      text-shadow:
-        4px 4px 0 #111,
-        -2px 2px 0 #5a189a,
-        0 0 18px rgba(255, 209, 102, 0.58),
-        0 0 34px rgba(255, 77, 216, 0.24);
-      transform: rotate(-1deg);
-    }
-
+    .brand { display: flex; flex-direction: column; gap: 2px; }
 
     .title-logo {
-      display: block;
-      width: min(620px, 44vw);
-      max-height: 150px;
+      height: 90px;
+      width: auto;
+      max-width: 420px;
       object-fit: contain;
       object-position: left center;
-      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.55));
+      filter: drop-shadow(0 4px 14px rgba(0,0,0,0.65));
+      display: block;
     }
 
-    .subtitle {
-      margin-top: 8px;
-      display: inline-block;
-      padding: 5px 12px;
-      border-radius: 999px;
-      color: #fff1a8;
-      font-weight: 900;
-      font-size: clamp(0.75rem, 1.1vw, 0.95rem);
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-      background: rgba(255, 209, 102, 0.12);
-      border: 1px solid rgba(255, 209, 102, 0.34);
-      box-shadow: 0 0 14px rgba(255, 209, 102, 0.13);
+    .title-fallback {
+      font-family: var(--font-display);
+      font-size: 3.6rem;
+      letter-spacing: 2px;
+      color: var(--gold);
+      text-shadow: 3px 3px 0 #111, 0 0 24px rgba(255,209,102,0.55);
+      line-height: 1;
     }
 
-    .top-buttons {
-      display: flex;
-      gap: 8px;
-    }
-
-    button {
-      appearance: none;
-      border: 0;
-      border-radius: 14px;
-      padding: 12px 14px;
-      min-height: 46px;
-      font-weight: 950;
-      font-size: 0.95rem;
-      cursor: pointer;
-      color: white;
-      background: linear-gradient(135deg, #34344c, #242436);
-      border: 2px solid rgba(255,255,255,0.10);
-      transition: transform 0.08s ease, filter 0.15s ease, opacity 0.15s ease;
-      box-shadow: 0 5px 0 rgba(0,0,0,0.35), inset 0 0 16px rgba(255,255,255,0.07);
-      text-transform: uppercase;
-      letter-spacing: 0.2px;
-      position: relative;
-      overflow: hidden;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    button::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      opacity: 0.18;
-      background-image:
-        linear-gradient(110deg, transparent 0 30%, rgba(255,255,255,0.45) 31%, transparent 32%),
-        radial-gradient(circle, rgba(255,255,255,0.35) 0 1px, transparent 1.4px);
-      background-size: 180px 90px, 24px 25px;
-    }
-
-    button:hover:not(:disabled) { transform: translateY(-2px) rotate(-0.5deg); filter: brightness(1.14) saturate(1.12); }
-    button:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.35), inset 0 0 16px rgba(255,255,255,0.07); }
-    button:disabled { opacity: 0.38; cursor: not-allowed; }
-
-    .primary { background: linear-gradient(135deg, #ffb703, #fb8500); color: #1c1200; }
-    .danger { background: linear-gradient(135deg, #ff5c5c, #b51730); }
-    .blue { background: linear-gradient(135deg, #20d7ff, #0077b6); color: #06131a; }
-    .pink { background: linear-gradient(135deg, #ff4dd8, #9b2cff); }
-    .green { background: linear-gradient(135deg, #7bed9f, #2ecc71); color: #06170b; }
-    .shield { background: linear-gradient(135deg, #ffd166, #8ecae6); color: #141414; }
-    .dash { background: linear-gradient(135deg, #c77dff, #5a189a); color: #ffffff; }
-    .quarter { background: linear-gradient(135deg, #fff200, #ff006e); color: #190014; }
+    .top-buttons { display: flex; gap: 8px; flex-shrink: 0; }
 
     .clock-zone {
-      position: relative;
-      z-index: 2;
       min-height: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: clamp(26px, 3vw, 48px) clamp(18px, 2vw, 34px) clamp(42px, 4vw, 68px);
-      overflow: visible;
+      position: relative;
     }
 
     .clock-zone::before {
       content: "";
       position: absolute;
-      width: min(60vh, 52vw);
-      height: min(60vh, 52vw);
+      inset: 10%;
       border-radius: 50%;
-      background:
-        conic-gradient(from 12deg, rgba(255,209,102,0.0), rgba(255,209,102,0.24), rgba(32,215,255,0.10), rgba(255,77,216,0.20), rgba(255,209,102,0.0));
-      filter: blur(18px);
-      opacity: 0.45;
-      animation: arenaGlow 4s linear infinite;
+      background: radial-gradient(circle, rgba(0,229,255,0.05) 0%, transparent 70%);
+      pointer-events: none;
     }
 
-    @keyframes arenaGlow { to { transform: rotate(360deg); } }
-
-    svg {
-      width: min(60vh, 52vw);
-      max-width: 100%;
-      max-height: calc(100vh - 240px);
-      height: auto;
+    svg#clock {
+      width: 100%;
+      height: 100%;
+      max-width: min(calc(100vh - 120px), 100%);
+      max-height: min(calc(100vh - 120px), 100%);
       display: block;
       overflow: visible;
-      position: relative;
-      z-index: 1;
-      filter: drop-shadow(0 18px 35px rgba(0,0,0,0.6));
+      filter: drop-shadow(0 8px 28px rgba(0,0,0,0.7));
     }
 
     .control-panel {
-      padding: clamp(12px, 1.4vw, 20px);
+      background: linear-gradient(180deg, #111120 0%, #0c0c18 100%);
+      border-left: 1px solid rgba(255,255,255,0.06);
       display: grid;
-      grid-template-rows: auto minmax(360px, 1.1fr) minmax(160px, 0.65fr);
-      gap: clamp(10px, 1vw, 16px);
-    }
-
-    .panel-title {
-      position: relative;
-      z-index: 2;
-      color: var(--gold);
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-size: clamp(0.9rem, 1.2vw, 1.15rem);
-    }
-
-    .players {
-      position: relative;
-      z-index: 2;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .player {
-      border-radius: 18px;
-      padding: 14px;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.045), transparent 28%, rgba(0,0,0,0.16) 70%),
-        rgba(23, 23, 36, 0.95);
-      border: 2px solid rgba(255,255,255,0.10);
-      box-shadow: 0 14px 32px rgba(0,0,0,0.35), inset 0 0 20px rgba(0,0,0,0.18);
-    }
-
-    .player.active.p1 { border-color: var(--p1); box-shadow: 0 0 24px rgba(32, 215, 255, 0.30); }
-    .player.active.p2 { border-color: var(--p2); box-shadow: 0 0 24px rgba(255, 77, 216, 0.30); }
-
-    .player h2 { margin: 0 0 10px; font-size: clamp(1rem, 1.4vw, 1.3rem); }
-    .stat { display: flex; justify-content: space-between; gap: 10px; margin: 7px 0; color: var(--muted); font-size: clamp(0.88rem, 1vw, 1rem); }
-    .stat strong { color: white; }
-
-    .actions-panel {
-      position: relative;
-      z-index: 2;
-      display: grid;
-      grid-template-rows: auto 1fr;
+      grid-template-rows: auto auto 1fr 130px;
+      gap: 10px;
+      padding: 16px 14px 14px 12px;
       min-height: 0;
       overflow: hidden;
     }
 
-    .action-title { margin-bottom: 10px; }
+    /* ── Player cards ── */
+    .players { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-
-    .kids-art-panel {
-      position: relative;
-      z-index: 2;
-      min-height: 150px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      overflow: visible;
-      border: none;
-      background: transparent;
-      box-shadow: none;
+    .player {
+      border-radius: 14px;
+      padding: 11px 12px;
+      background: rgba(255,255,255,0.025);
+      border: 2px solid rgba(255,255,255,0.06);
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    .kids-art-panel img {
-      width: 100%;
-      height: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      object-position: center bottom;
+    .player h2 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      letter-spacing: 1px;
+      margin-bottom: 7px;
+      line-height: 1;
+    }
+
+    .player.p1 h2 { color: var(--p1); }
+    .player.p2 h2 { color: var(--p2); }
+    .player.active.p1 { border-color: var(--p1); box-shadow: 0 0 16px rgba(0,229,255,0.22); }
+    .player.active.p2 { border-color: var(--p2); box-shadow: 0 0 16px rgba(255,44,240,0.22); }
+
+    .stat { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; margin: 4px 0; font-size: 0.78rem; color: var(--muted); }
+    .stat strong { color: var(--text); font-size: 0.9rem; font-weight: 900; }
+
+    .turn-badge {
       display: block;
-      filter: saturate(1.08) contrast(1.03);
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 1px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(255,209,102,0.10);
+      border: 1px solid rgba(255,209,102,0.28);
+      color: var(--gold);
+      text-align: center;
     }
 
+    .actions-panel {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 8px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .panel-title {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      letter-spacing: 1.5px;
+      color: var(--gold);
+      text-transform: uppercase;
+      padding-bottom: 5px;
+      border-bottom: 1px solid rgba(255,209,102,0.13);
+      flex-shrink: 0;
+    }
 
     .actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: repeat(3, minmax(70px, 1fr));
-      gap: clamp(10px, 1vw, 14px);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 7px;
       min-height: 0;
     }
 
-    .actions button {
-      min-height: 70px;
-      font-size: clamp(0.84rem, 1.05vw, 1rem);
-      line-height: 1.12;
-      padding: 12px;
+    .kids-art-panel {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      min-height: 120px;
+      overflow: hidden;
+    }
+    .kids-art-panel img {
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+      object-position: center bottom;
     }
 
+    /* ZoodleBug branding — fixed bottom-left */
+    .zoodlebug-badge {
+      position: fixed;
+      bottom: 14px;
+      left: 14px;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .zoodlebug-badge img {
+      width: 90px;
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.7));
+      opacity: 0.92;
+    }
+
+    /* ═══════════════════════════════════
+       BUTTONS
+    ═══════════════════════════════════ */
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 12px;
+      padding: 9px 7px;
+      font-family: var(--font-body);
+      font-weight: 900;
+      font-size: 0.82rem;
+      cursor: pointer;
+      color: white;
+      background: linear-gradient(160deg, #2a2a45, #1a1a2e);
+      border: 2px solid rgba(255,255,255,0.07);
+      transition: transform 0.08s, filter 0.12s, box-shadow 0.12s;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.45);
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+      line-height: 1.2;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      overflow: hidden;
+    }
+    button::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 38%;
+      background: rgba(255,255,255,0.055);
+      border-radius: 10px 10px 0 0;
+      pointer-events: none;
+    }
+    button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.14); box-shadow: 0 6px 0 rgba(0,0,0,0.45); }
+    button:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.45); }
+    button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .btn-sm { font-size: 0.75rem; padding: 7px 11px; min-height: 34px; border-radius: 10px; }
+
+    .primary { background: linear-gradient(135deg, #ffc300, #e07000); color: #1a0f00; border-color: rgba(255,195,0,0.28); }
+    .danger  { background: linear-gradient(135deg, #ff4455, #aa0020); border-color: rgba(255,68,85,0.28); }
+    .blue    { background: linear-gradient(135deg, #00e5ff, #0077b6); color: #001a20; border-color: rgba(0,229,255,0.28); }
+    .green   { background: linear-gradient(135deg, #39ff8a, #00aa44); color: #001a0a; border-color: rgba(57,255,138,0.28); }
+    .shield  { background: linear-gradient(135deg, #ffd166, #7ec8e8); color: #141414; border-color: rgba(255,209,102,0.28); }
+    .dash    { background: linear-gradient(135deg, #c077ff, #5a189a); border-color: rgba(192,119,255,0.28); }
+    .quarter { background: linear-gradient(135deg, #ffe600, #ff2060); color: #1a0010; border-color: rgba(255,230,0,0.28); }
+
+    .actions button {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      text-align: center;
+    }
+
+    .btn-label { font-size: 0.8rem;  font-weight: 900; line-height: 1.15; }
+    .btn-sub   { font-size: 0.65rem; opacity: 0.88;    font-weight: 700;  }
+
+    /* ═══════════════════════════════════
+       MODALS
+    ═══════════════════════════════════ */
     .modal, .winner, .how-modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.42);
+      background: rgba(0,0,0,0.58);
+      backdrop-filter: blur(3px);
       z-index: 20;
       align-items: center;
-      justify-content: flex-end;
-      padding: clamp(16px, 3vw, 54px);
-      pointer-events: none;
+      justify-content: center;
+      padding: 16px;
     }
 
     .modal-card, .winner-card, .how-card {
-      width: min(440px, 92vw);
-      max-height: 88vh;
+      width: min(440px, 96vw);
+      max-height: 90vh;
       overflow-y: auto;
-      background: rgba(24, 24, 38, 0.90);
-      backdrop-filter: blur(8px);
-      border: 2px solid rgba(255, 209, 102, 0.8);
-      border-radius: 28px;
-      padding: 26px;
-      box-shadow: 0 0 70px rgba(255, 209, 102, 0.35);
-      pointer-events: auto;
-      position: relative;
+      background: linear-gradient(145deg, #1a1a2e, #101020);
+      border: 2px solid rgba(255,209,102,0.55);
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 0 60px rgba(255,209,102,0.18), 0 20px 60px rgba(0,0,0,0.75);
     }
 
-    .how-card {
-      width: min(680px, 92vw);
-    }
+    .how-card { width: min(680px, 96vw); }
 
-    .modal-card h2, .how-card h2 {
-      font-size: 2rem;
-      margin: 0 0 10px;
-      text-transform: uppercase;
+    .modal-card h2, .winner-card h2, .how-card h2 {
+      font-family: var(--font-display);
+      letter-spacing: 1px;
     }
+    .modal-card h2 { font-size: 1.7rem; margin-bottom: 10px; }
+    .how-card h2   { font-size: 1.9rem; color: var(--gold); margin-bottom: 12px; }
+    .how-card h3   { font-family: var(--font-display); font-size: 1.15rem; color: var(--p1); margin: 14px 0 6px; }
 
-    .modal-card p, .how-card p, .how-card li {
-      color: #e8e8ef;
-      line-height: 1.45;
-    }
-
-    .how-card h3 {
-      margin: 18px 0 8px;
-      color: var(--gold);
-    }
-
-    .how-card ul { padding-left: 22px; }
+    .modal-card p, .how-card p, .how-card li { color: #cccce8; font-size: 0.93rem; line-height: 1.55; }
+    .how-card ul { padding-left: 20px; }
+    .how-card li { margin-bottom: 6px; }
 
     .choice-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-top: 18px;
+      gap: 8px;
+      margin-top: 14px;
     }
-
-    .choice-grid button {
-      font-size: 1.18rem;
-      padding: 13px 8px;
-    }
+    .choice-grid button { font-family: var(--font-display); font-size: 1.3rem; padding: 11px 4px; letter-spacing: 1px; }
 
     .answer-input {
       width: 100%;
-      border-radius: 16px;
+      border-radius: 14px;
       border: 2px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.06);
       color: white;
-      font-size: 2rem;
-      font-weight: 950;
-      padding: 14px;
+      font-family: var(--font-display);
+      font-size: 2.4rem;
+      letter-spacing: 2px;
+      padding: 12px;
       margin-top: 12px;
       text-align: center;
       outline: none;
+      transition: border-color 0.15s;
     }
+    .answer-input:focus { border-color: var(--gold); }
 
-    .answer-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
+    .answer-row { display: flex; gap: 9px; margin-top: 12px; }
     .answer-row button { flex: 1; }
 
     .feedback-title.correct { color: var(--green); }
-    .feedback-title.wrong { color: var(--danger); }
+    .feedback-title.wrong   { color: var(--danger); }
 
     .reveal-box {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 18px;
-      padding: 14px;
-      margin-top: 16px;
-      font-weight: 800;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 13px;
+      padding: 13px;
+      margin-top: 12px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #c8c8e8;
     }
 
-    .winner {
-      background: rgba(0,0,0,0.28);
-    }
-
-    .winner-card {
-      text-align: center;
-      overflow: hidden;
-    }
-
+    /* Winner */
+    .winner-card { text-align: center; position: relative; }
     .winner-card h2 {
-      font-size: clamp(2rem, 4vw, 3.2rem);
-      margin: 0 0 12px;
-      text-transform: uppercase;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      letter-spacing: 2px;
+      color: var(--gold);
+      text-shadow: 0 0 28px rgba(255,209,102,0.5);
     }
-
-    .winner-card p {
-      font-size: 1.05rem;
-      color: #f2f2f7;
-    }
+    .winner-card p { color: #e0e0f5; font-size: 1rem; margin: 10px 0; }
 
     .victory-clock {
-      width: 150px;
-      height: 150px;
-      margin: 16px auto;
-      position: relative;
-      border: 10px solid var(--gold);
+      width: 120px; height: 120px;
+      margin: 14px auto;
       border-radius: 50%;
-      box-shadow: 0 0 28px rgba(255, 209, 102, 0.65), inset 0 0 20px rgba(255,255,255,0.08);
-      background: radial-gradient(circle, #262640, #11111f);
+      border: 7px solid var(--gold);
+      background: radial-gradient(circle, #1e1e38, #0d0d1a);
+      box-shadow: 0 0 28px rgba(255,209,102,0.48);
+      position: relative;
       animation: pulseClock 1s infinite alternate ease-in-out;
     }
-
     .victory-clock::before, .victory-clock::after {
       content: "";
       position: absolute;
-      left: 50%;
-      top: 50%;
+      left: 50%; top: 50%;
       transform-origin: 0 0;
       border-radius: 999px;
       background: white;
     }
+    .victory-clock::before { width: 44px; height: 5px; transform: rotate(-90deg); animation: spinMinute 2s linear infinite; }
+    .victory-clock::after  { width: 30px; height: 9px; background: var(--gold); transform: rotate(-35deg); animation: spinHour 8s linear infinite; }
 
-    .victory-clock::before {
-      width: 58px;
-      height: 8px;
-      transform: rotate(-90deg);
-      animation: spinMinute 2s linear infinite;
-    }
+    .confetti { pointer-events: none; position: absolute; inset: 0; overflow: hidden; border-radius: 22px; }
+    .confetti span { position: absolute; width: 8px; height: 13px; top: -20px; animation: fall linear infinite; }
 
-    .victory-clock::after {
-      width: 42px;
-      height: 12px;
-      background: var(--gold);
-      transform: rotate(-35deg);
-      animation: spinHour 8s linear infinite;
-    }
+    @keyframes fall        { 0%   { transform: translateY(-30px) rotate(0deg); }
+                             100% { transform: translateY(700px)  rotate(720deg); } }
+    @keyframes pulseClock  { from { transform: scale(1); } to { transform: scale(1.07); } }
+    @keyframes spinMinute  { to   { transform: rotate(270deg); } }
+    @keyframes spinHour    { to   { transform: rotate(325deg); } }
 
-    .confetti {
-      pointer-events: none;
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-
-    .confetti span {
-      position: absolute;
-      width: 9px;
-      height: 15px;
-      top: -20px;
-      opacity: 0.95;
-      animation: fall linear infinite;
-    }
-
-    @keyframes fall {
-      0% { transform: translateY(-30px) rotate(0deg); }
-      100% { transform: translateY(620px) rotate(720deg); }
-    }
-
-    @keyframes pulseClock { from { transform: scale(1); } to { transform: scale(1.06); } }
-    @keyframes spinMinute { to { transform: rotate(270deg); } }
-    @keyframes spinHour { to { transform: rotate(325deg); } }
-
+    /* Clock SVG elements */
+    .territory { transition: fill 0.22s, stroke 0.22s; }
+    .hand { stroke-linecap: round; filter: drop-shadow(0 0 5px rgba(255,255,255,0.3)); }
+    .center-dot { fill: var(--gold); stroke: #111; stroke-width: 4; }
     .territory-label {
-      font-size: 54px;
-      font-weight: 950;
+      font-size: 48px;
+      font-weight: 900;
       text-anchor: middle;
       dominant-baseline: middle;
       fill: white;
-      pointer-events: none;
       paint-order: stroke;
-      stroke: rgba(0,0,0,0.75);
+      stroke: rgba(0,0,0,0.85);
       stroke-width: 9px;
+      pointer-events: none;
     }
-
-    .tick { stroke: #d8d8e8; stroke-linecap: round; opacity: 0.78; }
-    .tick.big { stroke-width: 4; opacity: 0.95; }
-    .tick.small { stroke-width: 1.5; }
-
-    .territory {
-      transition: 0.2s;
-    }
-
-    .hand { stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(255,255,255,0.4)); }
-    .center-dot { fill: var(--gold); stroke: #111; stroke-width: 4; }
-
     .territory-token {
-      font-size: 22px;
-      font-weight: 950;
+      font-size: 21px;
+      font-weight: 900;
       text-anchor: middle;
       dominant-baseline: middle;
       fill: #111;
       pointer-events: none;
     }
 
-    .small { font-size: 0.85rem; color: var(--muted); }
+    /* ═══════════════════════════════════
+       MOBILE  (<= 699px)
+    ═══════════════════════════════════ */
+    @media (max-width: 699px) {
+      html, body { height: auto; overflow-y: auto; overflow-x: hidden; }
 
-    @media (max-width: 1000px) {
       .app {
-        grid-template-columns: 1fr 360px;
-      }
-      .actions {
-        grid-template-rows: repeat(3, minmax(70px, 1fr));
-      }
-      .actions button {
-        min-height: 62px;
-        font-size: 0.78rem;
-      }
-    }
-  
-    /* Desktop clock safety override: keeps the clock from touching/cutting off at the bottom. */
-    @media (min-width: 901px) {
-      .clock-zone {
-        padding-top: clamp(24px, 3vw, 46px) !important;
-        padding-right: clamp(18px, 2vw, 34px) !important;
-        padding-bottom: clamp(54px, 5vw, 86px) !important;
-        padding-left: clamp(18px, 2vw, 34px) !important;
-        overflow: visible !important;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
       }
 
-      .clock-zone::before {
-        width: min(60vh, 52vw) !important;
-        height: min(60vh, 52vw) !important;
+      .board-panel {
+        display: flex;
+        flex-direction: column;
+        padding: 10px 12px 4px;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+
+      .topbar { flex-wrap: wrap; gap: 8px; }
+
+      .title-logo     { height: 60px; max-width: 280px; }
+      .title-fallback { font-size: 2.2rem; }
+
+      .top-buttons .btn-sm { font-size: 0.72rem; padding: 7px 10px; min-height: 34px; }
+
+      /* Clock: square, sized to viewport */
+      .clock-zone {
+        width: 100%;
+        height: min(88vw, 340px);
+        flex-shrink: 0;
+        padding: 2px;
       }
 
       svg#clock {
-        width: min(60vh, 52vw) !important;
-        max-height: calc(100vh - 250px) !important;
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
       }
+
+      .control-panel {
+        display: flex;
+        flex-direction: column;
+        border-left: none;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        padding: 10px 12px 20px;
+        gap: 10px;
+        overflow: visible;
+        flex-shrink: 0;
+      }
+
+      .player       { padding: 9px 10px; border-radius: 12px; }
+      .player h2    { font-size: 1.05rem; margin-bottom: 5px; }
+      .stat         { font-size: 0.76rem; }
+      .stat strong  { font-size: 0.84rem; }
+
+      .turn-badge   { font-size: 0.9rem; padding: 4px 10px; }
+      .panel-title  { font-size: 0.95rem; }
+
+      /* Actions auto-height on mobile */
+      .actions-panel { overflow: visible; }
+      .actions { grid-template-rows: repeat(3, auto); gap: 7px; }
+
+      .actions button {
+        height: auto;
+        min-height: 56px;
+        padding: 9px 6px;
+      }
+
+      .btn-label { font-size: 0.75rem; }
+      .btn-sub   { font-size: 0.62rem; }
+
+      .kids-art-panel { height: 120px; flex-shrink: 0; }
+
+      /* Modals slide up from bottom on mobile */
+      .modal, .winner, .how-modal {
+        align-items: flex-end;
+        padding: 0;
+      }
+      .modal-card, .winner-card, .how-card {
+        width: 100%;
+        max-height: 84vh;
+        border-radius: 22px 22px 0 0;
+        padding: 18px 16px 24px;
+        border-bottom: none;
+      }
+      .modal-card h2 { font-size: 1.4rem; }
+      .choice-grid   { gap: 6px; }
+      .choice-grid button { font-size: 1.1rem; padding: 10px 2px; }
+      .answer-input  { font-size: 2rem; padding: 10px; }
     }
 
+    /* Very small phones */
+    @media (max-width: 380px) {
+      .territory-label  { font-size: 40px; stroke-width: 7px; }
+      .choice-grid      { grid-template-columns: repeat(3, 1fr); }
+      .player h2        { font-size: 0.95rem; }
+    }
+
+    /* Tablet (700–959px) */
+    @media (min-width: 700px) and (max-width: 959px) {
+      .app { grid-template-columns: 1fr 340px; }
+      .actions button { min-height: 56px; }
+      .btn-label { font-size: 0.76rem; }
+      .btn-sub   { font-size: 0.62rem; }
+    }
   </style>
 </head>
 <body>
-  <div class="app">
-    <main class="board-panel">
-      <div class="topbar">
-        <div>
-          <img class="title-logo" src="battle-clock-title.png" alt="Battle Clock!" />
-          <div class="subtitle">A Tim Bedley Learning Game</div>
-        </div>
-        <div class="top-buttons">
-          <button onclick="openHowToPlay()">Rules</button>
-          <button class="primary" onclick="newGame()">New Game</button>
-        </div>
+<div class="app">
+
+  <!-- LEFT: Clock -->
+  <main class="board-panel">
+    <div class="topbar">
+      <div class="brand">
+        <img class="title-logo" src="battle-clock-title.png" alt="Battle Clock!"
+             onerror="this.style.display='none';document.getElementById('titleFallback').style.display='block'"/>
+        <div class="title-fallback" id="titleFallback" style="display:none">BATTLE CLOCK!</div>
       </div>
-
-      <div class="clock-zone">
-        <svg id="clock" viewBox="0 0 700 700" aria-label="Battle Clock game board"></svg>
-      </div>
-    </main>
-
-    <aside class="control-panel">
-      <div class="players">
-        <div class="player p1 active" id="p1Panel">
-          <h2>Player 1</h2>
-          <div class="stat"><span>Energy</span><strong id="p1Energy">500</strong></div>
-          <div class="stat"><span>Territories</span><strong id="p1Territories">0</strong></div>
-          <div class="stat"><span>Late Captures</span><strong id="p1Late">0</strong></div>
-        </div>
-
-        <div class="player p2" id="p2Panel">
-          <h2>Player 2</h2>
-          <div class="stat"><span>Energy</span><strong id="p2Energy">500</strong></div>
-          <div class="stat"><span>Territories</span><strong id="p2Territories">0</strong></div>
-          <div class="stat"><span>Late Captures</span><strong id="p2Late">0</strong></div>
-        </div>
-      </div>
-
-      <section class="actions-panel">
-        <div class="panel-title action-title">Choose Your Battle Move</div>
-        <div class="actions">
-          <button class="quarter" onclick="startQuarterPower()">Quarter Power Up<br><span style="font-size:.78em;">±25% Energy</span></button>
-          <button class="green" onclick="startAction('harvest')">Harvest Minute Energy<br><span style="font-size:.78em;">Earns Energy</span></button>
-          <button class="dash" onclick="startAction('countdown')">Countdown Dash<br><span style="font-size:.78em;">Earns 1.5×</span></button>
-          <button class="blue" onclick="startAction('capture')">Capture Current Hour<br><span style="font-size:.82em;">Cost: 1500 Energy</span></button>
-          <button class="danger" onclick="startAction('challenge')">Challenge Territory<br><span style="font-size:.82em;">Cost: 2200 Energy</span></button>
-          <button class="shield" onclick="startAction('fortify')">Fortify Territory<br><span style="font-size:.82em;">Cost: 1000 Energy</span></button>
-        </div>
-      </section>
-
-      <section class="kids-art-panel" aria-label="Two students celebrating Battle Clock">
-        <img src="battle-clock-kids-clean.png" alt="Two kids celebrating with fists raised for Battle Clock" />
-      </section>
-    </aside>
-  </div>
-
-  <div class="modal" id="answerModal">
-    <div class="modal-card">
-      <h2 id="answerTitle">Declare Your Move</h2>
-      <p id="answerPrompt"></p>
-      <div id="answerArea"></div>
-    </div>
-  </div>
-
-  <div class="modal" id="feedbackModal">
-    <div class="modal-card">
-      <h2 id="feedbackTitle" class="feedback-title">Result</h2>
-      <p id="feedbackMessage"></p>
-      <div class="reveal-box" id="revealBox"></div>
-      <div class="answer-row">
-        <button class="primary" onclick="continueAfterFeedback()">Continue</button>
+      <div class="top-buttons">
+        <button class="btn-sm" onclick="openHowToPlay()">📖 Rules</button>
+        <button class="btn-sm primary" onclick="newGame()">↺ New Game</button>
       </div>
     </div>
-  </div>
 
-  <div class="winner" id="winnerOverlay">
-    <div class="winner-card">
-      <div class="confetti" id="confetti"></div>
-      <h2 id="winnerText">Player Wins!</h2>
-      <div class="victory-clock"></div>
-      <p id="winnerSubtext"></p>
-      <button class="primary" onclick="newGame()">Play Again</button>
+    <div class="clock-zone">
+      <svg id="clock" viewBox="0 0 700 700" aria-label="Battle Clock game board"></svg>
     </div>
-  </div>
+  </main>
 
-  <div class="how-modal" id="howModal">
-    <div class="how-card">
-      <h2>Rules</h2>
-      <p><strong>Goal:</strong> Be the first player to control 4 Hour Territories. At least one capture must happen during a Late Hour time, on or after 45 past the hour.</p>
-
-      <h3>The Big Clock Idea</h3>
-      <p>The time is hidden while you make your move. You have to read the analog clock to power your strategy.</p>
-      <p>At <strong>5:58</strong>, the short hand is close to 6, but the active territory is still <strong>5</strong>. The 6 Territory opens only when the minute hand reaches the top.</p>
-
-      <h3>Battle Moves</h3>
-      <ul>
-        <li><strong>Quarter Power Up:</strong> If the clock shows :15 or :45, choose the correct quarter phrase and hour. Correct answers add 25% of your current energy. If you try it when the clock is not :15 or :45, you lose 25% of your current energy. This bonus does not use up your regular turn.</li>
-        <li><strong>Harvest Minute Energy:</strong> Type how many minute ticks the long hand has traveled. The farther after the hour, the more energy you earn.</li>
-        <li><strong>Countdown Dash:</strong> Type how many minutes remain until the next hour opens. This is harder, so it pays about 1.5 times as much as Harvest Minute Energy.</li>
-        <li><strong>Capture Current Hour:</strong> Choose the active Hour Territory. Spend <strong>1500</strong> energy to capture it.</li>
-        <li><strong>Challenge Territory:</strong> Choose the active Hour Territory. If your opponent owns it, spend <strong>2200</strong> energy to attack it. If it is fortified, the shield breaks but the opponent keeps the territory.</li>
-        <li><strong>Fortify Territory:</strong> Choose the active Hour Territory. If you control it, spend <strong>1000</strong> energy to protect it from one successful challenge.</li>
-      </ul>
-
-      <h3>Wrong Answers</h3>
-      <p>Wrong answers show the correct answer and why. The explanation stays on screen until the player clicks Continue.</p>
-
-      <div class="answer-row">
-        <button class="primary" onclick="closeHowToPlay()">Close</button>
+  <!-- RIGHT: Controls -->
+  <aside class="control-panel">
+    <div class="players">
+      <div class="player p1 active" id="p1Panel">
+        <h2>Player 1</h2>
+        <div class="stat"><span>Energy</span>     <strong id="p1Energy">500</strong></div>
+        <div class="stat"><span>Territories</span> <strong id="p1Territories">0</strong></div>
+        <div class="stat"><span>Late Caps</span>   <strong id="p1Late">0</strong></div>
+      </div>
+      <div class="player p2" id="p2Panel">
+        <h2>Player 2</h2>
+        <div class="stat"><span>Energy</span>     <strong id="p2Energy">500</strong></div>
+        <div class="stat"><span>Territories</span> <strong id="p2Territories">0</strong></div>
+        <div class="stat"><span>Late Caps</span>   <strong id="p2Late">0</strong></div>
       </div>
     </div>
+
+    <div id="turnBadge" class="turn-badge">⚔️ Player 1's Turn</div>
+
+    <section class="actions-panel">
+      <div class="panel-title">Choose Your Battle Move</div>
+      <div class="actions">
+        <button class="quarter" onclick="startQuarterPower()">
+          <span class="btn-label">⚡ Quarter Power Up</span>
+          <span class="btn-sub">±25% Energy</span>
+        </button>
+        <button class="green" onclick="startAction('harvest')">
+          <span class="btn-label">🌿 Harvest Minute</span>
+          <span class="btn-sub">Earns Energy</span>
+        </button>
+        <button class="dash" onclick="startAction('countdown')">
+          <span class="btn-label">💨 Countdown Dash</span>
+          <span class="btn-sub">Earns 1.5×</span>
+        </button>
+        <button class="blue" onclick="startAction('capture')">
+          <span class="btn-label">🏴 Capture Hour</span>
+          <span class="btn-sub">Cost: 1500 Energy</span>
+        </button>
+        <button class="danger" onclick="startAction('challenge')">
+          <span class="btn-label">⚔️ Challenge</span>
+          <span class="btn-sub">Cost: 2200 Energy</span>
+        </button>
+        <button class="shield" onclick="startAction('fortify')">
+          <span class="btn-label">🛡️ Fortify</span>
+          <span class="btn-sub">Cost: 1000 Energy</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="kids-art-panel" aria-label="Two students celebrating Battle Clock">
+      <img src="battle-clock-kids-clean.png" alt="Two kids celebrating Battle Clock" />
+    </section>
+  </aside>
+</div>
+
+<!-- ZoodleBug branding badge -->
+<div class="zoodlebug-badge">
+  <img src="zoodlebug-game.png" alt="A ZoodleBug Game" />
+</div>
+
+<!-- ANSWER MODAL -->
+<div class="modal" id="answerModal">
+  <div class="modal-card">
+    <h2 id="answerTitle">Declare Your Move</h2>
+    <p id="answerPrompt"></p>
+    <div id="answerArea"></div>
   </div>
+</div>
 
-  <script>
-    const svg = document.getElementById("clock");
+<!-- FEEDBACK MODAL -->
+<div class="modal" id="feedbackModal">
+  <div class="modal-card">
+    <h2 id="feedbackTitle" class="feedback-title">Result</h2>
+    <p id="feedbackMessage"></p>
+    <div class="reveal-box" id="revealBox"></div>
+    <div class="answer-row">
+      <button class="primary" onclick="continueAfterFeedback()">Continue ▶</button>
+    </div>
+  </div>
+</div>
 
-    const state = {
-      currentPlayer: 1,
-      hour: 5,
-      minute: 58,
-      players: {
-        1: { energy: 500, lateCaptures: 0 },
-        2: { energy: 500, lateCaptures: 0 }
-      },
-      territories: {},
-      blocked: {},
-      fortified: {},
-      gameOver: false,
-      pendingNextTurn: true,
-      audioStarted: false,
-      pendingVictory: null,
-      quarterUsedThisTurn: false
-    };
+<!-- WINNER OVERLAY -->
+<div class="winner" id="winnerOverlay">
+  <div class="winner-card">
+    <div class="confetti" id="confetti"></div>
+    <h2 id="winnerText">Player Wins!</h2>
+    <div class="victory-clock"></div>
+    <p id="winnerSubtext"></p>
+    <button class="primary" style="margin-top:14px;width:100%;" onclick="newGame()">🔄 Play Again</button>
+  </div>
+</div>
 
-    for (let h = 1; h <= 12; h++) {
-      state.territories[h] = 0;
-      state.blocked[h] = 0;
-      state.fortified[h] = false;
+<!-- HOW TO PLAY -->
+<div class="how-modal" id="howModal">
+  <div class="how-card">
+    <h2>📖 Rules</h2>
+    <p><strong>Goal:</strong> Be the first player to control <strong>4 Hour Territories</strong> — with at least <strong>1 Late-Hour capture</strong> (at :45 or later).</p>
+
+    <h3>The Big Clock Idea</h3>
+    <p>The digital time is hidden while you move. Read the analog clock to power your strategy!</p>
+    <p>At <strong>5:58</strong>, the hour hand is near 6, but the active territory is still <strong>5</strong>. Territory 6 only opens when the minute hand reaches the top.</p>
+
+    <h3>Battle Moves</h3>
+    <ul>
+      <li><strong>⚡ Quarter Power Up:</strong> If the clock shows :15 or :45, pick the correct phrase and hour. Correct = +25% energy. Wrong timing = −25% energy. Doesn't use your regular turn.</li>
+      <li><strong>🌿 Harvest Minute Energy:</strong> Type how many minute ticks the long hand has traveled from the top. More ticks = more energy.</li>
+      <li><strong>💨 Countdown Dash:</strong> Type how many minutes remain until the next hour opens. Pays ~1.5× more than Harvest.</li>
+      <li><strong>🏴 Capture Current Hour:</strong> Choose the active Hour Territory. Costs <strong>1500 energy</strong>.</li>
+      <li><strong>⚔️ Challenge Territory:</strong> Choose the active territory your opponent owns. Costs <strong>2200 energy</strong>. Breaks a shield or removes control.</li>
+      <li><strong>🛡️ Fortify Territory:</strong> Choose your active territory. Costs <strong>1000 energy</strong>. Protects against one successful Challenge.</li>
+    </ul>
+
+    <h3>Wrong Answers</h3>
+    <p>Wrong answers reveal the correct time and explain why. The screen stays until you click Continue.</p>
+
+    <div class="answer-row" style="margin-top:18px;">
+      <button class="primary" onclick="closeHowToPlay()">Got It! ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+const state = {
+  currentPlayer: 1,
+  hour: 5,
+  minute: 58,
+  players: {
+    1: { energy: 500, lateCaptures: 0 },
+    2: { energy: 500, lateCaptures: 0 }
+  },
+  territories: {},
+  fortified: {},
+  gameOver: false,
+  pendingNextTurn: true,
+  pendingVictory: null,
+  quarterUsedThisTurn: false
+};
+
+for (let h = 1; h <= 12; h++) {
+  state.territories[h] = 0;
+  state.fortified[h] = false;
+}
+
+// ═══════════════════════════════════════════════
+//  AUDIO
+// ═══════════════════════════════════════════════
+let audioCtx = null;
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+}
+
+function playTone(freq, dur, type = "sine", vol = 0.05, offset = 0) {
+  if (!audioCtx) return;
+  const osc  = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime + offset);
+  gain.gain.setValueAtTime(0, audioCtx.currentTime + offset);
+  gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + offset + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + offset + dur);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(audioCtx.currentTime + offset);
+  osc.stop(audioCtx.currentTime + offset + dur + 0.03);
+}
+
+function playCorrect() {
+  ensureAudio();
+  playTone(523, 0.11, "sine", 0.04, 0);
+  playTone(659, 0.11, "sine", 0.04, 0.11);
+  playTone(784, 0.17, "sine", 0.04, 0.22);
+}
+
+function playWrong() {
+  ensureAudio();
+  playTone(200, 0.18, "sawtooth", 0.04, 0);
+  playTone(140, 0.26, "sawtooth", 0.04, 0.16);
+}
+
+function playVictoryMusic() {
+  ensureAudio();
+  const notes = [392,494,587,784,740,784,988,1175,988,1175,1568];
+  notes.forEach((n,i) => playTone(n, 0.20, i % 2 ? "sawtooth" : "square", 0.05, i * 0.17));
+  [196,247,294,392].forEach((n,i) => playTone(n, 0.7, "sawtooth", 0.03, i * 0.34));
+}
+
+// ═══════════════════════════════════════════════
+//  GEOMETRY HELPERS
+// ═══════════════════════════════════════════════
+function polar(cx, cy, r, deg) {
+  const a = (deg - 90) * Math.PI / 180;
+  return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+}
+
+function sectorPath(cx, cy, rIn, rOut, startDeg, endDeg) {
+  const p1 = polar(cx, cy, rOut, startDeg);
+  const p2 = polar(cx, cy, rOut, endDeg);
+  const p3 = polar(cx, cy, rIn,  endDeg);
+  const p4 = polar(cx, cy, rIn,  startDeg);
+  const large = (endDeg - startDeg) > 180 ? 1 : 0;
+  return [
+    `M ${p1.x} ${p1.y}`,
+    `A ${rOut} ${rOut} 0 ${large} 1 ${p2.x} ${p2.y}`,
+    `L ${p3.x} ${p3.y}`,
+    `A ${rIn} ${rIn} 0 ${large} 0 ${p4.x} ${p4.y}`,
+    "Z"
+  ].join(" ");
+}
+
+// ═══════════════════════════════════════════════
+//  GAME HELPERS
+// ═══════════════════════════════════════════════
+function hourToAngle(h)         { return (h % 12) * 30; }
+function getHourTerritory(h)    { return h === 0 ? 12 : h; }
+function getNextHour(h)         { return h === 12 ? 1 : h + 1; }
+function isLateHour()           { return state.minute >= 45; }
+function countdownValue()       { return state.minute === 0 ? 0 : 60 - state.minute; }
+function randomTime()           { state.hour = Math.floor(Math.random()*12)+1; state.minute = Math.floor(Math.random()*60); }
+function formatTime()           { return `${state.hour}:${String(state.minute).padStart(2,"0")}`; }
+function activeName()           { return `Player ${state.currentPlayer}`; }
+function roundToNearest50(v)    { return Math.round(v / 50) * 50; }
+
+// ═══════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════
+function render() {
+  const svg = document.getElementById("clock");
+  const cx = 350, cy = 350;
+  let html = "";
+
+  // Defs + clock face
+  html += `
+    <defs>
+      <radialGradient id="faceGrad" cx="50%" cy="42%" r="62%">
+        <stop offset="0%"   stop-color="#1e1e3a"/>
+        <stop offset="100%" stop-color="#080812"/>
+      </radialGradient>
+      <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <circle cx="${cx}" cy="${cy}" r="338" fill="#09091a" stroke="rgba(255,255,255,0.05)" stroke-width="2"/>
+    <circle cx="${cx}" cy="${cy}" r="324" fill="url(#faceGrad)" stroke="rgba(255,255,255,0.09)" stroke-width="3"/>
+    <circle cx="${cx}" cy="${cy}" r="300" fill="none" stroke="rgba(255,255,255,0.035)" stroke-width="1"/>
+    <circle cx="${cx}" cy="${cy}" r="118" fill="none" stroke="rgba(255,255,255,0.03)"  stroke-width="1"/>
+  `;
+
+  // Territories
+  for (let h = 1; h <= 12; h++) {
+    const start = hourToAngle(h);
+    const end   = start + 30;
+    const owner = Number(state.territories[h]);
+
+    let fill, stroke, sw;
+    if (owner === 0) {
+      fill   = "rgba(55,55,88,0.35)";
+      stroke = "rgba(255,255,255,0.11)";
+      sw     = 1.5;
+    } else if (owner === 1) {
+      fill   = "rgba(0,229,255,0.48)";
+      stroke = "rgba(0,229,255,0.95)";
+      sw     = 4;
+    } else {
+      fill   = "rgba(255,44,240,0.48)";
+      stroke = "rgba(255,44,240,0.95)";
+      sw     = 4;
     }
 
-    let audioCtx = null;
+    html += `<path class="territory" d="${sectorPath(cx,cy,116,256,start,end)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
 
-    function ensureAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === "suspended") audioCtx.resume();
-      state.audioStarted = true;
-    }
-
-    function playTone(freq, duration, type = "sine", gainValue = 0.05, startOffset = 0) {
-      if (!audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startOffset);
-      gain.gain.setValueAtTime(0, audioCtx.currentTime + startOffset);
-      gain.gain.linearRampToValueAtTime(gainValue, audioCtx.currentTime + startOffset + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startOffset + duration);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(audioCtx.currentTime + startOffset);
-      osc.stop(audioCtx.currentTime + startOffset + duration + 0.03);
-    }
-
-    function playVictoryMusic() {
-      ensureAudio();
-      const notes = [392, 494, 587, 784, 740, 784, 988, 1175, 988, 1175, 1568];
-      notes.forEach((n, i) => playTone(n, 0.22, i % 2 ? "sawtooth" : "square", 0.055, i * 0.18));
-      [196, 247, 294, 392].forEach((n, i) => playTone(n, 0.75, "sawtooth", 0.035, i * 0.36));
-    }
-
-    function playCorrect() {
-      ensureAudio();
-      playTone(523, 0.12, "sine", 0.04, 0);
-      playTone(659, 0.12, "sine", 0.04, 0.12);
-      playTone(784, 0.18, "sine", 0.04, 0.24);
-    }
-
-    function playWrong() {
-      ensureAudio();
-      playTone(190, 0.2, "sawtooth", 0.04, 0);
-      playTone(135, 0.28, "sawtooth", 0.04, 0.18);
-    }
-
-    function openHowToPlay() { document.getElementById("howModal").style.display = "flex"; }
-    function closeHowToPlay() { document.getElementById("howModal").style.display = "none"; }
-
-    function polar(cx, cy, r, angleDeg) {
-      const angle = (angleDeg - 90) * Math.PI / 180;
-      return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
-    }
-
-    function sectorPath(cx, cy, rInner, rOuter, startAngle, endAngle) {
-      const p1 = polar(cx, cy, rOuter, startAngle);
-      const p2 = polar(cx, cy, rOuter, endAngle);
-      const p3 = polar(cx, cy, rInner, endAngle);
-      const p4 = polar(cx, cy, rInner, startAngle);
-      const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-      return [`M ${p1.x} ${p1.y}`, `A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${p2.x} ${p2.y}`, `L ${p3.x} ${p3.y}`, `A ${rInner} ${rInner} 0 ${largeArc} 0 ${p4.x} ${p4.y}`, "Z"].join(" ");
-    }
-
-    function hourToAngle(hour) { return (hour % 12) * 30; }
-    function getHourTerritory(hour) { return hour === 0 ? 12 : hour; }
-    function getNextHour(hour) { return hour === 12 ? 1 : hour + 1; }
-    function isLateHour() { return state.minute >= 45; }
-    function countdownValue() { return state.minute === 0 ? 0 : 60 - state.minute; }
-
-    function randomTime() {
-      state.hour = Math.floor(Math.random() * 12) + 1;
-      state.minute = Math.floor(Math.random() * 60);
-    }
-
-    function formatTime() { return `${state.hour}:${String(state.minute).padStart(2, "0")}`; }
-    function activeName() { return `Player ${state.currentPlayer}`; }
-
-    function log(message) {
-      // Battle Log removed to keep the screen clean.
-    }
-
-    function render() {
-      svg.innerHTML = "";
-      const cx = 350, cy = 350;
-      const activeHour = getHourTerritory(state.hour);
-
-      svg.innerHTML += `
-        <circle cx="${cx}" cy="${cy}" r="322" fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.08)" stroke-width="3"/>
-        <circle cx="${cx}" cy="${cy}" r="270" fill="rgba(0,0,0,0.15)" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+    if (owner !== 0) {
+      const tp    = polar(cx, cy, 200, start + 15);
+      const color = owner === 1 ? "#00e5ff" : "#ff2cf0";
+      html += `
+        <circle cx="${tp.x}" cy="${tp.y}" r="31" fill="${color}" stroke="white" stroke-width="3" filter="url(#glow)"/>
+        <text class="territory-token" x="${tp.x}" y="${tp.y+1}">P${owner}</text>
       `;
-
-      for (let h = 1; h <= 12; h++) {
-        const start = hourToAngle(h);
-        const end = start + 30;
-        const owner = Number(state.territories[h]);
-        let fill = "rgba(70,70,95,0.42)";
-        let stroke = "rgba(255,255,255,0.18)";
-        let strokeWidth = 2;
-
-        if (owner === 1) {
-          fill = "rgba(32, 215, 255, 0.58)";
-          stroke = "rgba(32, 215, 255, 0.95)";
-          strokeWidth = 5;
-        }
-
-        if (owner === 2) {
-          fill = "rgba(255, 77, 216, 0.58)";
-          stroke = "rgba(255, 77, 216, 0.95)";
-          strokeWidth = 5;
-        }
-
-        svg.innerHTML += `<path class="territory" d="${sectorPath(cx, cy, 112, 258, start, end)}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"></path>`;
-
-        if (owner !== 0) {
-          const tokenPoint = polar(cx, cy, 205, start + 15);
-          const color = owner === 1 ? "var(--p1)" : "var(--p2)";
-          svg.innerHTML += `
-            <circle cx="${tokenPoint.x}" cy="${tokenPoint.y}" r="34" fill="${color}" stroke="white" stroke-width="4"></circle>
-            <text class="territory-token" x="${tokenPoint.x}" y="${tokenPoint.y + 2}">P${owner}</text>
-          `;
-        }
-
-        if (Boolean(state.fortified[h])) {
-          const f = polar(cx, cy, 176, start + 15);
-          svg.innerHTML += `<text x="${f.x}" y="${f.y}" text-anchor="middle" dominant-baseline="middle" font-size="24">🛡️</text>`;
-        }
-      }
-
-      for (let m = 0; m < 60; m++) {
-        const angle = m * 6;
-        const outer = polar(cx, cy, 310, angle);
-        const inner = polar(cx, cy, m % 5 === 0 ? 286 : 296, angle);
-        const cls = m % 5 === 0 ? "tick big" : "tick small";
-        svg.innerHTML += `<line class="${cls}" x1="${inner.x}" y1="${inner.y}" x2="${outer.x}" y2="${outer.y}" stroke="#d8d8e8" stroke-width="${m % 5 === 0 ? 4 : 1.5}"></line>`;
-      }
-
-      for (let h = 1; h <= 12; h++) {
-        const labelPoint = polar(cx, cy, 238, hourToAngle(h));
-        svg.innerHTML += `<text class="territory-label" x="${labelPoint.x}" y="${labelPoint.y}">${h}</text>`;
-      }
-
-      const hourAngle = hourToAngle(activeHour) + (state.minute * 0.5);
-      const minuteAngle = state.minute * 6;
-      const hourEnd = polar(cx, cy, 118, hourAngle);
-      const minuteEnd = polar(cx, cy, 278, minuteAngle);
-
-      svg.innerHTML += `
-        <line class="hand" x1="${cx}" y1="${cy}" x2="${hourEnd.x}" y2="${hourEnd.y}" stroke="#f5f5f5" stroke-width="14"></line>
-        <line class="hand" x1="${cx}" y1="${cy}" x2="${minuteEnd.x}" y2="${minuteEnd.y}" stroke="var(--gold)" stroke-width="7"></line>
-        <circle class="center-dot" cx="${cx}" cy="${cy}" r="15"></circle>
-      `;
-
-      updateStats();
-      updateButtons();
     }
 
-    function updateStats() {
-      for (let p = 1; p <= 2; p++) {
-        const territoryCount = Object.values(state.territories).filter(owner => Number(owner) === p).length;
-        document.getElementById(`p${p}Energy`).textContent = state.players[p].energy;
-        document.getElementById(`p${p}Territories`).textContent = territoryCount;
-        document.getElementById(`p${p}Late`).textContent = state.players[p].lateCaptures;
-        document.getElementById(`p${p}Panel`).classList.toggle("active", state.currentPlayer === p);
-      }
+    if (state.fortified[h]) {
+      const fp = polar(cx, cy, 165, start + 15);
+      html += `<text x="${fp.x}" y="${fp.y}" text-anchor="middle" dominant-baseline="middle" font-size="22">🛡️</text>`;
     }
+  }
 
-    function updateButtons() {
-      document.querySelectorAll("button").forEach(btn => {
-        if (!btn.textContent.includes("New Game") && !btn.textContent.includes("Play Again") && !btn.textContent.includes("Rules") && !btn.textContent.includes("Close") && !btn.textContent.includes("Continue")) {
-          btn.disabled = state.gameOver;
-        }
-      });
-    }
+  // Minute ticks — golden highlights at :15 and :45 to teach quarter-hours
+  for (let m = 0; m < 60; m++) {
+    const isBig     = m % 5 === 0;
+    const isQuarter = m === 15 || m === 45;
+    const outer = polar(cx, cy, 310, m * 6);
+    const inner = polar(cx, cy, isBig ? 283 : 295, m * 6);
+    const color = isQuarter ? "rgba(255,209,102,0.95)" : (isBig ? "#d0d0ee" : "rgba(190,190,215,0.45)");
+    const width = isBig ? 4 : 1.5;
+    html += `<line x1="${inner.x}" y1="${inner.y}" x2="${outer.x}" y2="${outer.y}"
+                   stroke="${color}" stroke-width="${width}" stroke-linecap="round"/>`;
+  }
 
-    function showHourChoices(title, prompt, actionType) {
-      document.getElementById("answerModal").dataset.cancelOutside = "true";
-      document.getElementById("answerTitle").textContent = title;
-      document.getElementById("answerPrompt").innerHTML = prompt;
-      const area = document.getElementById("answerArea");
-      area.innerHTML = `
-        <div class="choice-grid">${Array.from({length: 12}, (_, i) => `<button onclick="submitAnswer('${actionType}', ${i + 1})">${i + 1}</button>`).join("")}</div>
-        <div class="answer-row">
-          <button onclick="closeAnswerModal()">Cancel</button>
-        </div>
-      `;
-      document.getElementById("answerModal").style.display = "flex";
-    }
+  // Hour numbers
+  for (let h = 1; h <= 12; h++) {
+    const lp = polar(cx, cy, 236, hourToAngle(h));
+    html += `<text class="territory-label" x="${lp.x}" y="${lp.y}">${h}</text>`;
+  }
 
-    function showNumberInput(title, prompt, actionType) {
-      document.getElementById("answerModal").dataset.cancelOutside = "true";
-      document.getElementById("answerTitle").textContent = title;
-      document.getElementById("answerPrompt").innerHTML = prompt;
-      document.getElementById("answerArea").innerHTML = `
-        <input class="answer-input" id="numberAnswer" type="number" min="0" max="59" inputmode="numeric" />
-        <div class="answer-row">
-          <button onclick="closeAnswerModal()">Cancel</button>
-          <button class="primary" onclick="submitNumberAnswer('${actionType}')">Lock It In</button>
-        </div>
-      `;
-      document.getElementById("answerModal").style.display = "flex";
-      setTimeout(() => document.getElementById("numberAnswer").focus(), 50);
-    }
+  // Clock hands
+  const ah          = getHourTerritory(state.hour);
+  const hourAngle   = hourToAngle(ah) + state.minute * 0.5;
+  const minuteAngle = state.minute * 6;
+  const hourEnd     = polar(cx, cy, 114, hourAngle);
+  const minuteEnd   = polar(cx, cy, 278, minuteAngle);
 
-    function showQuarterChoices() {
-      document.getElementById("answerModal").dataset.cancelOutside = "false";
-      document.getElementById("answerTitle").textContent = "Quarter Power Up";
-      document.getElementById("answerPrompt").innerHTML = "Choose the quarter phrase and the hour it belongs with.";
-      const hourButtons = Array.from({length: 12}, (_, i) => `<button onclick="chooseQuarterHour(${i + 1})">${i + 1}</button>`).join("");
-      document.getElementById("answerArea").innerHTML = `
-        <div class="answer-row">
-          <button class="primary" id="qpPast" onclick="chooseQuarterType('past')">Quarter Past</button>
-          <button class="primary" id="qpTo" onclick="chooseQuarterType('to')">Quarter To</button>
-        </div>
-        <div class="choice-grid">${hourButtons}</div>
-        <p class="small" style="margin-top:12px;">Pick a phrase first, then pick the matching hour.</p>
-      `;
-      quarterPick.type = null;
-      quarterPick.hour = null;
-      document.getElementById("answerModal").style.display = "flex";
-    }
+  // Shadows
+  html += `<line x1="${cx}" y1="${cy}" x2="${hourEnd.x}"   y2="${hourEnd.y}"   stroke="rgba(0,0,0,0.55)" stroke-width="18" stroke-linecap="round"/>`;
+  html += `<line x1="${cx}" y1="${cy}" x2="${minuteEnd.x}" y2="${minuteEnd.y}" stroke="rgba(0,0,0,0.45)" stroke-width="10" stroke-linecap="round"/>`;
+  // Hands
+  html += `<line class="hand" x1="${cx}" y1="${cy}" x2="${hourEnd.x}"   y2="${hourEnd.y}"   stroke="#f0f0ff"       stroke-width="14"/>`;
+  html += `<line class="hand" x1="${cx}" y1="${cy}" x2="${minuteEnd.x}" y2="${minuteEnd.y}" stroke="var(--gold)" stroke-width="7"/>`;
 
-    function closeAnswerModal() { document.getElementById("answerModal").style.display = "none"; }
+  // Center hub
+  html += `
+    <circle cx="${cx}" cy="${cy}" r="18" fill="#18183a" stroke="rgba(255,255,255,0.18)" stroke-width="3"/>
+    <circle class="center-dot" cx="${cx}" cy="${cy}" r="11"/>
+  `;
 
-    const quarterPick = { type: null, hour: null };
+  svg.innerHTML = html;
+  updateStats();
+  updateButtons();
+}
 
-    function roundToNearest50(value) {
-      return Math.round(value / 50) * 50;
-    }
+function updateStats() {
+  for (let p = 1; p <= 2; p++) {
+    const tc = Object.values(state.territories).filter(o => Number(o) === p).length;
+    document.getElementById(`p${p}Energy`).textContent      = state.players[p].energy;
+    document.getElementById(`p${p}Territories`).textContent = tc;
+    document.getElementById(`p${p}Late`).textContent        = state.players[p].lateCaptures;
+    document.getElementById(`p${p}Panel`).classList.toggle("active", state.currentPlayer === p);
+  }
+  document.getElementById("turnBadge").textContent =
+    state.gameOver ? "🏆 Game Over" : `⚔️ Player ${state.currentPlayer}'s Turn`;
+}
 
-    function quarterCorrectType() {
-      if (state.minute === 15) return "past";
-      if (state.minute === 45) return "to";
-      return null;
-    }
+function updateButtons() {
+  const controlKeywords = ["New Game","Play Again","Rules","Close","Continue","Got It"];
+  document.querySelectorAll("button").forEach(btn => {
+    const isControl = controlKeywords.some(k => btn.textContent.includes(k));
+    if (!isControl) btn.disabled = state.gameOver;
+  });
+}
 
-    function quarterCorrectHour() {
-      const activeHour = getHourTerritory(state.hour);
-      if (state.minute === 15) return activeHour;
-      if (state.minute === 45) return getNextHour(activeHour);
-      return null;
-    }
+// ═══════════════════════════════════════════════
+//  ANSWER MODALS
+// ═══════════════════════════════════════════════
+function showHourChoices(title, prompt, actionType) {
+  document.getElementById("answerTitle").textContent   = title;
+  document.getElementById("answerPrompt").innerHTML    = prompt;
+  const btns = Array.from({length:12}, (_,i) =>
+    `<button onclick="submitAnswer('${actionType}',${i+1})">${i+1}</button>`).join("");
+  document.getElementById("answerArea").innerHTML = `
+    <div class="choice-grid">${btns}</div>
+    <div class="answer-row"><button onclick="closeAnswerModal()">Cancel</button></div>
+  `;
+  document.getElementById("answerModal").dataset.cancelOutside = "true";
+  document.getElementById("answerModal").style.display = "flex";
+}
 
-    function startQuarterPower() {
-      ensureAudio();
-      if (state.gameOver) return;
+function showNumberInput(title, prompt, actionType) {
+  document.getElementById("answerTitle").textContent  = title;
+  document.getElementById("answerPrompt").innerHTML   = prompt;
+  document.getElementById("answerArea").innerHTML = `
+    <input class="answer-input" id="numberAnswer" type="number" min="0" max="59" inputmode="numeric"/>
+    <div class="answer-row">
+      <button onclick="closeAnswerModal()">Cancel</button>
+      <button class="primary" onclick="submitNumberAnswer('${actionType}')">Lock It In</button>
+    </div>
+  `;
+  document.getElementById("answerModal").dataset.cancelOutside = "true";
+  document.getElementById("answerModal").style.display = "flex";
+  setTimeout(() => { const el = document.getElementById("numberAnswer"); if (el) el.focus(); }, 60);
+}
 
-      if (state.quarterUsedThisTurn) {
-        showBonusFeedback(
-          "Quarter Power Already Used",
-          `<strong>${activeName()}</strong> already tried Quarter Power Up on this clock. Choose your regular move now.`,
-          `Quarter Power Up can only be attempted once per turn.`,
-          false
-        );
-        return;
-      }
+function showQuarterChoices() {
+  document.getElementById("answerTitle").textContent = "Quarter Power Up";
+  document.getElementById("answerPrompt").innerHTML  = "Pick the <strong>quarter phrase</strong> first, then the matching hour.";
+  const hourBtns = Array.from({length:12}, (_,i) =>
+    `<button onclick="chooseQuarterHour(${i+1})">${i+1}</button>`).join("");
+  document.getElementById("answerArea").innerHTML = `
+    <div class="answer-row">
+      <button class="primary" id="qpPast" onclick="chooseQuarterType('past')">Quarter Past</button>
+      <button class="primary" id="qpTo"   onclick="chooseQuarterType('to')">Quarter To</button>
+    </div>
+    <div class="choice-grid">${hourBtns}</div>
+    <p style="margin-top:10px;font-size:0.8rem;color:var(--muted);">Pick a phrase first, then pick the hour.</p>
+    <div class="answer-row"><button onclick="closeAnswerModal()">Cancel</button></div>
+  `;
+  document.getElementById("answerModal").dataset.cancelOutside = "false";
+  document.getElementById("answerModal").style.display = "flex";
+  quarterPick.type = null;
+  quarterPick.hour = null;
+}
 
-      if (state.minute !== 15 && state.minute !== 45) {
-        state.quarterUsedThisTurn = true;
-        const p = state.currentPlayer;
-        const loss = Math.min(state.players[p].energy, roundToNearest50(state.players[p].energy * 0.25));
-        state.players[p].energy -= loss;
-        playWrong();
-        render();
-        showBonusFeedback(
-          "Quarter Power Miss!",
-          `<strong>${activeName()}</strong> lost <strong>${loss} energy</strong> because the clock was not showing :15 or :45. You still get your regular turn.`,
-          quarterRevealExplanation(false),
-          false
-        );
-        return;
-      }
+function closeAnswerModal() { document.getElementById("answerModal").style.display = "none"; }
 
-      showQuarterChoices();
-    }
+document.getElementById("answerModal").addEventListener("click", function(e) {
+  if (e.target === this && this.dataset.cancelOutside === "true") closeAnswerModal();
+});
 
-    function chooseQuarterType(type) {
-      quarterPick.type = type;
-      document.getElementById("qpPast").style.filter = type === "past" ? "brightness(1.35)" : "brightness(0.75)";
-      document.getElementById("qpTo").style.filter = type === "to" ? "brightness(1.35)" : "brightness(0.75)";
-    }
+// ═══════════════════════════════════════════════
+//  QUARTER POWER
+// ═══════════════════════════════════════════════
+const quarterPick = { type: null, hour: null };
 
-    function chooseQuarterHour(hour) {
-      if (!quarterPick.type) return;
-      quarterPick.hour = hour;
-      submitQuarterAnswer();
-    }
+function quarterCorrectType() {
+  if (state.minute === 15) return "past";
+  if (state.minute === 45) return "to";
+  return null;
+}
 
-    function submitQuarterAnswer() {
-      closeAnswerModal();
-      state.quarterUsedThisTurn = true;
-      const p = state.currentPlayer;
-      const correctType = quarterCorrectType();
-      const correctHour = quarterCorrectHour();
-      const correct = quarterPick.type === correctType && quarterPick.hour === correctHour;
+function quarterCorrectHour() {
+  const ah = getHourTerritory(state.hour);
+  if (state.minute === 15) return ah;
+  if (state.minute === 45) return getNextHour(ah);
+  return null;
+}
 
-      if (correct) {
-        const bonus = roundToNearest50(state.players[p].energy * 0.25);
-        state.players[p].energy += bonus;
-        playCorrect();
-        render();
-        showBonusFeedback(
-          "Quarter Power Up!",
-          `<strong>${activeName()}</strong> identified <strong>${formatQuarterPhrase(correctType, correctHour)}</strong> and gained <strong>${bonus} energy</strong>. You still get your regular turn.`,
-          quarterRevealExplanation(true),
-          true
-        );
-      } else {
-        playWrong();
-        render();
-        showBonusFeedback(
-          "Quarter Power Miss!",
-          `<strong>${activeName()}</strong> chose <strong>${formatQuarterPhrase(quarterPick.type, quarterPick.hour)}</strong>, but the correct answer was <strong>${formatQuarterPhrase(correctType, correctHour)}</strong>. No bonus, but you still get your regular turn.`,
-          quarterRevealExplanation(true),
-          false
-        );
-      }
-    }
+function formatQuarterPhrase(type, hour) {
+  if (!type || !hour) return "no complete answer";
+  return type === "past" ? `Quarter Past ${hour}` : `Quarter To ${hour}`;
+}
 
-    function formatQuarterPhrase(type, hour) {
-      if (!type || !hour) return "no complete answer";
-      return type === "past" ? `Quarter Past ${hour}` : `Quarter To ${hour}`;
-    }
+function quarterRevealExplanation(isQuarterTime) {
+  const ah = getHourTerritory(state.hour);
+  const nh = getNextHour(ah);
+  if (!isQuarterTime) {
+    return `<strong>Actual time:</strong> ${formatTime()}<br>This is not :15 or :45, so Quarter Power Up was not available. You lose 25% of current energy for taking the risk.`;
+  }
+  if (state.minute === 15) {
+    return `<strong>Actual time:</strong> ${formatTime()}<br>The minute hand has traveled 15 ticks — that's <strong>Quarter Past ${ah}</strong>. The active territory is still ${ah}.`;
+  }
+  return `<strong>Actual time:</strong> ${formatTime()}<br>The minute hand has traveled 45 ticks, meaning 15 remain before the next hour — so this is <strong>Quarter To ${nh}</strong>. The active territory is still ${ah}.`;
+}
 
-    function quarterRevealExplanation(isQuarterTime) {
-      const activeHour = getHourTerritory(state.hour);
-      const nextHour = getNextHour(activeHour);
-      if (!isQuarterTime) {
-        return `<strong>Actual time:</strong> ${formatTime()}<br>This is not :15 or :45, so Quarter Power Up was not available. The player loses 25% of current energy for taking the risk.`;
-      }
-      if (state.minute === 15) {
-        return `<strong>Actual time:</strong> ${formatTime()}<br>The minute hand has traveled 15 ticks, so this is <strong>Quarter Past ${activeHour}</strong>. The active hour territory is still ${activeHour}.`;
-      }
-      return `<strong>Actual time:</strong> ${formatTime()}<br>The minute hand has traveled 45 ticks. That means 15 minutes remain before the next hour, so this is <strong>Quarter To ${nextHour}</strong>. The active hour territory is still ${activeHour}.`;
-    }
+function startQuarterPower() {
+  ensureAudio();
+  if (state.gameOver) return;
 
-    function showBonusFeedback(title, message, reveal, isCorrect) {
-      document.getElementById("feedbackTitle").textContent = title;
-      document.getElementById("feedbackTitle").className = `feedback-title ${isCorrect ? "correct" : "wrong"}`;
-      document.getElementById("feedbackMessage").innerHTML = message;
-      document.getElementById("revealBox").innerHTML = reveal;
-      document.getElementById("feedbackModal").style.display = "flex";
-      state.pendingNextTurn = false;
-      state.pendingVictory = null;
-    }
+  if (state.quarterUsedThisTurn) {
+    showBonusFeedback(
+      "Quarter Power Already Used",
+      `<strong>${activeName()}</strong> already tried Quarter Power Up this turn. Choose your regular move.`,
+      "Quarter Power Up can only be attempted once per turn.",
+      false
+    );
+    return;
+  }
 
-    function startAction(type) {
-      ensureAudio();
-      if (state.gameOver) return;
-      if (type === "capture") showHourChoices("Declare the Territory", "Which <strong>Hour Territory</strong> is active right now?", "capture");
-      if (type === "challenge") showHourChoices("Declare the Battle Zone", "Which <strong>Hour Territory</strong> is active right now?", "challenge");
-      if (type === "fortify") showHourChoices("Fortify Your Territory", "Which <strong>Hour Territory</strong> is active right now?", "fortify");
-      if (type === "harvest") showNumberInput("Harvest Minute Energy", "How many <strong>minute ticks</strong> has the long hand traveled from the top?", "harvest");
-      if (type === "countdown") showNumberInput("Countdown Dash", "How many <strong>minutes remain</strong> until the next hour opens?", "countdown");
-    }
-
-    function submitNumberAnswer(actionType) {
-      const raw = document.getElementById("numberAnswer").value;
-      if (raw === "") return;
-      submitAnswer(actionType, Number(raw));
-    }
-
-    function submitAnswer(actionType, answer) {
-      closeAnswerModal();
-      let correct;
-      if (actionType === "capture" || actionType === "challenge" || actionType === "fortify") correct = getHourTerritory(state.hour);
-      if (actionType === "harvest") correct = state.minute;
-      if (actionType === "countdown") correct = countdownValue();
-
-      const isCorrect = Number(answer) === correct;
-      resolveAction(actionType, Number(answer), correct, isCorrect);
-    }
-
-    function revealExplanation(actionType) {
-      const activeHour = getHourTerritory(state.hour);
-      const nextHour = getNextHour(activeHour);
-      const base = `<strong>Actual time:</strong> ${formatTime()}<br><strong>Active Hour Territory:</strong> ${activeHour}<br><strong>Minute ticks traveled:</strong> ${state.minute}<br><strong>Minutes until next hour:</strong> ${countdownValue()}`;
-      let why = "";
-      if (actionType === "capture" || actionType === "challenge" || actionType === "fortify") why = `The correct territory is <strong>${activeHour}</strong>. Even if the short hand is close to ${nextHour}, the next hour does not open until the minute hand reaches the top.`;
-      if (actionType === "harvest") why = `The long hand has traveled <strong>${state.minute}</strong> minute tick${state.minute === 1 ? "" : "s"} from the top.`;
-      if (actionType === "countdown") why = `There are <strong>${countdownValue()}</strong> minute tick${countdownValue() === 1 ? "" : "s"} left before the next hour opens.`;
-      return `${base}<br><br>${why}`;
-    }
-
-    function resolveAction(actionType, answer, correct, isCorrect) {
-      if (isCorrect) playCorrect(); else playWrong();
-
-      const p = state.currentPlayer;
-      const opponent = p === 1 ? 2 : 1;
-      const activeHour = getHourTerritory(state.hour);
-      let title = isCorrect ? "Correct!" : "Not Quite";
-      let message = "";
-      let shouldCheckWin = false;
-
-      if (!isCorrect) {
-        message = `<strong>${activeName()}</strong> answered <strong>${answer}</strong>, but the correct answer was <strong>${correct}</strong>. The move does not work this turn.`;
-      } else if (actionType === "harvest") {
-        let gain = 100 + (state.minute * 10);
-        state.players[p].energy += gain;
-        message = `<strong>${activeName()}</strong> read the minute hand correctly and harvested <strong>${gain} energy</strong>. The farther the minute hand travels after the hour, the more energy it creates.`;
-      } else if (actionType === "countdown") {
-        let gain = 150 + (countdownValue() * 15);
-        state.players[p].energy += gain;
-        message = `<strong>${activeName()}</strong> nailed the Countdown Dash and earned <strong>${gain} energy</strong>. This harder move pays about 1.5 times compared to harvesting minutes after the hour.`;
-      } else if (actionType === "capture") {
-        if (state.territories[activeHour] === p) {
-          message = `You already control Territory ${activeHour}. Try fortifying it if you want to protect it.`;
-        } else if (state.players[p].energy < 1500) {
-          message = `You need 1500 energy to capture Territory ${activeHour}. Build more energy first.`;
-        } else {
-          state.players[p].energy -= 1500;
-          state.territories[activeHour] = Number(p);
-          state.fortified[activeHour] = false;
-          if (isLateHour()) state.players[p].lateCaptures++;
-          message = `<strong>${activeName()}</strong> captured <strong>${isLateHour() ? "Late " : ""}${activeHour} Territory</strong>!`;
-          shouldCheckWin = true;
-        }
-      } else if (actionType === "challenge") {
-        if (state.territories[activeHour] !== opponent) {
-          message = `You read the active territory correctly, but Player ${opponent} does not control Territory ${activeHour}. No challenge available.`;
-        } else if (state.players[p].energy < 2200) {
-          message = `You need 2200 energy to challenge Territory ${activeHour}.`;
-        } else {
-          state.players[p].energy -= 2200;
-          if (state.fortified[activeHour]) {
-            state.fortified[activeHour] = false;
-            message = `<strong>${activeName()}</strong> challenged Territory ${activeHour} and broke its shield. Player ${opponent} still controls the territory.`;
-          } else {
-            state.territories[activeHour] = 0;
-            message = `<strong>${activeName()}</strong> challenged Territory ${activeHour} and knocked it back to open territory.`;
-          }
-        }
-      } else if (actionType === "fortify") {
-        if (state.territories[activeHour] !== p) {
-          message = `You read the active territory correctly, but you can only fortify Territory ${activeHour} if you already control it.`;
-        } else if (state.fortified[activeHour]) {
-          message = `Territory ${activeHour} is already fortified.`;
-        } else if (state.players[p].energy < 1000) {
-          message = `You need 1000 energy to fortify Territory ${activeHour}.`;
-        } else {
-          state.players[p].energy -= 1000;
-          state.fortified[activeHour] = true;
-          message = `<strong>${activeName()}</strong> fortified Territory ${activeHour}. The next successful challenge will break the shield instead of removing control.`;
-        }
-      }
-
-      render();
-      showFeedback(title, message, revealExplanation(actionType), isCorrect, shouldCheckWin);
-    }
-
-    function showFeedback(title, message, reveal, isCorrect, shouldCheckWin) {
-      document.getElementById("feedbackTitle").textContent = title;
-      document.getElementById("feedbackTitle").className = `feedback-title ${isCorrect ? "correct" : "wrong"}`;
-      document.getElementById("feedbackMessage").innerHTML = message;
-      document.getElementById("revealBox").innerHTML = reveal;
-      document.getElementById("feedbackModal").style.display = "flex";
-
-      state.pendingNextTurn = true;
-      if (shouldCheckWin) {
-        const winner = getWinner();
-        if (winner) {
-          state.gameOver = true;
-          state.pendingNextTurn = false;
-          state.pendingVictory = winner;
-        }
-      }
-    }
-
-    function continueAfterFeedback() {
-      document.getElementById("feedbackModal").style.display = "none";
-
-      if (state.pendingVictory) {
-        showVictory(state.pendingVictory);
-        state.pendingVictory = null;
-        return;
-      }
-
-      if (!state.gameOver && state.pendingNextTurn) nextTurn();
-    }
-
-    function getWinner() {
-      for (let p = 1; p <= 2; p++) {
-        const territoryCount = Object.values(state.territories).filter(owner => Number(owner) === p).length;
-        if (territoryCount >= 4 && state.players[p].lateCaptures >= 1) return p;
-      }
-      return null;
-    }
-
-    function showVictory(playerNumber) {
-      const territoryCount = Object.values(state.territories).filter(owner => Number(owner) === playerNumber).length;
-      document.getElementById("winnerText").textContent = `Player ${playerNumber} Wins!`;
-      document.getElementById("winnerSubtext").innerHTML = `Player ${playerNumber} controls <strong>${territoryCount}</strong> territories and made a Late-Hour Capture.<br>Victory belongs to the player who mastered the clock!`;
-      buildConfetti();
-      document.getElementById("winnerOverlay").style.display = "flex";
-      playVictoryMusic();
-    }
-
-    function buildConfetti() {
-      const box = document.getElementById("confetti");
-      const colors = ["#ffd166", "#20d7ff", "#ff4dd8", "#7bed9f", "#ffffff", "#ff5c5c"];
-      box.innerHTML = "";
-      for (let i = 0; i < 70; i++) {
-        const s = document.createElement("span");
-        s.style.left = Math.random() * 100 + "%";
-        s.style.background = colors[i % colors.length];
-        s.style.animationDuration = (2.2 + Math.random() * 2.8) + "s";
-        s.style.animationDelay = (Math.random() * 1.6) + "s";
-        box.appendChild(s);
-      }
-    }
-
-    function nextTurn() {
-      if (state.gameOver) return;
-      state.currentPlayer = state.currentPlayer === 1 ? 2 : 1;
-      state.quarterUsedThisTurn = false;
-      randomTime();
-      render();
-    }
-
-    function newGame() {
-      ensureAudio();
-      state.currentPlayer = 1;
-      state.gameOver = false;
-      state.pendingNextTurn = true;
-      state.pendingVictory = null;
-      state.quarterUsedThisTurn = false;
-      state.players = { 1: { energy: 500, lateCaptures: 0 }, 2: { energy: 500, lateCaptures: 0 } };
-      for (let h = 1; h <= 12; h++) {
-        state.territories[h] = 0;
-        state.blocked[h] = 0;
-        state.fortified[h] = false;
-      }
-      document.getElementById("winnerOverlay").style.display = "none";
-      document.getElementById("feedbackModal").style.display = "none";
-      document.getElementById("answerModal").style.display = "none";
-      randomTime();
-      render();
-    }
-
-    document.getElementById("answerModal").addEventListener("click", function(event) {
-      if (event.target === this && this.dataset.cancelOutside === "true") {
-        closeAnswerModal();
-      }
-    });
-
-    randomTime();
+  if (state.minute !== 15 && state.minute !== 45) {
+    state.quarterUsedThisTurn = true;
+    const p    = state.currentPlayer;
+    const loss = Math.min(state.players[p].energy, roundToNearest50(state.players[p].energy * 0.25));
+    state.players[p].energy -= loss;
+    playWrong();
     render();
-  </script>
+    showBonusFeedback(
+      "Quarter Power Miss!",
+      `<strong>${activeName()}</strong> lost <strong>${loss} energy</strong> — the clock wasn't showing :15 or :45. You still get your regular turn.`,
+      quarterRevealExplanation(false),
+      false
+    );
+    return;
+  }
+
+  showQuarterChoices();
+}
+
+function chooseQuarterType(type) {
+  quarterPick.type = type;
+  document.getElementById("qpPast").style.filter = type === "past" ? "brightness(1.35)" : "brightness(0.65)";
+  document.getElementById("qpTo").style.filter   = type === "to"   ? "brightness(1.35)" : "brightness(0.65)";
+}
+
+function chooseQuarterHour(hour) {
+  if (!quarterPick.type) return;
+  quarterPick.hour = hour;
+  submitQuarterAnswer();
+}
+
+function submitQuarterAnswer() {
+  closeAnswerModal();
+  state.quarterUsedThisTurn = true;
+  const p           = state.currentPlayer;
+  const correctType = quarterCorrectType();
+  const correctHour = quarterCorrectHour();
+  const correct     = quarterPick.type === correctType && quarterPick.hour === correctHour;
+
+  if (correct) {
+    const bonus = roundToNearest50(state.players[p].energy * 0.25);
+    state.players[p].energy += bonus;
+    playCorrect();
+    render();
+    showBonusFeedback(
+      "⚡ Quarter Power Up!",
+      `<strong>${activeName()}</strong> identified <strong>${formatQuarterPhrase(correctType,correctHour)}</strong> and gained <strong>${bonus} energy</strong>! You still get your regular turn.`,
+      quarterRevealExplanation(true),
+      true
+    );
+  } else {
+    playWrong();
+    render();
+    showBonusFeedback(
+      "Quarter Power Miss!",
+      `<strong>${activeName()}</strong> chose <strong>${formatQuarterPhrase(quarterPick.type,quarterPick.hour)}</strong>, but the correct answer was <strong>${formatQuarterPhrase(correctType,correctHour)}</strong>. No bonus — but you still get your regular turn.`,
+      quarterRevealExplanation(true),
+      false
+    );
+  }
+}
+
+function showBonusFeedback(title, message, reveal, isCorrect) {
+  document.getElementById("feedbackTitle").textContent   = title;
+  document.getElementById("feedbackTitle").className     = `feedback-title ${isCorrect ? "correct" : "wrong"}`;
+  document.getElementById("feedbackMessage").innerHTML   = message;
+  document.getElementById("revealBox").innerHTML         = reveal;
+  document.getElementById("feedbackModal").style.display = "flex";
+  state.pendingNextTurn = false;
+  state.pendingVictory  = null;
+}
+
+// ═══════════════════════════════════════════════
+//  ACTIONS
+// ═══════════════════════════════════════════════
+function startAction(type) {
+  ensureAudio();
+  if (state.gameOver) return;
+  if (type === "capture")   showHourChoices("Declare the Territory",   "Which <strong>Hour Territory</strong> is active right now?", "capture");
+  if (type === "challenge") showHourChoices("Declare the Battle Zone",  "Which <strong>Hour Territory</strong> is active right now?", "challenge");
+  if (type === "fortify")   showHourChoices("Fortify Your Territory",   "Which <strong>Hour Territory</strong> is active right now?", "fortify");
+  if (type === "harvest")   showNumberInput("Harvest Minute Energy",    "How many <strong>minute ticks</strong> has the long hand traveled from the top?", "harvest");
+  if (type === "countdown") showNumberInput("Countdown Dash",           "How many <strong>minutes remain</strong> until the next hour opens?", "countdown");
+}
+
+function submitNumberAnswer(actionType) {
+  const raw = document.getElementById("numberAnswer").value;
+  if (raw === "") return;
+  submitAnswer(actionType, Number(raw));
+}
+
+function submitAnswer(actionType, answer) {
+  closeAnswerModal();
+  let correct;
+  if (["capture","challenge","fortify"].includes(actionType)) correct = getHourTerritory(state.hour);
+  if (actionType === "harvest")   correct = state.minute;
+  if (actionType === "countdown") correct = countdownValue();
+  resolveAction(actionType, Number(answer), correct, Number(answer) === correct);
+}
+
+function revealExplanation(actionType) {
+  const ah = getHourTerritory(state.hour);
+  const nh = getNextHour(ah);
+  const base = `<strong>Actual time:</strong> ${formatTime()}<br>
+                <strong>Active Hour Territory:</strong> ${ah}<br>
+                <strong>Minute ticks traveled:</strong> ${state.minute}<br>
+                <strong>Minutes until next hour:</strong> ${countdownValue()}`;
+  let why = "";
+  if (["capture","challenge","fortify"].includes(actionType))
+    why = `The correct territory is <strong>${ah}</strong>. Even if the hour hand looks close to ${nh}, the next hour doesn't open until the minute hand reaches the top.`;
+  if (actionType === "harvest")
+    why = `The long hand has traveled <strong>${state.minute}</strong> minute tick${state.minute===1?"":"s"} from the top.`;
+  if (actionType === "countdown")
+    why = `There are <strong>${countdownValue()}</strong> minute tick${countdownValue()===1?"":"s"} remaining before the next hour opens.`;
+  return `${base}<br><br>${why}`;
+}
+
+function resolveAction(actionType, answer, correct, isCorrect) {
+  if (isCorrect) playCorrect(); else playWrong();
+
+  const p        = state.currentPlayer;
+  const opponent = p === 1 ? 2 : 1;
+  const ah       = getHourTerritory(state.hour);
+  let title          = isCorrect ? "✅ Correct!" : "❌ Not Quite";
+  let message        = "";
+  let shouldCheckWin = false;
+
+  if (!isCorrect) {
+    message = `<strong>${activeName()}</strong> answered <strong>${answer}</strong>, but the correct answer was <strong>${correct}</strong>. The move fails this turn.`;
+  } else if (actionType === "harvest") {
+    const gain = 100 + state.minute * 10;
+    state.players[p].energy += gain;
+    message = `<strong>${activeName()}</strong> read the minute hand correctly and harvested <strong>${gain} energy</strong>!`;
+  } else if (actionType === "countdown") {
+    const gain = 150 + countdownValue() * 15;
+    state.players[p].energy += gain;
+    message = `<strong>${activeName()}</strong> nailed the Countdown Dash and earned <strong>${gain} energy</strong>!`;
+  } else if (actionType === "capture") {
+    if (state.territories[ah] === p) {
+      message = `You already control Territory ${ah}. Try fortifying it instead.`;
+    } else if (state.players[p].energy < 1500) {
+      message = `You need 1500 energy to capture Territory ${ah}. Build more energy first.`;
+    } else {
+      state.players[p].energy  -= 1500;
+      state.territories[ah]     = Number(p);
+      state.fortified[ah]       = false;
+      if (isLateHour()) state.players[p].lateCaptures++;
+      message = `<strong>${activeName()}</strong> captured <strong>${isLateHour() ? "Late " : ""}Territory ${ah}</strong>! 🏴`;
+      shouldCheckWin = true;
+    }
+  } else if (actionType === "challenge") {
+    if (state.territories[ah] !== opponent) {
+      message = `You read the territory correctly, but Player ${opponent} doesn't control Territory ${ah}. No challenge available.`;
+    } else if (state.players[p].energy < 2200) {
+      message = `You need 2200 energy to challenge Territory ${ah}.`;
+    } else {
+      state.players[p].energy -= 2200;
+      if (state.fortified[ah]) {
+        state.fortified[ah] = false;
+        message = `<strong>${activeName()}</strong> challenged Territory ${ah} and <strong>broke the shield</strong>! Player ${opponent} still holds the territory.`;
+      } else {
+        state.territories[ah] = 0;
+        message = `<strong>${activeName()}</strong> challenged Territory ${ah} and knocked it to <strong>open territory</strong>! ⚔️`;
+      }
+    }
+  } else if (actionType === "fortify") {
+    if (state.territories[ah] !== p) {
+      message = `You can only fortify a territory you already control. Territory ${ah} isn't yours.`;
+    } else if (state.fortified[ah]) {
+      message = `Territory ${ah} is already fortified.`;
+    } else if (state.players[p].energy < 1000) {
+      message = `You need 1000 energy to fortify Territory ${ah}.`;
+    } else {
+      state.players[p].energy -= 1000;
+      state.fortified[ah]      = true;
+      message = `<strong>${activeName()}</strong> fortified Territory ${ah}! 🛡️ The next Challenge will break the shield instead of removing control.`;
+    }
+  }
+
+  render();
+  showFeedback(title, message, revealExplanation(actionType), isCorrect, shouldCheckWin);
+}
+
+function showFeedback(title, message, reveal, isCorrect, shouldCheckWin) {
+  document.getElementById("feedbackTitle").textContent   = title;
+  document.getElementById("feedbackTitle").className     = `feedback-title ${isCorrect ? "correct" : "wrong"}`;
+  document.getElementById("feedbackMessage").innerHTML   = message;
+  document.getElementById("revealBox").innerHTML         = reveal;
+  document.getElementById("feedbackModal").style.display = "flex";
+
+  state.pendingNextTurn = true;
+  if (shouldCheckWin) {
+    const winner = getWinner();
+    if (winner) {
+      state.gameOver        = true;
+      state.pendingNextTurn = false;
+      state.pendingVictory  = winner;
+    }
+  }
+}
+
+function continueAfterFeedback() {
+  document.getElementById("feedbackModal").style.display = "none";
+  if (state.pendingVictory) {
+    showVictory(state.pendingVictory);
+    state.pendingVictory = null;
+    return;
+  }
+  if (!state.gameOver && state.pendingNextTurn) nextTurn();
+}
+
+// ═══════════════════════════════════════════════
+//  WIN / LOSS
+// ═══════════════════════════════════════════════
+function getWinner() {
+  for (let p = 1; p <= 2; p++) {
+    const tc = Object.values(state.territories).filter(o => Number(o) === p).length;
+    if (tc >= 4 && state.players[p].lateCaptures >= 1) return p;
+  }
+  return null;
+}
+
+function showVictory(playerNumber) {
+  const tc = Object.values(state.territories).filter(o => Number(o) === playerNumber).length;
+  document.getElementById("winnerText").textContent   = `Player ${playerNumber} Wins! 🏆`;
+  document.getElementById("winnerSubtext").innerHTML  =
+    `Player ${playerNumber} controls <strong>${tc}</strong> territories with a Late-Hour Capture.<br>Victory goes to the master of the clock!`;
+  buildConfetti();
+  document.getElementById("winnerOverlay").style.display = "flex";
+  playVictoryMusic();
+}
+
+function buildConfetti() {
+  const box    = document.getElementById("confetti");
+  const colors = ["#ffd166","#00e5ff","#ff2cf0","#39ff8a","#ffffff","#ff4455"];
+  box.innerHTML = "";
+  for (let i = 0; i < 65; i++) {
+    const s = document.createElement("span");
+    s.style.cssText = `left:${Math.random()*100}%;background:${colors[i%colors.length]};animation-duration:${2.2+Math.random()*2.6}s;animation-delay:${Math.random()*1.5}s;`;
+    box.appendChild(s);
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  TURN / NEW GAME
+// ═══════════════════════════════════════════════
+function nextTurn() {
+  if (state.gameOver) return;
+  state.currentPlayer       = state.currentPlayer === 1 ? 2 : 1;
+  state.quarterUsedThisTurn = false;
+  randomTime();
+  render();
+}
+
+function newGame() {
+  ensureAudio();
+  state.currentPlayer       = 1;
+  state.gameOver            = false;
+  state.pendingNextTurn     = true;
+  state.pendingVictory      = null;
+  state.quarterUsedThisTurn = false;
+  state.players = { 1: { energy: 500, lateCaptures: 0 }, 2: { energy: 500, lateCaptures: 0 } };
+  for (let h = 1; h <= 12; h++) { state.territories[h] = 0; state.fortified[h] = false; }
+  ["winnerOverlay","feedbackModal","answerModal"].forEach(id =>
+    document.getElementById(id).style.display = "none");
+  randomTime();
+  render();
+}
+
+function openHowToPlay()  { document.getElementById("howModal").style.display = "flex"; }
+function closeHowToPlay() { document.getElementById("howModal").style.display = "none"; }
+
+// ═══════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════
+randomTime();
+render();
+</script>
 </body>
 </html>
