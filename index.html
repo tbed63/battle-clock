@@ -170,6 +170,28 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
 @keyframes corruptPulse{from{opacity:.78}to{opacity:1}}
 @keyframes threatPulse{from{opacity:.65}to{opacity:1}}
 
+
+/* ========================= */
+/* BATTLE MOVE BUTTON ORDER  */
+/* ========================= */
+/* These order values arrange the 6 move buttons inside the 2-column action grid. */
+/* Two Player Mode layout: Harvest, Countdown, Capture, Fortify, Quarter Power, Challenge. */
+.action-harvest{order:1;}
+.action-countdown{order:2;}
+.action-capture{order:3;}
+.action-fortify-rescue{order:4;}
+.action-quarter{order:5;}
+.action-challenge-cleanse{order:6;}
+
+/* One Player Mode layout: Harvest, Countdown, Capture, Cleanse, Quarter Power, Rescue. */
+/* In solo mode, the Cleanse button moves to row 2 right, and Rescue moves to row 3 right. */
+.solo-mode .action-harvest{order:1;}
+.solo-mode .action-countdown{order:2;}
+.solo-mode .action-capture{order:3;}
+.solo-mode .action-challenge-cleanse{order:4;}
+.solo-mode .action-quarter{order:5;}
+.solo-mode .action-fortify-rescue{order:6;}
+
 </style>
 </head>
 <body>
@@ -256,12 +278,24 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
     <section class="actions-panel">
       <div class="panel-title">Choose Your Battle Move</div>
       <div class="actions">
-        <button class="quarter" onclick="startQuarterPower()"><span class="btn-label">&#9889; Quarter Power</span><span class="btn-sub">+/-25% Energy</span></button>
-        <button class="green" onclick="startAction('harvest')"><span class="btn-label">&#127807; Harvest Minute</span><span class="btn-sub">Earns Energy</span></button>
-        <button class="dash" onclick="startAction('countdown')"><span class="btn-label">&#128168; Countdown Dash</span><span class="btn-sub">Earns 1.5x</span></button>
-        <button class="blue" onclick="startAction('capture')"><span class="btn-label">&#127988; Capture Hour</span><span class="btn-sub">Cost: 1500</span></button>
-        <button class="danger" id="challengeCleanseBtn" onclick="startChallengeOrCleanse()"><span class="btn-label" id="challengeCleanseLabel">&#9876; Challenge</span><span class="btn-sub" id="challengeCleanseSub">Cost: 400</span></button>
-        <button class="shield" onclick="startAction('fortify')"><span class="btn-label">&#128737; Fortify</span><span class="btn-sub">Cost: 500</span></button>
+        <!-- ROW 1 LEFT: Harvest Minute in both One Player and Two Player modes. -->
+        <button class="green action-harvest" onclick="startAction('harvest')"><span class="btn-label">&#127807; Harvest Minute</span><span class="btn-sub">Earns Energy</span></button>
+
+        <!-- ROW 1 RIGHT: Countdown Dash in both One Player and Two Player modes. -->
+        <button class="dash action-countdown" onclick="startAction('countdown')"><span class="btn-label">&#128168; Countdown Dash</span><span class="btn-sub">Earns 1.5x</span></button>
+
+        <!-- ROW 2 LEFT: Capture Hour in both One Player and Two Player modes. -->
+        <button class="blue action-capture" onclick="startAction('capture')"><span class="btn-label">&#127988; Capture Hour</span><span class="btn-sub">Cost: 1500</span></button>
+
+        <!-- TWO PLAYER ROW 2 RIGHT / ONE PLAYER ROW 3 RIGHT: Fortify becomes Rescue in One Player Mode. -->
+        <button class="shield action-fortify-rescue" onclick="startAction('fortify')"><span class="btn-label">&#128737; Fortify</span><span class="btn-sub">Cost: 500</span></button>
+
+        <!-- ROW 3 LEFT: Quarter Power in both One Player and Two Player modes. -->
+        <button class="quarter action-quarter" onclick="startQuarterPower()"><span class="btn-label">&#9889; Quarter Power</span><span class="btn-sub">+/-25% Energy</span></button>
+
+        <!-- TWO PLAYER ROW 3 RIGHT / ONE PLAYER ROW 2 RIGHT: Challenge becomes Cleanse in One Player Mode. -->
+        <!-- TWO PLAYER CHALLENGE / ONE PLAYER CLEANSE BUTTON: In Two Player Mode this button costs 400 energy. In One Player Mode it becomes Cleanse. -->
+        <button class="danger action-challenge-cleanse" id="challengeCleanseBtn" onclick="startChallengeOrCleanse()"><span class="btn-label" id="challengeCleanseLabel">&#9876; Challenge</span><span class="btn-sub" id="challengeCleanseSub">Cost: 400</span><!-- Two Player Challenge visible cost. --></button>
       </div>
     </section>
     <section class="kids-art-panel">
@@ -314,6 +348,7 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
       <li><strong>Harvest Minute:</strong> Type how many minute ticks the long hand has traveled. More = more energy.</li>
       <li><strong>Countdown Dash:</strong> Type minutes remaining until next hour. Pays ~1.5x more than Harvest.</li>
       <li><strong>Capture Hour:</strong> Choose the active territory. Costs 1500 energy in Two Player Mode and 1000 energy in One Player Mode.</li>
+      <!-- RULES TEXT: Two Player Challenge costs 400 energy. -->
       <li><strong>Challenge:</strong> In Two Player Mode, attack opponent\'s active territory. Costs 400 energy. Breaks shield or removes control.</li>
       <li><strong>Cleanse:</strong> In One Player Mode, remove corruption from the active territory. Costs 500 energy and does not use up your regular turn.</li>
       <li><strong>Fortify / Rescue:</strong> In Two Player Mode, Fortify shields your active territory for 500 energy. In One Player Mode, this becomes Rescue: if the active hour is in danger, rescue it for 300 energy and still take your regular turn.</li>
@@ -417,6 +452,7 @@ function updateModeUI(){
     if(p2TerritoriesLabel)p2TerritoriesLabel.textContent="Territories";
     if(p2LateLabel)p2LateLabel.textContent="Late Caps";
     document.getElementById("challengeCleanseLabel").innerHTML="&#9876; Challenge";
+    // TWO PLAYER MODE UI: Show the correct Challenge cost on the action button.
     document.getElementById("challengeCleanseSub").textContent="Cost: 400";
     const fortBtn=document.querySelector("button.shield .btn-label");
     const fortSub=document.querySelector("button.shield .btn-sub");
@@ -643,7 +679,9 @@ function resolveAction(atype,answer,correct,isCorrect){
   }
   else if(atype==="challenge"){
     if(state.territories[ah]!==opp){msg="Player "+opp+" doesn't control Territory "+ah+". No challenge.";snd=playWrong;}
+    // CHALLENGE COST CHECK: Player must have at least 400 energy to challenge an opponent territory.
     else if(state.players[p].energy<400){msg="Need 400 energy to challenge Territory "+ah+".";snd=playWrong;}
+    // CHALLENGE PAYMENT: Subtract 400 energy after a valid Challenge is chosen.
     else{state.players[p].energy-=400;snd=playChallenge;if(state.fortified[ah]){state.fortified[ah]=false;msg="<strong>"+activeName()+"</strong> broke the shield on Territory "+ah+"! Player "+opp+" still holds it.";}else{state.territories[ah]=0;msg="<strong>"+activeName()+"</strong> knocked Territory "+ah+" to open territory!";}}
   }
   else if(atype==="cleanse"){
