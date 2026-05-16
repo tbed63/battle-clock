@@ -68,9 +68,9 @@
     .brand { display: flex; flex-direction: column; gap: 2px; }
 
     .title-logo {
-      height: 90px;
+      height: 180px;
       width: auto;
-      max-width: 420px;
+      max-width: 600px;
       object-fit: contain;
       object-position: left center;
       filter: drop-shadow(0 4px 14px rgba(0,0,0,0.65));
@@ -210,13 +210,13 @@
     /* ZoodleBug branding — fixed bottom-left */
     .zoodlebug-badge {
       position: fixed;
-      bottom: 14px;
-      left: 14px;
+      bottom: 28px;
+      left: 28px;
       z-index: 10;
       pointer-events: none;
     }
     .zoodlebug-badge img {
-      width: 90px;
+      width: 180px;
       height: auto;
       display: block;
       filter: drop-shadow(0 2px 8px rgba(0,0,0,0.7));
@@ -433,38 +433,39 @@
        MOBILE  (<= 699px)
     ═══════════════════════════════════ */
     @media (max-width: 699px) {
-      html, body { height: auto; overflow-y: auto; overflow-x: hidden; }
+      html, body { height: 100%; overflow: hidden; }
 
       .app {
         display: flex;
         flex-direction: column;
         width: 100%;
-        height: auto;
-        min-height: 100vh;
-        overflow: visible;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
       }
 
       .board-panel {
         display: flex;
         flex-direction: column;
-        padding: 10px 12px 4px;
-        gap: 6px;
+        padding: 6px 10px 2px;
+        gap: 4px;
         flex-shrink: 0;
       }
 
       .topbar { flex-wrap: wrap; gap: 8px; }
 
-      .title-logo     { height: 60px; max-width: 280px; }
-      .title-fallback { font-size: 2.2rem; }
+      .title-logo     { height: 38px; max-width: 200px; }
+      .title-fallback { font-size: 1.6rem; }
 
-      .top-buttons .btn-sm { font-size: 0.72rem; padding: 7px 10px; min-height: 34px; }
+      .top-buttons .btn-sm { font-size: 0.65rem; padding: 5px 8px; min-height: 28px; border-radius: 8px; }
 
-      /* Clock: square, sized to viewport */
+      /* Clock: compact on mobile */
       .clock-zone {
         width: 100%;
-        height: min(88vw, 340px);
+        height: min(44vw, 210px);
         flex-shrink: 0;
         padding: 2px;
+        position: relative;
       }
 
       svg#clock {
@@ -479,34 +480,54 @@
         flex-direction: column;
         border-left: none;
         border-top: 1px solid rgba(255,255,255,0.06);
-        padding: 10px 12px 20px;
-        gap: 10px;
-        overflow: visible;
-        flex-shrink: 0;
+        padding: 6px 10px 8px;
+        gap: 6px;
+        overflow: hidden;
+        flex: 1;
+        min-height: 0;
       }
 
-      .player       { padding: 9px 10px; border-radius: 12px; }
-      .player h2    { font-size: 1.05rem; margin-bottom: 5px; }
-      .stat         { font-size: 0.76rem; }
-      .stat strong  { font-size: 0.84rem; }
+      .player       { padding: 6px 8px; border-radius: 10px; }
+      .player h2    { font-size: 0.88rem; margin-bottom: 3px; }
+      .stat         { font-size: 0.65rem; margin: 2px 0; }
+      .stat strong  { font-size: 0.72rem; }
 
-      .turn-badge   { font-size: 0.9rem; padding: 4px 10px; }
-      .panel-title  { font-size: 0.95rem; }
+      .turn-badge   { font-size: 0.78rem; padding: 3px 8px; }
+      .panel-title  { font-size: 0.82rem; padding-bottom: 3px; }
 
-      /* Actions auto-height on mobile */
-      .actions-panel { overflow: visible; }
-      .actions { grid-template-rows: repeat(3, auto); gap: 7px; }
+      /* Actions fill remaining space */
+      .actions-panel { overflow: hidden; flex: 1; min-height: 0; display: grid; grid-template-rows: auto 1fr; gap: 4px; }
+      .actions { grid-template-rows: repeat(3, 1fr); gap: 5px; min-height: 0; }
 
       .actions button {
-        height: auto;
-        min-height: 56px;
-        padding: 9px 6px;
+        height: 100%;
+        min-height: 0;
+        padding: 5px 4px;
       }
 
-      .btn-label { font-size: 0.75rem; }
-      .btn-sub   { font-size: 0.62rem; }
+      .btn-label { font-size: 0.68rem; }
+      .btn-sub   { font-size: 0.56rem; }
 
-      .kids-art-panel { height: 120px; flex-shrink: 0; }
+      .kids-art-panel { display: none; }
+
+      /* Kids art overlaid in clock zone on mobile */
+      .clock-zone .kids-art-mobile {
+        display: flex !important;
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        height: 90%;
+        width: auto;
+        pointer-events: none;
+        z-index: 2;
+      }
+      .clock-zone .kids-art-mobile img {
+        height: 100%;
+        width: auto;
+        object-fit: contain;
+        object-position: right bottom;
+        display: block;
+      }
 
       /* Modals slide up from bottom on mobile */
       .modal, .winner, .how-modal {
@@ -524,6 +545,11 @@
       .choice-grid   { gap: 6px; }
       .choice-grid button { font-size: 1.1rem; padding: 10px 2px; }
       .answer-input  { font-size: 2rem; padding: 10px; }
+    }
+
+    @media (max-width: 699px) {
+      .zoodlebug-badge img { width: 80px; }
+      .zoodlebug-badge { bottom: 12px; left: 12px; }
     }
 
     /* Very small phones */
@@ -561,6 +587,9 @@
 
     <div class="clock-zone">
       <svg id="clock" viewBox="0 0 700 700" aria-label="Battle Clock game board"></svg>
+      <div class="kids-art-mobile" style="display:none">
+        <img src="battle-clock-kids-clean.png" alt="Two kids celebrating Battle Clock" />
+      </div>
     </div>
   </main>
 
