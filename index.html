@@ -211,6 +211,7 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
 
     <button class="primary" style="width:100%;font-size:1.1rem;padding:14px;" onclick="startGame()">&#9876; Begin Battle!</button>
   </div>
+
   <div class="ss-zoodle">
     <img src="zoodlebug-game.png" alt="A ZoodleBug Game" onerror="this.parentElement.style.display='none'"/>
   </div>
@@ -486,39 +487,57 @@ function applyExactHourShield(h){
   state.pendingNextTurn=false;
 }
 
-function startGame(){
-  ensureAudio();
-  loadZoodle();
+function startGame(){ensureAudio();loadZoodle();state.mode=document.getElementById("modeSel").value;state.level=parseInt(document.getElementById("levelSel").value,10)||1;state.levelConfig=levelConfigs[state.level]||levelConfigs[1];if(!isSolo())state.turnDuration=parseInt(document.getElementById("timerSel").value,10);document.getElementById("startScreen").style.display="none";document.getElementById("mainApp").style.display="";document.getElementById("kidsStrip").style.display=window.innerWidth<=699?"flex":"none";resetState();updateModeUI();randomTimeForMode();render();if(isSolo()){stopTimer();checkExactHourEvent();}else{startTimer();checkExactHourEvent();}}
+function goToStart(){stopTimer();closeAnswerPanel();closeFeedbackPanel();document.getElementById("winnerOverlay").style.display="none";document.getElementById("howModal").style.display="none";document.getElementById("mainApp").style.display="none";document.getElementById("startScreen").style.display="flex";}
+function resetState(){state.currentPlayer=1;state.gameOver=false;state.pendingNextTurn=true;state.pendingVictory=null;state.quarterUsedThisTurn=false;state.exactHourHandledThisTurn=false;state.pendingBonusAction=false;state.justCapturedHour=null;state.protectedThreatsThisTurn=[];state.quarterSuccesses=0;state.stability=state.levelConfig.stability;state.players={1:{energy:isSolo()?1000:500,lateCaptures:0},2:{energy:500,lateCaptures:0}};for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.threatAge[h]=0;state.corrupted[h]=false;}if(isSolo())spawnThreat();}
+function openAnswerPanel(){document.getElementById("answerPanel").classList.add("open");document.getElementById("feedbackPanel").classList.remove("open");}
+function closeAnswerPanel(){document.getElementById("answerPanel").classList.remove("open");}
+function openFeedbackPanel(){document.getElementById("feedbackPanel").classList.add("open");document.getElementById("answerPanel").classList.remove("open");}
+function closeFeedbackPanel(){document.getElementById("feedbackPanel").classList.remove("open");}
+window.addEventListener("resize",()=>{const s=document.getElementById("kidsStrip");if(s&&document.getElementById("mainApp").style.display!=="none")s.style.display=window.innerWidth<=699?"flex":"none";});
+function polar(cx,cy,r,deg){const a=(deg-90)*Math.PI/180;return{x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)};}
+function sectorPath(cx,cy,rIn,rOut,s,e){const p1=polar(cx,cy,rOut,s),p2=polar(cx,cy,rOut,e),p3=polar(cx,cy,rIn,e),p4=polar(cx,cy,rIn,s),lg=(e-s)>180?1:0;return"M "+p1.x+" "+p1.y+" A "+rOut+" "+rOut+" 0 "+lg+" 1 "+p2.x+" "+p2.y+" L "+p3.x+" "+p3.y+" A "+rIn+" "+rIn+" 0 "+lg+" 0 "+p4.x+" "+p4.y+" Z";}
+function hourToAngle(h){return(h%12)*30;}
+function getHourTerritory(h){return h===0?12:h;}
+function getNextHour(h){return h===12?1:h+1;}
+function isLateHour(){return state.minute>=45;}
+function countdownValue(){return state.minute===0?0:60-state.minute;}
+function randomTime(){randomTimeForMode();}
+function formatTime(){return state.hour+":"+(state.minute<10?"0":"")+state.minute;}
+function activeName(){return"Player "+state.currentPlayer;}
+function roundToNearest50(v){return Math.round(v/50)*50;}
 
-  const modeSel=document.getElementById("modeSel");
-  const levelSel=document.getElementById("levelSel");
-  const timerSel=document.getElementById("timerSel");
-
-  state.mode=modeSel?modeSel.value:"solo";
-  state.level=levelSel?parseInt(levelSel.value,10)||1:1;
-  state.levelConfig=levelConfigs[state.level]||levelConfigs[1];
-
-  if(!isSolo()){
-    state.turnDuration=timerSel?parseInt(timerSel.value,10)||60:60;
+function render(){
+  const svg=document.getElementById("clock"),cx=350,cy=350;
+  let h="<defs><radialGradient id='fg' cx='50%' cy='42%' r='62%'><stop offset='0%' stop-color='#1e1e3a'/><stop offset='100%' stop-color='#080812'/></radialGradient><filter id='glow' x='-30%' y='-30%' width='160%' height='160%'><feGaussianBlur stdDeviation='4' result='b'/><feMerge><feMergeNode in='b'/><feMergeNode in='SourceGraphic'/></feMerge></filter></defs>";
+  h+="<circle cx='"+cx+"' cy='"+cy+"' r='338' fill='#09091a' stroke='rgba(255,255,255,0.05)' stroke-width='2'/>";
+  h+="<circle cx='"+cx+"' cy='"+cy+"' r='324' fill='url(#fg)' stroke='rgba(255,255,255,0.09)' stroke-width='3'/>";
+  h+="<circle cx='"+cx+"' cy='"+cy+"' r='300' fill='none' stroke='rgba(255,255,255,0.035)' stroke-width='1'/>";
+  h+="<circle cx='"+cx+"' cy='"+cy+"' r='118' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1'/>";
+  for(let hr=1;hr<=12;hr++){
+    const st=hourToAngle(hr),en=st+30,own=Number(state.territories[hr]);
+    let fill,stroke,sw;
+    if(own===0){fill="rgba(55,55,88,.35)";stroke="rgba(255,255,255,.11)";sw=1.5;}
+    else if(own===1){fill="rgba(0,229,255,.48)";stroke="rgba(0,229,255,.95)";sw=4;}
+    else{fill="rgba(255,44,240,.48)";stroke="rgba(255,44,240,.95)";sw=4;}
+    if(isSolo()&&state.corrupted[hr]){fill="rgba(255,68,85,.55)";stroke="rgba(255,68,85,1)";sw=5;}
+    else if(isSolo()&&state.threatened[hr]){stroke="rgba(255,209,102,1)";sw=5;}
+    h+="<path class='territory "+(isSolo()&&state.corrupted[hr]?"corrupt-pulse":isSolo()&&state.threatened[hr]?"threat-pulse":"")+"' d='"+sectorPath(cx,cy,116,256,st,en)+"' fill='"+fill+"' stroke='"+stroke+"' stroke-width='"+sw+"' "+(isSolo()&&state.threatened[hr]&&!state.corrupted[hr]?"stroke-dasharray='8 7'":"")+"/>";
+    if(own!==0){const tp=polar(cx,cy,200,st+15),col=own===1?"#00e5ff":"#ff2cf0";h+="<circle cx='"+tp.x+"' cy='"+tp.y+"' r='31' fill='"+col+"' stroke='white' stroke-width='3' filter='url(#glow)'/><text class='territory-token' x='"+tp.x+"' y='"+(tp.y+1)+"'>P"+own+"</text>";}
+    if(isSolo()&&state.corrupted[hr]){const cp=polar(cx,cy,164,st+15);h+="<text x='"+cp.x+"' y='"+cp.y+"' text-anchor='middle' dominant-baseline='middle' font-size='24'>&#9760;</text>";}
+    else if(isSolo()&&state.threatened[hr]){const tp2=polar(cx,cy,164,st+15);h+="<text x='"+tp2.x+"' y='"+tp2.y+"' text-anchor='middle' dominant-baseline='middle' font-size='24'>&#9888;</text>";}
+    if(state.fortified[hr]){const fp=polar(cx,cy,165,st+15);h+="<text x='"+fp.x+"' y='"+fp.y+"' text-anchor='middle' dominant-baseline='middle' font-size='22'>&#128737;</text>";}
   }
-
-  document.getElementById("startScreen").style.display="none";
-  document.getElementById("mainApp").style.display="";
-  const kidsStrip=document.getElementById("kidsStrip");
-  if(kidsStrip)kidsStrip.style.display=window.innerWidth<=699?"flex":"none";
-
-  resetState();
-  updateModeUI();
-  randomTimeForMode();
-  render();
-
-  if(isSolo()){
-    stopTimer();
-    checkExactHourEvent();
-  }else{
-    startTimer();
-    checkExactHourEvent();
-  }
+  for(let m=0;m<60;m++){const big=m%5===0,qtr=m===15||m===45,out=polar(cx,cy,310,m*6),inn=polar(cx,cy,big?283:295,m*6),col=qtr?"rgba(255,209,102,.95)":big?"#d0d0ee":"rgba(190,190,215,.45)";h+="<line x1='"+inn.x+"' y1='"+inn.y+"' x2='"+out.x+"' y2='"+out.y+"' stroke='"+col+"' stroke-width='"+(big?4:1.5)+"' stroke-linecap='round'/>";}
+  for(let hr=1;hr<=12;hr++){const lp=polar(cx,cy,236,hourToAngle(hr));h+="<text class='territory-label' x='"+lp.x+"' y='"+lp.y+"'>"+hr+"</text>";}
+  const ah=getHourTerritory(state.hour),ha=hourToAngle(ah)+state.minute*.5,ma=state.minute*6,he=polar(cx,cy,114,ha),me=polar(cx,cy,278,ma);
+  h+="<line x1='"+cx+"' y1='"+cy+"' x2='"+he.x+"' y2='"+he.y+"' stroke='rgba(0,0,0,.55)' stroke-width='18' stroke-linecap='round'/>";
+  h+="<line x1='"+cx+"' y1='"+cy+"' x2='"+me.x+"' y2='"+me.y+"' stroke='rgba(0,0,0,.45)' stroke-width='10' stroke-linecap='round'/>";
+  h+="<line class='hand' x1='"+cx+"' y1='"+cy+"' x2='"+he.x+"' y2='"+he.y+"' stroke='#f0f0ff' stroke-width='14'/>";
+  h+="<line class='hand' x1='"+cx+"' y1='"+cy+"' x2='"+me.x+"' y2='"+me.y+"' stroke='var(--gold)' stroke-width='7'/>";
+  h+="<circle cx='"+cx+"' cy='"+cy+"' r='18' fill='#18183a' stroke='rgba(255,255,255,.18)' stroke-width='3'/><circle class='center-dot' cx='"+cx+"' cy='"+cy+"' r='11'/>";
+  svg.innerHTML=h;
+  updateStats();updateButtons();
 }
 
 function updateStats(){
@@ -612,149 +631,127 @@ function revealExp(atype){
 function resolveAction(atype,answer,correct,isCorrect){
   const p=state.currentPlayer,opp=p===1?2:1,ah=getHourTerritory(state.hour);
   let title=isCorrect?"Correct!":"Not Quite",msg="",win=false,snd=isCorrect?playCorrect:playWrong;
-
-  if(!isCorrect){
-    if(isSolo())state.stability=Math.max(0,state.stability-5);
-    msg="<strong>"+activeName()+"</strong> answered <strong>"+answer+"</strong>, correct was <strong>"+correct+"</strong>. Move fails."+(isSolo()?" Clock Stability -5.":"");
-  }
-  else if(atype==="harvest"){
-    const gain=100+state.minute*10;
-    state.players[p].energy+=gain;
-    snd=playEnergy;
-    msg="<strong>"+activeName()+"</strong> harvested <strong>"+gain+" energy</strong>!";
-  }
-  else if(atype==="countdown"){
-    const gain=150+countdownValue()*15;
-    state.players[p].energy+=gain;
-    snd=playEnergy;
-    msg="<strong>"+activeName()+"</strong> earned <strong>"+gain+" energy</strong> from Countdown Dash!";
-  }
+  if(!isCorrect){if(isSolo())state.stability=Math.max(0,state.stability-5);msg="<strong>"+activeName()+"</strong> answered <strong>"+answer+"</strong>, correct was <strong>"+correct+"</strong>. Move fails."+(isSolo()?" Clock Stability -5.":"");}
+  else if(atype==="harvest"){const gain=100+state.minute*10;state.players[p].energy+=gain;snd=playEnergy;msg="<strong>"+activeName()+"</strong> harvested <strong>"+gain+" energy</strong>!";}
+  else if(atype==="countdown"){const gain=150+countdownValue()*15;state.players[p].energy+=gain;snd=playEnergy;msg="<strong>"+activeName()+"</strong> earned <strong>"+gain+" energy</strong> from Countdown Dash!";}
   else if(atype==="capture"){
-    if(isSolo()&&state.corrupted[ah]){
-      msg="Territory "+ah+" is corrupted. Cleanse it before you can capture it.";
-      snd=playWrong;
-    }
-    else if(state.territories[ah]===p){
-      msg="You already control Territory "+ah+".";
-      snd=playWrong;
-    }
-    else{
-      const captureCost=isSolo()?1000:1500;
-      if(state.players[p].energy<captureCost){
-        msg="Need "+captureCost+" energy to capture Territory "+ah+".";
-        snd=playWrong;
-      }else{
-        state.players[p].energy-=captureCost;
-        state.territories[ah]=Number(p);
-        state.fortified[ah]=false;
-
-        if(isSolo()){
-          state.protectedThreatsThisTurn=[];
-          for(let hh=1;hh<=12;hh++){
-            if(state.threatened[hh])state.protectedThreatsThisTurn.push(hh);
-          }
-          state.threatened[ah]=false;
-          state.threatAge[ah]=0;
-          state.corrupted[ah]=false;
-          state.justCapturedHour=ah;
-        }
-
-        if(isLateHour())state.players[p].lateCaptures++;
-        snd=playCapture;
-        msg="<strong>"+activeName()+"</strong> captured <strong>"+(isLateHour()?"Late ":"")+"Territory "+ah+"</strong>!"+(isSolo()?" Captured territories are stable and safe from clock corruption.":"");
-        win=true;
-      }
-    }
+    if(isSolo()&&state.corrupted[ah]){msg="Territory "+ah+" is corrupted. Cleanse it before you can capture it.";snd=playWrong;}
+    else if(state.territories[ah]===p){msg="You already control Territory "+ah+". Try fortifying it.";snd=playWrong;}
+    else{const captureCost=isSolo()?1000:1500;if(state.players[p].energy<captureCost){msg="Need "+captureCost+" energy to capture Territory "+ah+".";snd=playWrong;}
+    else{state.players[p].energy-=captureCost;state.territories[ah]=Number(p);state.fortified[ah]=false;if(isSolo()){state.protectedThreatsThisTurn=[];for(let hh=1;hh<=12;hh++){if(state.threatened[hh])state.protectedThreatsThisTurn.push(hh);}state.threatened[ah]=false;state.threatAge[ah]=0;state.corrupted[ah]=false;state.justCapturedHour=ah;}if(isLateHour())state.players[p].lateCaptures++;snd=playCapture;msg="<strong>"+activeName()+"</strong> captured <strong>"+(isLateHour()?"Late ":"")+"Territory "+ah+"</strong>!"+(isSolo()?" Captured territories are now stable and safe from clock corruption.":"");win=true;}
   }
   else if(atype==="challenge"){
-    if(state.territories[ah]!==opp){
-      msg="Player "+opp+" doesn't control Territory "+ah+". No challenge.";
-      snd=playWrong;
-    }
-    else if(state.players[p].energy<2200){
-      msg="Need 2200 energy to challenge Territory "+ah+".";
-      snd=playWrong;
-    }
-    else{
-      state.players[p].energy-=2200;
-      snd=playChallenge;
-      if(state.fortified[ah]){
-        state.fortified[ah]=false;
-        msg="<strong>"+activeName()+"</strong> broke the shield on Territory "+ah+"! Player "+opp+" still holds it.";
-      }else{
-        state.territories[ah]=0;
-        msg="<strong>"+activeName()+"</strong> knocked Territory "+ah+" to open territory!";
-      }
-    }
+    if(state.territories[ah]!==opp){msg="Player "+opp+" doesn't control Territory "+ah+". No challenge.";snd=playWrong;}
+    else if(state.players[p].energy<2200){msg="Need 2200 energy to challenge Territory "+ah+".";snd=playWrong;}
+    else{state.players[p].energy-=2200;snd=playChallenge;if(state.fortified[ah]){state.fortified[ah]=false;msg="<strong>"+activeName()+"</strong> broke the shield on Territory "+ah+"! Player "+opp+" still holds it.";}else{state.territories[ah]=0;msg="<strong>"+activeName()+"</strong> knocked Territory "+ah+" to open territory!";}}
   }
   else if(atype==="cleanse"){
-    if(!isSolo()){
-      msg="Cleanse is only available in One Player Mode.";
-      snd=playWrong;
-    }
-    else if(!state.corrupted[ah]){
-      msg="Territory "+ah+" is not corrupted. No cleanse needed.";
-      snd=playWrong;
-    }
-    else if(state.players[1].energy<500){
-      msg="Need 500 energy to cleanse Territory "+ah+".";
-      snd=playWrong;
-    }
-    else{
-      state.players[1].energy-=500;
-      state.corrupted[ah]=false;
-      state.threatened[ah]=false;
-      state.threatAge[ah]=0;
-      state.territories[ah]=0;
-      state.pendingBonusAction=true;
-      snd=playFortify;
-      msg="<strong>Territory "+ah+"</strong> was cleansed! It is now open territory. You still get your regular turn.";
-    }
+    if(!isSolo()){msg="Cleanse is only available in One Player Mode.";snd=playWrong;}
+    else if(!state.corrupted[ah]){msg="Territory "+ah+" is not corrupted. No cleanse needed.";snd=playWrong;}
+    else if(state.players[1].energy<500){msg="Need 500 energy to cleanse Territory "+ah+".";snd=playWrong;}
+    else{state.players[1].energy-=500;state.corrupted[ah]=false;state.threatened[ah]=false;state.threatAge[ah]=0;state.territories[ah]=0;state.pendingBonusAction=true;snd=playFortify;msg="<strong>Territory "+ah+"</strong> was cleansed! It is now open territory. You still get your regular turn.";}
   }
   else if(atype==="fortify"){
     if(isSolo()){
-      if(!state.threatened[ah]){
-        msg="Territory "+ah+" is not currently in danger. Rescue only works when the active hour is threatened.";
-        snd=playWrong;
-      }
-      else if(state.players[1].energy<300){
-        msg="Need 300 energy to rescue Territory "+ah+".";
-        snd=playWrong;
-      }
-      else{
-        state.players[1].energy-=300;
-        state.threatened[ah]=false;
-        state.threatAge[ah]=0;
-        state.corrupted[ah]=false;
-        state.pendingBonusAction=true;
-        snd=playFortify;
-        msg="<strong>Territory "+ah+"</strong> was rescued from danger! You still get your regular turn.";
-      }
+      if(!state.threatened[ah]){msg="Territory "+ah+" is not currently in danger. Rescue only works when the active hour is threatened.";snd=playWrong;}
+      else if(state.players[1].energy<300){msg="Need 300 energy to rescue Territory "+ah+".";snd=playWrong;}
+      else{state.players[1].energy-=300;state.threatened[ah]=false;state.threatAge[ah]=0;state.corrupted[ah]=false;state.pendingBonusAction=true;snd=playFortify;msg="<strong>Territory "+ah+"</strong> was rescued from danger! You still get your regular turn.";}
     }else{
-      if(state.territories[ah]!==p){
-        msg="You can only fortify a territory you control.";
-        snd=playWrong;
+      if(state.territories[ah]!==p){msg="You can only fortify a territory you control.";snd=playWrong;}
+      else if(state.fortified[ah]){msg="Territory "+ah+" is already fortified.";snd=playWrong;}
+      else if(state.players[p].energy<500){msg="Need 500 energy to fortify Territory "+ah+".";snd=playWrong;}
+      else{state.players[p].energy-=500;state.fortified[ah]=true;snd=playFortify;msg="<strong>"+activeName()+"</strong> fortified Territory "+ah+"! Next Challenge breaks shield instead of removing control.";}
+    }
+  }
+  snd();render();
+  showFB(title,isCorrect?"correct":"wrong",msg,revealExp(atype),win);
+}
+
+
+function spawnThreat(){
+  const choices=[];
+  for(let h=1;h<=12;h++){
+    // In One Player Mode, captured territories are stable and safe from corruption.
+    // The clock enemy may only threaten open territories.
+    if(!state.corrupted[h]&&!state.threatened[h]&&Number(state.territories[h])!==1)choices.push(h);
+  }
+  if(choices.length===0)return;
+  const pick=choices[Math.floor(Math.random()*choices.length)];
+  state.threatened[pick]=true;
+  state.threatAge[pick]=0;
+}
+function enemyTurnSolo(){
+  if(!isSolo()||state.gameOver)return "";
+  let notes=[];
+  const protectedHour=state.justCapturedHour;
+  const protectedThreats=Array.isArray(state.protectedThreatsThisTurn)?state.protectedThreatsThisTurn.slice():[];
+  state.justCapturedHour=null;
+  state.protectedThreatsThisTurn=[];
+
+  for(let h=1;h<=12;h++){
+    if(state.threatened[h]){
+      if(Number(state.territories[h])===1){
+        state.threatened[h]=false;
+        state.threatAge[h]=0;
+        state.corrupted[h]=false;
+        notes.push("Territory "+h+" stayed safe because you already captured it.");
+        continue;
       }
-      else if(state.fortified[ah]){
-        msg="Territory "+ah+" is already fortified.";
-        snd=playWrong;
+
+      if(h===protectedHour||protectedThreats.includes(h)){
+        state.threatened[h]=false;
+        state.threatAge[h]=0;
+        state.corrupted[h]=false;
+        notes.push("Territory "+h+" stayed clean because you captured an hour this turn.");
+        continue;
       }
-      else if(state.players[p].energy<500){
-        msg="Need 500 energy to fortify Territory "+ah+".";
-        snd=playWrong;
+
+      // Threats now give the player one warning turn.
+      // First enemy turn: danger grows.
+      // Second enemy turn: it corrupts.
+      if((state.threatAge[h]||0)<1){
+        state.threatAge[h]=1;
+        notes.push("Territory "+h+" is still in danger. Rescue it, capture it, or prepare to cleanse it soon.");
+        continue;
       }
-      else{
-        state.players[p].energy-=500;
-        state.fortified[ah]=true;
-        snd=playFortify;
-        msg="<strong>"+activeName()+"</strong> fortified Territory "+ah+"! Next Challenge breaks shield instead of removing control.";
+
+      state.threatened[h]=false;
+      state.threatAge[h]=0;
+      if(state.fortified[h]){
+        state.fortified[h]=false;
+        notes.push("A threat hit Territory "+h+" but broke its shield instead of corrupting it.");
+      }else{
+        state.corrupted[h]=true;
+        state.territories[h]=0;
+        notes.push("Territory "+h+" became corrupted.");
       }
     }
   }
 
-  snd();
-  render();
-  showFB(title,isCorrect?"correct":"wrong",msg,revealExp(atype),win);
+  // Corruption now hurts less so the game is winnable.
+  const damage=soloCorruptedCount()*3;
+  if(damage>0){
+    state.stability=Math.max(0,state.stability-damage);
+    notes.push("Corruption damaged Clock Stability by "+damage+".");
+  }
+
+  if(state.stability>0)spawnThreat();
+
+  if(state.stability<=0){
+    state.gameOver=true;
+    state.pendingNextTurn=false;
+    state.pendingVictory="defeat";
+  }
+
+  return notes.join("<br>");
+}
+function getSoloWinner(){
+  if(!isSolo())return null;
+  const cfg=state.levelConfig;
+  if(soloCapturedCount()<cfg.goal)return null;
+  if(cfg.lateGoal&&state.players[1].lateCaptures<cfg.lateGoal)return null;
+  if(cfg.quarterGoal&&state.quarterSuccesses<cfg.quarterGoal)return null;
+  return "solo";
 }
 
 function showFB(title,cls,msg,reveal,checkWin){
