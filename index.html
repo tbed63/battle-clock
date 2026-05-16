@@ -66,7 +66,7 @@ button:disabled{opacity:.3;cursor:not-allowed;}
 .quarter{background:linear-gradient(135deg,#ffe600,#ff2060);color:#1a0010;border-color:rgba(255,230,0,.28);}
 .actions button{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;}
 .btn-label{font-size:.78rem;font-weight:900;line-height:1.15;}.btn-sub{font-size:.62rem;opacity:.88;font-weight:700;}
-#answerPanel,#feedbackPanel{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(160deg,#13132a,#0a0a18);z-index:5;padding:18px 16px;flex-direction:column;gap:10px;overflow-y:auto;}
+#answerPanel,#feedbackPanel{display:none;position:absolute;top:148px;left:0;right:0;bottom:0;background:linear-gradient(160deg,#13132a,#0a0a18);z-index:5;padding:18px 16px;flex-direction:column;gap:10px;overflow-y:auto;}
 #answerPanel.open,#feedbackPanel.open{display:flex;}
 .ap-title{font-family:var(--font-display);font-size:1.5rem;letter-spacing:1px;color:var(--gold);}
 .ap-prompt{font-size:.9rem;color:#cccce8;line-height:1.45;}
@@ -145,6 +145,11 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
 @media(max-width:380px){.territory-label{font-size:40px;stroke-width:7px;}.choice-grid{grid-template-columns:repeat(3,1fr);}.player h2{font-size:.82rem;}}
 @media(min-width:700px) and (max-width:959px){.app{grid-template-columns:1fr 340px;}.btn-label{font-size:.74rem;}.btn-sub{font-size:.6rem;}}
 @media(max-width:699px){#startScreen .ss-logo img{max-height:130px;}.ss-zoodle img{height:65px !important;}.start-card{padding:18px 16px;}#startScreen{gap:16px;}}
+
+@media(min-width:700px) and (max-height:760px){
+  #answerPanel,#feedbackPanel{top:128px;}
+}
+
 </style>
 </head>
 <body>
@@ -203,7 +208,7 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
       </div>
     </div>
     <div class="turn-timer-row">
-      <div id="turnBadge" class="turn-badge">&#9876; Player 1's Turn</div>
+      <div id="turnBadge" class="turn-badge">Player 1's Turn</div>
       <div id="timerBox" class="timer-box">1:00</div>
     </div>
     <section class="actions-panel">
@@ -349,7 +354,7 @@ function render(){
 
 function updateStats(){
   for(let p=1;p<=2;p++){const tc=Object.values(state.territories).filter(o=>Number(o)===p).length;document.getElementById("p"+p+"Energy").textContent=state.players[p].energy;document.getElementById("p"+p+"Territories").textContent=tc;document.getElementById("p"+p+"Late").textContent=state.players[p].lateCaptures;document.getElementById("p"+p+"Panel").classList.toggle("active",state.currentPlayer===p);}
-  document.getElementById("turnBadge").textContent=state.gameOver?"&#127942; Game Over":"&#9876; Player "+state.currentPlayer+"'s Turn";
+  document.getElementById("turnBadge").textContent=state.gameOver?"Game Over":"Player "+state.currentPlayer+"'s Turn";
 }
 function updateButtons(){const keys=["New Game","Play Again","Rules","Got It","Continue","Start"];document.querySelectorAll("button").forEach(b=>{if(!keys.some(k=>b.textContent.includes(k)))b.disabled=state.gameOver;});}
 function showHourChoices(title,prompt,atype){
