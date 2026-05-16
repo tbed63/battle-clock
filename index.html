@@ -260,7 +260,7 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
         <button class="green" onclick="startAction('harvest')"><span class="btn-label">&#127807; Harvest Minute</span><span class="btn-sub">Earns Energy</span></button>
         <button class="dash" onclick="startAction('countdown')"><span class="btn-label">&#128168; Countdown Dash</span><span class="btn-sub">Earns 1.5x</span></button>
         <button class="blue" onclick="startAction('capture')"><span class="btn-label">&#127988; Capture Hour</span><span class="btn-sub">Cost: 1500</span></button>
-        <button class="danger" id="challengeCleanseBtn" onclick="startChallengeOrCleanse()"><span class="btn-label" id="challengeCleanseLabel">&#9876; Challenge</span><span class="btn-sub" id="challengeCleanseSub">Cost: 2200</span></button>
+        <button class="danger" id="challengeCleanseBtn" onclick="startChallengeOrCleanse()"><span class="btn-label" id="challengeCleanseLabel">&#9876; Challenge</span><span class="btn-sub" id="challengeCleanseSub">Cost: 1000</span></button>
         <button class="shield" onclick="startAction('fortify')"><span class="btn-label">&#128737; Fortify</span><span class="btn-sub">Cost: 500</span></button>
       </div>
     </section>
@@ -314,7 +314,7 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
       <li><strong>Harvest Minute:</strong> Type how many minute ticks the long hand has traveled. More = more energy.</li>
       <li><strong>Countdown Dash:</strong> Type minutes remaining until next hour. Pays ~1.5x more than Harvest.</li>
       <li><strong>Capture Hour:</strong> Choose the active territory. Costs 1500 energy in Two Player Mode and 1000 energy in One Player Mode.</li>
-      <li><strong>Challenge:</strong> In Two Player Mode, attack opponent\'s active territory. Costs 2200 energy. Breaks shield or removes control.</li>
+      <li><strong>Challenge:</strong> In Two Player Mode, attack opponent\'s active territory. Costs 1000 energy. Breaks shield or removes control.</li>
       <li><strong>Cleanse:</strong> In One Player Mode, remove corruption from the active territory. Costs 500 energy and does not use up your regular turn.</li>
       <li><strong>Fortify / Rescue:</strong> In Two Player Mode, Fortify shields your active territory for 500 energy. In One Player Mode, this becomes Rescue: if the active hour is in danger, rescue it for 300 energy and still take your regular turn.</li>
       <li><strong>Exact Hour Event:</strong> If the clock lands on :00, the current player gets a free shield on one captured territory. If the current player has no captured territories, they lose the turn.</li>
@@ -417,7 +417,7 @@ function updateModeUI(){
     if(p2TerritoriesLabel)p2TerritoriesLabel.textContent="Territories";
     if(p2LateLabel)p2LateLabel.textContent="Late Caps";
     document.getElementById("challengeCleanseLabel").innerHTML="&#9876; Challenge";
-    document.getElementById("challengeCleanseSub").textContent="Cost: 2200";
+    document.getElementById("challengeCleanseSub").textContent="Cost: 1000";
     const fortBtn=document.querySelector("button.shield .btn-label");
     const fortSub=document.querySelector("button.shield .btn-sub");
     if(fortBtn)fortBtn.innerHTML="&#128737; Fortify";
@@ -643,8 +643,8 @@ function resolveAction(atype,answer,correct,isCorrect){
   }
   else if(atype==="challenge"){
     if(state.territories[ah]!==opp){msg="Player "+opp+" doesn't control Territory "+ah+". No challenge.";snd=playWrong;}
-    else if(state.players[p].energy<2200){msg="Need 2200 energy to challenge Territory "+ah+".";snd=playWrong;}
-    else{state.players[p].energy-=2200;snd=playChallenge;if(state.fortified[ah]){state.fortified[ah]=false;msg="<strong>"+activeName()+"</strong> broke the shield on Territory "+ah+"! Player "+opp+" still holds it.";}else{state.territories[ah]=0;msg="<strong>"+activeName()+"</strong> knocked Territory "+ah+" to open territory!";}}
+    else if(state.players[p].energy<1000){msg="Need 1000 energy to challenge Territory "+ah+".";snd=playWrong;}
+    else{state.players[p].energy-=1000;snd=playChallenge;if(state.fortified[ah]){state.fortified[ah]=false;msg="<strong>"+activeName()+"</strong> broke the shield on Territory "+ah+"! Player "+opp+" still holds it.";}else{state.territories[ah]=0;msg="<strong>"+activeName()+"</strong> knocked Territory "+ah+" to open territory!";}}
   }
   else if(atype==="cleanse"){
     if(!isSolo()){msg="Cleanse is only available in One Player Mode.";snd=playWrong;}
