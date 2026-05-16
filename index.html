@@ -331,7 +331,7 @@ const levelConfigs={
   4:{name:"Quarter Power",goal:7,stability:90,timeSet:"quarter",quarterGoal:2},
   5:{name:"Full Clock Battle",goal:12,stability:85,timeSet:"mixed"}
 };
-const state={mode:"two",level:1,levelConfig:levelConfigs[1],currentPlayer:1,hour:5,minute:58,players:{1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}},territories:{},fortified:{},threatened:{},corrupted:{},stability:100,quarterSuccesses:0,gameOver:false,pendingNextTurn:true,pendingVictory:null,quarterUsedThisTurn:false,exactHourHandledThisTurn:false,turnDuration:60,timerSecs:60,timerInterval:null};
+const state={mode:"two",level:1,levelConfig:levelConfigs[1],currentPlayer:1,hour:5,minute:58,players:{1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}},territories:{},fortified:{},threatened:{},corrupted:{},stability:100,quarterSuccesses:0,gameOver:false,pendingNextTurn:true,pendingVictory:null,quarterUsedThisTurn:false,exactHourHandledThisTurn:false,pendingBonusAction:false,turnDuration:60,timerSecs:60,timerInterval:null};
 for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.corrupted[h]=false;}
 
 let audioCtx=null,zoodleBuf=null;
@@ -472,7 +472,7 @@ function applyExactHourShield(h){
 
 function startGame(){ensureAudio();loadZoodle();state.mode=document.getElementById("modeSel").value;state.level=parseInt(document.getElementById("levelSel").value,10)||1;state.levelConfig=levelConfigs[state.level]||levelConfigs[1];if(!isSolo())state.turnDuration=parseInt(document.getElementById("timerSel").value,10);document.getElementById("startScreen").style.display="none";document.getElementById("mainApp").style.display="";document.getElementById("kidsStrip").style.display=window.innerWidth<=699?"flex":"none";resetState();updateModeUI();randomTimeForMode();render();if(isSolo()){stopTimer();checkExactHourEvent();}else{startTimer();checkExactHourEvent();}}
 function goToStart(){stopTimer();closeAnswerPanel();closeFeedbackPanel();document.getElementById("winnerOverlay").style.display="none";document.getElementById("howModal").style.display="none";document.getElementById("mainApp").style.display="none";document.getElementById("startScreen").style.display="flex";}
-function resetState(){state.currentPlayer=1;state.gameOver=false;state.pendingNextTurn=true;state.pendingVictory=null;state.quarterUsedThisTurn=false;state.exactHourHandledThisTurn=false;state.quarterSuccesses=0;state.stability=state.levelConfig.stability;state.players={1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}};for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.corrupted[h]=false;}if(isSolo())spawnThreat();}
+function resetState(){state.currentPlayer=1;state.gameOver=false;state.pendingNextTurn=true;state.pendingVictory=null;state.quarterUsedThisTurn=false;state.exactHourHandledThisTurn=false;state.pendingBonusAction=false;state.quarterSuccesses=0;state.stability=state.levelConfig.stability;state.players={1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}};for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.corrupted[h]=false;}if(isSolo())spawnThreat();}
 function openAnswerPanel(){document.getElementById("answerPanel").classList.add("open");document.getElementById("feedbackPanel").classList.remove("open");}
 function closeAnswerPanel(){document.getElementById("answerPanel").classList.remove("open");}
 function openFeedbackPanel(){document.getElementById("feedbackPanel").classList.add("open");document.getElementById("answerPanel").classList.remove("open");}
@@ -573,15 +573,15 @@ function qReveal(isQt){const ah=getHourTerritory(state.hour),nh=getNextHour(ah);
 
 function startQuarterPower(){
   ensureAudio();if(state.gameOver)return;
-  if(state.quarterUsedThisTurn){showFB("Quarter Power Already Used","wrong","<strong>"+activeName()+"</strong> already used Quarter Power this turn.","Quarter Power can only be attempted once per turn.",false);return;}
-  if(state.minute!==15&&state.minute!==45){state.quarterUsedThisTurn=true;const p=state.currentPlayer,loss=Math.min(state.players[p].energy,roundToNearest50(state.players[p].energy*.25));state.players[p].energy-=loss;playWrong();render();showFB("Quarter Power Miss!","wrong","<strong>"+activeName()+"</strong> lost <strong>"+loss+" energy</strong> — not :15 or :45. Regular turn still available.",qReveal(false),false);return;}
+  if(state.quarterUsedThisTurn){state.pendingBonusAction=true;showFB("Quarter Power Already Used","wrong","<strong>"+activeName()+"</strong> already used Quarter Power this turn.","Quarter Power can only be attempted once per turn.",false);return;}
+  if(state.minute!==15&&state.minute!==45){state.quarterUsedThisTurn=true;const p=state.currentPlayer,loss=Math.min(state.players[p].energy,roundToNearest50(state.players[p].energy*.25));state.players[p].energy-=loss;playWrong();render();state.pendingBonusAction=true;showFB("Quarter Power Miss!","wrong","<strong>"+activeName()+"</strong> lost <strong>"+loss+" energy</strong> — not :15 or :45. Regular turn still available.",qReveal(false),false);return;}
   showQuarterChoices();
 }
 function submitQA(){
   closeAnswerPanel();state.quarterUsedThisTurn=true;
   const p=state.currentPlayer,ct=qCorrectType(),ch=qCorrectHour(),ok=qp.type===ct&&qp.hour===ch;
-  if(ok){const bonus=roundToNearest50(state.players[p].energy*.25);state.players[p].energy+=bonus;if(isSolo())state.quarterSuccesses++;playCorrect();render();showFB("Quarter Power Up!","correct","<strong>"+activeName()+"</strong> identified <strong>"+fmtQP(ct,ch)+"</strong> and gained <strong>"+bonus+" energy</strong>! Regular turn still available.",qReveal(true),false);}
-  else{playWrong();render();showFB("Quarter Power Miss!","wrong","<strong>"+activeName()+"</strong> chose <strong>"+fmtQP(qp.type,qp.hour)+"</strong>, correct was <strong>"+fmtQP(ct,ch)+"</strong>. No bonus — regular turn available.",qReveal(true),false);}
+  if(ok){const bonus=roundToNearest50(state.players[p].energy*.25);state.players[p].energy+=bonus;if(isSolo())state.quarterSuccesses++;state.pendingBonusAction=true;playCorrect();render();showFB("Quarter Power Up!","correct","<strong>"+activeName()+"</strong> identified <strong>"+fmtQP(ct,ch)+"</strong> and gained <strong>"+bonus+" energy</strong>! Regular turn still available.",qReveal(true),false);}
+  else{state.pendingBonusAction=true;playWrong();render();showFB("Quarter Power Miss!","wrong","<strong>"+activeName()+"</strong> chose <strong>"+fmtQP(qp.type,qp.hour)+"</strong>, correct was <strong>"+fmtQP(ct,ch)+"</strong>. No bonus — regular turn available.",qReveal(true),false);}
 }
 
 function startAction(type){
@@ -704,6 +704,15 @@ function showFB(title,cls,msg,reveal,checkWin){
 }
 function continueAfterFeedback(){
   closeFeedbackPanel();
+
+  if(state.pendingBonusAction){
+    state.pendingBonusAction=false;
+    state.pendingNextTurn=false;
+    render();
+    if(!isSolo()&&!state.gameOver)startTimer();
+    return;
+  }
+
   if(state.pendingVictory){showVictory(state.pendingVictory);state.pendingVictory=null;return;}
   if(!state.gameOver&&state.pendingNextTurn){
     if(isSolo()){
