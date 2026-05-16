@@ -694,7 +694,12 @@ function render(){
     h+="<path class='territory "+(isSolo()&&state.corrupted[hr]?"corrupt-pulse":isSolo()&&state.threatened[hr]?"threat-pulse":"")+"' d='"+sectorPath(cx,cy,116,256,st,en)+"' fill='"+fill+"' stroke='"+stroke+"' stroke-width='"+sw+"' "+(isSolo()&&state.threatened[hr]&&!state.corrupted[hr]?"stroke-dasharray='8 7'":"")+"/>";
     if(own!==0){const tp=polar(cx,cy,200,st+15),col=own===1?"#00e5ff":"#ff2cf0";h+="<circle cx='"+tp.x+"' cy='"+tp.y+"' r='31' fill='"+col+"' stroke='white' stroke-width='3' filter='url(#glow)'/><text class='territory-token' x='"+tp.x+"' y='"+(tp.y+1)+"'>P"+own+"</text>";}
     if(isSolo()&&state.corrupted[hr]){const cp=polar(cx,cy,164,st+15);h+="<text x='"+cp.x+"' y='"+cp.y+"' text-anchor='middle' dominant-baseline='middle' font-size='24'>&#9760;</text>";}
-    else if(isSolo()&&state.threatened[hr]){const tp2=polar(cx,cy,164,st+15);h+="<text x='"+tp2.x+"' y='"+tp2.y+"' text-anchor='middle' dominant-baseline='middle' font-size='24'>&#9888;</text>";}
+    else if(isSolo()&&state.threatened[hr]){
+      /* THREAT WARNING ICON: Draw a yellow SVG danger triangle instead of an emoji so desktop browsers do not render it black. */
+      const tp2=polar(cx,cy,164,st+15);
+      h+="<polygon points='"+tp2.x+","+(tp2.y-18)+" "+(tp2.x-18)+","+(tp2.y+16)+" "+(tp2.x+18)+","+(tp2.y+16)+"' fill='var(--gold)' stroke='rgba(0,0,0,.85)' stroke-width='4'/>";
+      h+="<text x='"+tp2.x+"' y='"+(tp2.y+7)+"' text-anchor='middle' dominant-baseline='middle' font-size='28' font-weight='900' fill='#111'>!</text>";
+    }
     if(state.fortified[hr]){const fp=polar(cx,cy,165,st+15);h+="<text x='"+fp.x+"' y='"+fp.y+"' text-anchor='middle' dominant-baseline='middle' font-size='22'>&#128737;</text>";}
   }
   for(let m=0;m<60;m++){const big=m%5===0,qtr=m===15||m===45,out=polar(cx,cy,310,m*6),inn=polar(cx,cy,big?283:295,m*6),col=qtr?"rgba(255,209,102,.95)":big?"#d0d0ee":"rgba(190,190,215,.45)";h+="<line x1='"+inn.x+"' y1='"+inn.y+"' x2='"+out.x+"' y2='"+out.y+"' stroke='"+col+"' stroke-width='"+(big?4:1.5)+"' stroke-linecap='round'/>";}
