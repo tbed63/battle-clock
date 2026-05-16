@@ -162,6 +162,14 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
   }
 }
 
+
+.solo-mode .player.p2 h2{color:var(--danger);}
+.solo-mode .player.p2{border-color:rgba(255,68,85,.45);box-shadow:0 0 16px rgba(255,68,85,.16);}
+.corrupt-pulse{animation:corruptPulse .75s infinite alternate;}
+.threat-pulse{animation:threatPulse .75s infinite alternate;}
+@keyframes corruptPulse{from{opacity:.78}to{opacity:1}}
+@keyframes threatPulse{from{opacity:.65}to{opacity:1}}
+
 </style>
 </head>
 <body>
@@ -172,15 +180,36 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
   </div>
   <div class="start-card">
     <h2>&#9881; Game Settings</h2>
-    <label for="timerSel">Turn Timer</label>
-    <select id="timerSel">
-      <option value="30">30 Seconds</option>
-      <option value="45">45 Seconds</option>
-      <option value="60" selected>1 Minute</option>
-      <option value="90">1 Min 30 Sec</option>
-      <option value="120">2 Minutes</option>
+
+    <label for="modeSel">Game Mode</label>
+    <select id="modeSel" onchange="updateStartOptions()">
+      <option value="solo" selected>One Player Mode</option>
+      <option value="two">Two Player Mode</option>
     </select>
-    <button class="primary" style="width:100%;font-size:1.1rem;padding:14px;" onclick="startGame()">&#9876; Start Battle!</button>
+
+    <div id="soloOptions">
+      <label for="levelSel">One Player Level</label>
+      <select id="levelSel">
+        <option value="1" selected>Level 1: Territory Training</option>
+        <option value="2">Level 2: Minute Mastery</option>
+        <option value="3">Level 3: Late-Hour Danger</option>
+        <option value="4">Level 4: Quarter Power</option>
+        <option value="5">Level 5: Full Clock Battle</option>
+      </select>
+    </div>
+
+    <div id="twoPlayerOptions" style="display:none">
+      <label for="timerSel">Turn Timer</label>
+      <select id="timerSel">
+        <option value="30">30 Seconds</option>
+        <option value="45">45 Seconds</option>
+        <option value="60" selected>1 Minute</option>
+        <option value="90">1 Min 30 Sec</option>
+        <option value="120">2 Minutes</option>
+      </select>
+    </div>
+
+    <button class="primary" style="width:100%;font-size:1.1rem;padding:14px;" onclick="startGame()">&#9876; Begin Battle!</button>
   </div>
   <div class="ss-zoodle">
     <img src="zoodlebug-game.png" alt="A ZoodleBug Game" onerror="this.parentElement.style.display='none'"/>
@@ -207,16 +236,16 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
   <aside class="control-panel" id="controlPanel">
     <div class="players">
       <div class="player p1 active" id="p1Panel">
-        <h2>Player 1</h2>
+        <h2 id="p1Title">Player 1</h2>
         <div class="stat"><span>Energy</span><strong id="p1Energy">500</strong></div>
         <div class="stat"><span>Territories</span><strong id="p1Territories">0</strong></div>
-        <div class="stat"><span>Late Caps</span><strong id="p1Late">0</strong></div>
+        <div class="stat"><span id="p1LateLabel">Late Caps</span><strong id="p1Late">0</strong></div>
       </div>
       <div class="player p2" id="p2Panel">
-        <h2>Player 2</h2>
-        <div class="stat"><span>Energy</span><strong id="p2Energy">500</strong></div>
-        <div class="stat"><span>Territories</span><strong id="p2Territories">0</strong></div>
-        <div class="stat"><span>Late Caps</span><strong id="p2Late">0</strong></div>
+        <h2 id="p2Title">Player 2</h2>
+        <div class="stat"><span id="p2EnergyLabel">Energy</span><strong id="p2Energy">500</strong></div>
+        <div class="stat"><span id="p2TerritoriesLabel">Territories</span><strong id="p2Territories">0</strong></div>
+        <div class="stat"><span id="p2LateLabel">Late Caps</span><strong id="p2Late">0</strong></div>
       </div>
     </div>
     <div class="turn-timer-row">
@@ -230,7 +259,7 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
         <button class="green" onclick="startAction('harvest')"><span class="btn-label">&#127807; Harvest Minute</span><span class="btn-sub">Earns Energy</span></button>
         <button class="dash" onclick="startAction('countdown')"><span class="btn-label">&#128168; Countdown Dash</span><span class="btn-sub">Earns 1.5x</span></button>
         <button class="blue" onclick="startAction('capture')"><span class="btn-label">&#127988; Capture Hour</span><span class="btn-sub">Cost: 1500</span></button>
-        <button class="danger" onclick="startAction('challenge')"><span class="btn-label">&#9876; Challenge</span><span class="btn-sub">Cost: 2200</span></button>
+        <button class="danger" id="challengeCleanseBtn" onclick="startChallengeOrCleanse()"><span class="btn-label" id="challengeCleanseLabel">&#9876; Challenge</span><span class="btn-sub" id="challengeCleanseSub">Cost: 2200</span></button>
         <button class="shield" onclick="startAction('fortify')"><span class="btn-label">&#128737; Fortify</span><span class="btn-sub">Cost: 1000</span></button>
       </div>
     </section>
@@ -274,7 +303,8 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
 <div class="how-modal" id="howModal">
   <div class="how-card">
     <h2>&#128218; Rules</h2>
-    <p><strong>Goal:</strong> First player to control <strong>4 Hour Territories</strong> with at least <strong>1 Late-Hour capture</strong> (at :45 or later) wins.</p>
+    <p><strong>Two Player Goal:</strong> First player to control <strong>4 Hour Territories</strong> with at least <strong>1 Late-Hour capture</strong> (at :45 or later) wins.</p>
+    <p><strong>One Player Goal:</strong> Capture the required number of territories before Clock Stability reaches 0. Threatened territories can become corrupted. Corrupted territories damage Stability each round until you cleanse them.</p>
     <h3>The Clock</h3>
     <p>Digital time is hidden. At <strong>5:58</strong>, the hour hand is near 6, but active territory is still <strong>5</strong>. Territory 6 opens only when the minute hand reaches the top.</p>
     <h3>Battle Moves</h3>
@@ -283,7 +313,8 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
       <li><strong>Harvest Minute:</strong> Type how many minute ticks the long hand has traveled. More = more energy.</li>
       <li><strong>Countdown Dash:</strong> Type minutes remaining until next hour. Pays ~1.5x more than Harvest.</li>
       <li><strong>Capture Hour:</strong> Choose the active territory. Costs 1500 energy.</li>
-      <li><strong>Challenge:</strong> Attack opponent's active territory. Costs 2200 energy. Breaks shield or removes control.</li>
+      <li><strong>Challenge:</strong> In Two Player Mode, attack opponent\'s active territory. Costs 2200 energy. Breaks shield or removes control.</li>
+      <li><strong>Cleanse:</strong> In One Player Mode, remove corruption from the active territory. Costs 1200 energy.</li>
       <li><strong>Fortify:</strong> Shield your active territory. Costs 1000 energy.</li>
     </ul>
     <h3>Timer</h3>
@@ -292,8 +323,15 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
   </div>
 </div>
 <script>
-const state={currentPlayer:1,hour:5,minute:58,players:{1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}},territories:{},fortified:{},gameOver:false,pendingNextTurn:true,pendingVictory:null,quarterUsedThisTurn:false,turnDuration:60,timerSecs:60,timerInterval:null};
-for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;}
+const levelConfigs={
+  1:{name:"Territory Training",goal:4,stability:100,timeSet:"easy"},
+  2:{name:"Minute Mastery",goal:5,stability:100,timeSet:"exact"},
+  3:{name:"Late-Hour Danger",goal:6,stability:90,timeSet:"late",lateGoal:2},
+  4:{name:"Quarter Power",goal:7,stability:90,timeSet:"quarter",quarterGoal:2},
+  5:{name:"Full Clock Battle",goal:12,stability:85,timeSet:"mixed"}
+};
+const state={mode:"two",level:1,levelConfig:levelConfigs[1],currentPlayer:1,hour:5,minute:58,players:{1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}},territories:{},fortified:{},threatened:{},corrupted:{},stability:100,quarterSuccesses:0,gameOver:false,pendingNextTurn:true,pendingVictory:null,quarterUsedThisTurn:false,turnDuration:60,timerSecs:60,timerInterval:null};
+for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.corrupted[h]=false;}
 
 let audioCtx=null,zoodleBuf=null;
 function ensureAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume();}
@@ -310,14 +348,80 @@ function playTick(){ensureAudio();playTone(1200,.04,"square",.03,0);}
 function playTimerEnd(){ensureAudio();playTone(180,.15,"sawtooth",.05,0);playTone(140,.25,"sawtooth",.05,.14);playTone(100,.35,"sawtooth",.04,.28);}
 function playVictory(){playZoodle();ensureAudio();const n=[392,494,587,784,988,1175,1568];n.forEach((v,i)=>playTone(v,.20,i%2?"sawtooth":"square",.04,i*.17+.3));}
 
+function updateStartOptions(){
+  const mode=document.getElementById("modeSel").value;
+  document.getElementById("soloOptions").style.display=mode==="solo"?"block":"none";
+  document.getElementById("twoPlayerOptions").style.display=mode==="two"?"block":"none";
+}
+function isSolo(){return state.mode==="solo";}
+function soloCapturedCount(){return Object.values(state.territories).filter(o=>Number(o)===1).length;}
+function soloCorruptedCount(){let c=0;for(let h=1;h<=12;h++)if(state.corrupted[h])c++;return c;}
+function soloThreatenedCount(){let c=0;for(let h=1;h<=12;h++)if(state.threatened[h])c++;return c;}
+function soloGoalText(){
+  const cfg=state.levelConfig;
+  let t=soloCapturedCount()+"/"+cfg.goal;
+  if(cfg.lateGoal)t+=" | Late "+state.players[1].lateCaptures+"/"+cfg.lateGoal;
+  if(cfg.quarterGoal)t+=" | QP "+state.quarterSuccesses+"/"+cfg.quarterGoal;
+  return t;
+}
+function chooseMinuteForLevel(){
+  const set=state.levelConfig.timeSet;
+  const easy=[0,5,10,15,20,25,30,35,40,45,50,55];
+  const exact=[7,13,18,22,27,34,36,41,48,52,57,59];
+  const late=[45,46,47,48,49,50,52,53,55,57,58,59];
+  const quarter=[15,45,7,22,30,37,48,52];
+  const mixed=[0,3,7,11,15,19,24,27,31,36,42,45,48,52,55,58,59];
+  const pool=set==="easy"?easy:set==="exact"?exact:set==="late"?late:set==="quarter"?quarter:mixed;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function randomTimeForMode(){
+  state.hour=Math.floor(Math.random()*12)+1;
+  state.minute=isSolo()?chooseMinuteForLevel():Math.floor(Math.random()*60);
+}
+function updateModeUI(){
+  const app=document.getElementById("mainApp");
+  if(app)app.classList.toggle("solo-mode",isSolo());
+  const turnRow=document.querySelector(".turn-timer-row");
+  if(turnRow)turnRow.style.display=isSolo()?"flex":"flex";
+  const timer=document.getElementById("timerBox");
+  if(timer)timer.style.display=isSolo()?"none":"block";
+  const p1t=document.getElementById("p1Title"),p2t=document.getElementById("p2Title");
+  const p1LateLabel=document.getElementById("p1LateLabel");
+  const p2EnergyLabel=document.getElementById("p2EnergyLabel"),p2TerritoriesLabel=document.getElementById("p2TerritoriesLabel"),p2LateLabel=document.getElementById("p2LateLabel");
+  if(isSolo()){
+    if(p1t)p1t.textContent="Player";
+    if(p2t)p2t.textContent="Clock Enemy";
+    if(p1LateLabel)p1LateLabel.textContent="Late Caps";
+    if(p2EnergyLabel)p2EnergyLabel.textContent="Stability";
+    if(p2TerritoriesLabel)p2TerritoriesLabel.textContent="Goal";
+    if(p2LateLabel)p2LateLabel.textContent="Corrupted";
+    document.getElementById("challengeCleanseLabel").innerHTML="&#10024; Cleanse";
+    document.getElementById("challengeCleanseSub").textContent="Cost: 1200";
+  }else{
+    if(p1t)p1t.textContent="Player 1";
+    if(p2t)p2t.textContent="Player 2";
+    if(p1LateLabel)p1LateLabel.textContent="Late Caps";
+    if(p2EnergyLabel)p2EnergyLabel.textContent="Energy";
+    if(p2TerritoriesLabel)p2TerritoriesLabel.textContent="Territories";
+    if(p2LateLabel)p2LateLabel.textContent="Late Caps";
+    document.getElementById("challengeCleanseLabel").innerHTML="&#9876; Challenge";
+    document.getElementById("challengeCleanseSub").textContent="Cost: 2200";
+  }
+}
+function startChallengeOrCleanse(){
+  if(isSolo())startAction("cleanse");
+  else startAction("challenge");
+}
+
+
 function startTimer(){clearInterval(state.timerInterval);state.timerSecs=state.turnDuration;updateTimerDisplay();state.timerInterval=setInterval(()=>{state.timerSecs--;updateTimerDisplay();if(state.timerSecs<=10&&state.timerSecs>0)playTick();if(state.timerSecs<=0){clearInterval(state.timerInterval);playTimerEnd();handleTimerExpiry();}},1000);}
 function stopTimer(){clearInterval(state.timerInterval);state.timerInterval=null;}
 function updateTimerDisplay(){const b=document.getElementById("timerBox");if(!b)return;const s=Math.max(state.timerSecs,0),m=Math.floor(s/60),sec=s%60;b.textContent=(m>0?m+":":(""+"0:")+(sec<10?"0":"")+sec);b.classList.toggle("warn",s<=10);}
 function handleTimerExpiry(){closeAnswerPanel();if(!state.gameOver){document.getElementById("fbTitle").textContent="Time's Up!";document.getElementById("fbTitle").className="fb-title wrong";document.getElementById("fbMessage").innerHTML="<strong>"+activeName()+"</strong> ran out of time! Turn passes automatically.";document.getElementById("revealBox").innerHTML="<strong>Time:</strong> "+formatTime()+"<br><strong>Active territory:</strong> "+getHourTerritory(state.hour)+"<br><strong>Minute ticks:</strong> "+state.minute+"<br><strong>Minutes until next hour:</strong> "+countdownValue();openFeedbackPanel();state.pendingNextTurn=true;}}
 
-function startGame(){ensureAudio();loadZoodle();state.turnDuration=parseInt(document.getElementById("timerSel").value,10);document.getElementById("startScreen").style.display="none";document.getElementById("mainApp").style.display="";document.getElementById("kidsStrip").style.display=window.innerWidth<=699?"flex":"none";resetState();randomTime();render();startTimer();}
+function startGame(){ensureAudio();loadZoodle();state.mode=document.getElementById("modeSel").value;state.level=parseInt(document.getElementById("levelSel").value,10)||1;state.levelConfig=levelConfigs[state.level]||levelConfigs[1];if(!isSolo())state.turnDuration=parseInt(document.getElementById("timerSel").value,10);document.getElementById("startScreen").style.display="none";document.getElementById("mainApp").style.display="";document.getElementById("kidsStrip").style.display=window.innerWidth<=699?"flex":"none";resetState();updateModeUI();randomTimeForMode();render();if(isSolo())stopTimer();else startTimer();}
 function goToStart(){stopTimer();closeAnswerPanel();closeFeedbackPanel();document.getElementById("winnerOverlay").style.display="none";document.getElementById("howModal").style.display="none";document.getElementById("mainApp").style.display="none";document.getElementById("startScreen").style.display="flex";}
-function resetState(){state.currentPlayer=1;state.gameOver=false;state.pendingNextTurn=true;state.pendingVictory=null;state.quarterUsedThisTurn=false;state.players={1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}};for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;}}
+function resetState(){state.currentPlayer=1;state.gameOver=false;state.pendingNextTurn=true;state.pendingVictory=null;state.quarterUsedThisTurn=false;state.quarterSuccesses=0;state.stability=state.levelConfig.stability;state.players={1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}};for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.corrupted[h]=false;}if(isSolo())spawnThreat();}
 function openAnswerPanel(){document.getElementById("answerPanel").classList.add("open");document.getElementById("feedbackPanel").classList.remove("open");}
 function closeAnswerPanel(){document.getElementById("answerPanel").classList.remove("open");}
 function openFeedbackPanel(){document.getElementById("feedbackPanel").classList.add("open");document.getElementById("answerPanel").classList.remove("open");}
@@ -330,7 +434,7 @@ function getHourTerritory(h){return h===0?12:h;}
 function getNextHour(h){return h===12?1:h+1;}
 function isLateHour(){return state.minute>=45;}
 function countdownValue(){return state.minute===0?0:60-state.minute;}
-function randomTime(){state.hour=Math.floor(Math.random()*12)+1;state.minute=Math.floor(Math.random()*60);}
+function randomTime(){randomTimeForMode();}
 function formatTime(){return state.hour+":"+(state.minute<10?"0":"")+state.minute;}
 function activeName(){return"Player "+state.currentPlayer;}
 function roundToNearest50(v){return Math.round(v/50)*50;}
@@ -348,8 +452,12 @@ function render(){
     if(own===0){fill="rgba(55,55,88,.35)";stroke="rgba(255,255,255,.11)";sw=1.5;}
     else if(own===1){fill="rgba(0,229,255,.48)";stroke="rgba(0,229,255,.95)";sw=4;}
     else{fill="rgba(255,44,240,.48)";stroke="rgba(255,44,240,.95)";sw=4;}
-    h+="<path class='territory' d='"+sectorPath(cx,cy,116,256,st,en)+"' fill='"+fill+"' stroke='"+stroke+"' stroke-width='"+sw+"'/>";
+    if(isSolo()&&state.corrupted[hr]){fill="rgba(255,68,85,.55)";stroke="rgba(255,68,85,1)";sw=5;}
+    else if(isSolo()&&state.threatened[hr]){stroke="rgba(255,209,102,1)";sw=5;}
+    h+="<path class='territory "+(isSolo()&&state.corrupted[hr]?"corrupt-pulse":isSolo()&&state.threatened[hr]?"threat-pulse":"")+"' d='"+sectorPath(cx,cy,116,256,st,en)+"' fill='"+fill+"' stroke='"+stroke+"' stroke-width='"+sw+"' "+(isSolo()&&state.threatened[hr]&&!state.corrupted[hr]?"stroke-dasharray='8 7'":"")+"/>";
     if(own!==0){const tp=polar(cx,cy,200,st+15),col=own===1?"#00e5ff":"#ff2cf0";h+="<circle cx='"+tp.x+"' cy='"+tp.y+"' r='31' fill='"+col+"' stroke='white' stroke-width='3' filter='url(#glow)'/><text class='territory-token' x='"+tp.x+"' y='"+(tp.y+1)+"'>P"+own+"</text>";}
+    if(isSolo()&&state.corrupted[hr]){const cp=polar(cx,cy,164,st+15);h+="<text x='"+cp.x+"' y='"+cp.y+"' text-anchor='middle' dominant-baseline='middle' font-size='24'>&#9760;</text>";}
+    else if(isSolo()&&state.threatened[hr]){const tp2=polar(cx,cy,164,st+15);h+="<text x='"+tp2.x+"' y='"+tp2.y+"' text-anchor='middle' dominant-baseline='middle' font-size='24'>&#9888;</text>";}
     if(state.fortified[hr]){const fp=polar(cx,cy,165,st+15);h+="<text x='"+fp.x+"' y='"+fp.y+"' text-anchor='middle' dominant-baseline='middle' font-size='22'>&#128737;</text>";}
   }
   for(let m=0;m<60;m++){const big=m%5===0,qtr=m===15||m===45,out=polar(cx,cy,310,m*6),inn=polar(cx,cy,big?283:295,m*6),col=qtr?"rgba(255,209,102,.95)":big?"#d0d0ee":"rgba(190,190,215,.45)";h+="<line x1='"+inn.x+"' y1='"+inn.y+"' x2='"+out.x+"' y2='"+out.y+"' stroke='"+col+"' stroke-width='"+(big?4:1.5)+"' stroke-linecap='round'/>";}
@@ -365,8 +473,21 @@ function render(){
 }
 
 function updateStats(){
-  for(let p=1;p<=2;p++){const tc=Object.values(state.territories).filter(o=>Number(o)===p).length;document.getElementById("p"+p+"Energy").textContent=state.players[p].energy;document.getElementById("p"+p+"Territories").textContent=tc;document.getElementById("p"+p+"Late").textContent=state.players[p].lateCaptures;document.getElementById("p"+p+"Panel").classList.toggle("active",state.currentPlayer===p);}
-  document.getElementById("turnBadge").textContent=state.gameOver?"Game Over":"Player "+state.currentPlayer+"'s Turn";
+  if(isSolo()){
+    const tc=soloCapturedCount();
+    document.getElementById("p1Energy").textContent=state.players[1].energy;
+    document.getElementById("p1Territories").textContent=tc;
+    document.getElementById("p1Late").textContent=state.players[1].lateCaptures;
+    document.getElementById("p1Panel").classList.add("active");
+    document.getElementById("p2Panel").classList.remove("active");
+    document.getElementById("p2Energy").textContent=state.stability;
+    document.getElementById("p2Territories").textContent=soloGoalText();
+    document.getElementById("p2Late").textContent=soloCorruptedCount();
+    document.getElementById("turnBadge").textContent=state.gameOver?"Game Over":"Level "+state.level+": "+state.levelConfig.name;
+  }else{
+    for(let p=1;p<=2;p++){const tc=Object.values(state.territories).filter(o=>Number(o)===p).length;document.getElementById("p"+p+"Energy").textContent=state.players[p].energy;document.getElementById("p"+p+"Territories").textContent=tc;document.getElementById("p"+p+"Late").textContent=state.players[p].lateCaptures;document.getElementById("p"+p+"Panel").classList.toggle("active",state.currentPlayer===p);}
+    document.getElementById("turnBadge").textContent=state.gameOver?"Game Over":"Player "+state.currentPlayer+"'s Turn";
+  }
 }
 function updateButtons(){const keys=["New Game","Play Again","Rules","Got It","Continue","Start"];document.querySelectorAll("button").forEach(b=>{if(!keys.some(k=>b.textContent.includes(k)))b.disabled=state.gameOver;});}
 function showHourChoices(title,prompt,atype){
@@ -408,7 +529,7 @@ function startQuarterPower(){
 function submitQA(){
   closeAnswerPanel();state.quarterUsedThisTurn=true;
   const p=state.currentPlayer,ct=qCorrectType(),ch=qCorrectHour(),ok=qp.type===ct&&qp.hour===ch;
-  if(ok){const bonus=roundToNearest50(state.players[p].energy*.25);state.players[p].energy+=bonus;playCorrect();render();showFB("Quarter Power Up!","correct","<strong>"+activeName()+"</strong> identified <strong>"+fmtQP(ct,ch)+"</strong> and gained <strong>"+bonus+" energy</strong>! Regular turn still available.",qReveal(true),false);}
+  if(ok){const bonus=roundToNearest50(state.players[p].energy*.25);state.players[p].energy+=bonus;if(isSolo())state.quarterSuccesses++;playCorrect();render();showFB("Quarter Power Up!","correct","<strong>"+activeName()+"</strong> identified <strong>"+fmtQP(ct,ch)+"</strong> and gained <strong>"+bonus+" energy</strong>! Regular turn still available.",qReveal(true),false);}
   else{playWrong();render();showFB("Quarter Power Miss!","wrong","<strong>"+activeName()+"</strong> chose <strong>"+fmtQP(qp.type,qp.hour)+"</strong>, correct was <strong>"+fmtQP(ct,ch)+"</strong>. No bonus — regular turn available.",qReveal(true),false);}
 }
 
@@ -417,6 +538,7 @@ function startAction(type){
   if(type==="capture")showHourChoices("Declare the Territory","Which <strong>Hour Territory</strong> is active right now?","capture");
   else if(type==="challenge")showHourChoices("Declare the Battle Zone","Which <strong>Hour Territory</strong> is active right now?","challenge");
   else if(type==="fortify")showHourChoices("Fortify Your Territory","Which <strong>Hour Territory</strong> is active right now?","fortify");
+  else if(type==="cleanse")showHourChoices("Cleanse Corruption","Which <strong>Hour Territory</strong> is active right now?","cleanse");
   else if(type==="harvest")showNumberInput("Harvest Minute Energy","How many <strong>minute ticks</strong> has the long hand traveled from the top?","harvest");
   else if(type==="countdown")showNumberInput("Countdown Dash","How many <strong>minutes remain</strong> until the next hour opens?","countdown");
 }
@@ -424,7 +546,7 @@ function submitNum(atype){const r=document.getElementById("numAns").value;if(r==
 function submitAnswer(atype,answer){
   closeAnswerPanel();
   let correct;
-  if(["capture","challenge","fortify"].includes(atype))correct=getHourTerritory(state.hour);
+  if(["capture","challenge","fortify","cleanse"].includes(atype))correct=getHourTerritory(state.hour);
   else if(atype==="harvest")correct=state.minute;
   else if(atype==="countdown")correct=countdownValue();
   resolveAction(atype,Number(answer),correct,Number(answer)===correct);
@@ -433,7 +555,7 @@ function revealExp(atype){
   const ah=getHourTerritory(state.hour),nh=getNextHour(ah);
   let base="<strong>Time:</strong> "+formatTime()+"<br><strong>Active territory:</strong> "+ah+"<br><strong>Minute ticks:</strong> "+state.minute+"<br><strong>Minutes until next hour:</strong> "+countdownValue();
   let why="";
-  if(["capture","challenge","fortify"].includes(atype))why="Correct territory: <strong>"+ah+"</strong>. Hour hand near "+nh+" but next hour doesn't open until minute hand reaches top.";
+  if(["capture","challenge","fortify","cleanse"].includes(atype))why="Correct territory: <strong>"+ah+"</strong>. Hour hand near "+nh+" but next hour doesn't open until minute hand reaches top.";
   else if(atype==="harvest")why="Long hand traveled <strong>"+state.minute+"</strong> tick"+(state.minute===1?"":"s")+" from top.";
   else if(atype==="countdown")why="<strong>"+countdownValue()+"</strong> tick"+(countdownValue()===1?"":"s")+" remain before next hour opens.";
   return base+"<br><br>"+why;
@@ -441,11 +563,12 @@ function revealExp(atype){
 function resolveAction(atype,answer,correct,isCorrect){
   const p=state.currentPlayer,opp=p===1?2:1,ah=getHourTerritory(state.hour);
   let title=isCorrect?"Correct!":"Not Quite",msg="",win=false,snd=isCorrect?playCorrect:playWrong;
-  if(!isCorrect){msg="<strong>"+activeName()+"</strong> answered <strong>"+answer+"</strong>, correct was <strong>"+correct+"</strong>. Move fails.";}
+  if(!isCorrect){if(isSolo())state.stability=Math.max(0,state.stability-5);msg="<strong>"+activeName()+"</strong> answered <strong>"+answer+"</strong>, correct was <strong>"+correct+"</strong>. Move fails."+(isSolo()?" Clock Stability -5.":"");}
   else if(atype==="harvest"){const gain=100+state.minute*10;state.players[p].energy+=gain;snd=playEnergy;msg="<strong>"+activeName()+"</strong> harvested <strong>"+gain+" energy</strong>!";}
   else if(atype==="countdown"){const gain=150+countdownValue()*15;state.players[p].energy+=gain;snd=playEnergy;msg="<strong>"+activeName()+"</strong> earned <strong>"+gain+" energy</strong> from Countdown Dash!";}
   else if(atype==="capture"){
-    if(state.territories[ah]===p){msg="You already control Territory "+ah+". Try fortifying it.";snd=playWrong;}
+    if(isSolo()&&state.corrupted[ah]){msg="Territory "+ah+" is corrupted. Cleanse it before you can capture it.";snd=playWrong;}
+    else if(state.territories[ah]===p){msg="You already control Territory "+ah+". Try fortifying it.";snd=playWrong;}
     else if(state.players[p].energy<1500){msg="Need 1500 energy to capture Territory "+ah+".";snd=playWrong;}
     else{state.players[p].energy-=1500;state.territories[ah]=Number(p);state.fortified[ah]=false;if(isLateHour())state.players[p].lateCaptures++;snd=playCapture;msg="<strong>"+activeName()+"</strong> captured <strong>"+(isLateHour()?"Late ":"")+"Territory "+ah+"</strong>!";win=true;}
   }
@@ -453,6 +576,12 @@ function resolveAction(atype,answer,correct,isCorrect){
     if(state.territories[ah]!==opp){msg="Player "+opp+" doesn't control Territory "+ah+". No challenge.";snd=playWrong;}
     else if(state.players[p].energy<2200){msg="Need 2200 energy to challenge Territory "+ah+".";snd=playWrong;}
     else{state.players[p].energy-=2200;snd=playChallenge;if(state.fortified[ah]){state.fortified[ah]=false;msg="<strong>"+activeName()+"</strong> broke the shield on Territory "+ah+"! Player "+opp+" still holds it.";}else{state.territories[ah]=0;msg="<strong>"+activeName()+"</strong> knocked Territory "+ah+" to open territory!";}}
+  }
+  else if(atype==="cleanse"){
+    if(!isSolo()){msg="Cleanse is only available in One Player Mode.";snd=playWrong;}
+    else if(!state.corrupted[ah]){msg="Territory "+ah+" is not corrupted. No cleanse needed.";snd=playWrong;}
+    else if(state.players[1].energy<1200){msg="Need 1200 energy to cleanse Territory "+ah+".";snd=playWrong;}
+    else{state.players[1].energy-=1200;state.corrupted[ah]=false;state.threatened[ah]=false;state.territories[ah]=0;snd=playFortify;msg="<strong>Territory "+ah+"</strong> was cleansed! It is now open territory.";}
   }
   else if(atype==="fortify"){
     if(state.territories[ah]!==p){msg="You can only fortify a territory you control.";snd=playWrong;}
@@ -464,6 +593,54 @@ function resolveAction(atype,answer,correct,isCorrect){
   showFB(title,isCorrect?"correct":"wrong",msg,revealExp(atype),win);
 }
 
+
+function spawnThreat(){
+  const choices=[];
+  for(let h=1;h<=12;h++){
+    if(!state.corrupted[h]&&!state.threatened[h])choices.push(h);
+  }
+  if(choices.length===0)return;
+  const pick=choices[Math.floor(Math.random()*choices.length)];
+  state.threatened[pick]=true;
+}
+function enemyTurnSolo(){
+  if(!isSolo()||state.gameOver)return "";
+  let notes=[];
+  for(let h=1;h<=12;h++){
+    if(state.threatened[h]){
+      state.threatened[h]=false;
+      if(state.fortified[h]){
+        state.fortified[h]=false;
+        notes.push("A threat hit Territory "+h+" but broke its shield instead of corrupting it.");
+      }else{
+        state.corrupted[h]=true;
+        state.territories[h]=0;
+        notes.push("Territory "+h+" became corrupted.");
+      }
+    }
+  }
+  const damage=soloCorruptedCount()*5;
+  if(damage>0){
+    state.stability=Math.max(0,state.stability-damage);
+    notes.push("Corruption damaged Clock Stability by "+damage+".");
+  }
+  if(state.stability>0)spawnThreat();
+  if(state.stability<=0){
+    state.gameOver=true;
+    state.pendingNextTurn=false;
+    state.pendingVictory="defeat";
+  }
+  return notes.join("<br>");
+}
+function getSoloWinner(){
+  if(!isSolo())return null;
+  const cfg=state.levelConfig;
+  if(soloCapturedCount()<cfg.goal)return null;
+  if(cfg.lateGoal&&state.players[1].lateCaptures<cfg.lateGoal)return null;
+  if(cfg.quarterGoal&&state.quarterSuccesses<cfg.quarterGoal)return null;
+  return "solo";
+}
+
 function showFB(title,cls,msg,reveal,checkWin){
   stopTimer();
   document.getElementById("fbTitle").textContent=title;
@@ -472,15 +649,46 @@ function showFB(title,cls,msg,reveal,checkWin){
   document.getElementById("revealBox").innerHTML=reveal;
   openFeedbackPanel();
   state.pendingNextTurn=true;
-  if(checkWin){const w=getWinner();if(w){state.gameOver=true;state.pendingNextTurn=false;state.pendingVictory=w;}}
+  if(checkWin){const w=isSolo()?getSoloWinner():getWinner();if(w){state.gameOver=true;state.pendingNextTurn=false;state.pendingVictory=w;}}
 }
 function continueAfterFeedback(){
   closeFeedbackPanel();
   if(state.pendingVictory){showVictory(state.pendingVictory);state.pendingVictory=null;return;}
-  if(!state.gameOver&&state.pendingNextTurn)nextTurn();
+  if(!state.gameOver&&state.pendingNextTurn){
+    if(isSolo()){
+      const enemyMsg=enemyTurnSolo();
+      if(state.pendingVictory){showVictory(state.pendingVictory);state.pendingVictory=null;return;}
+      if(state.gameOver){showVictory("defeat");return;}
+      nextTurn();
+      if(enemyMsg){
+        document.getElementById("fbTitle").textContent="Clock Enemy Moves";
+        document.getElementById("fbTitle").className="fb-title wrong";
+        document.getElementById("fbMessage").innerHTML=enemyMsg;
+        document.getElementById("revealBox").innerHTML="A new clock time is ready. Decide whether to earn energy, capture, fortify, or cleanse corruption.";
+        openFeedbackPanel();
+        state.pendingNextTurn=false;
+      }
+    }else nextTurn();
+  }
 }
 function getWinner(){for(let p=1;p<=2;p++){const tc=Object.values(state.territories).filter(o=>Number(o)===p).length;if(tc>=4&&state.players[p].lateCaptures>=1)return p;}return null;}
 function showVictory(pn){
+  if(pn==="defeat"){
+    document.getElementById("winnerText").textContent="Clock Corrupted!";
+    document.getElementById("winnerSubtext").innerHTML="Clock Stability reached 0. Try again and cleanse corruption before it spreads!";
+    buildConfetti();
+    document.getElementById("winnerOverlay").style.display="flex";
+    playWrong();
+    return;
+  }
+  if(pn==="solo"){
+    document.getElementById("winnerText").textContent="Level Complete!";
+    document.getElementById("winnerSubtext").innerHTML="You captured enough territories and stabilized the clock. Victory!";
+    buildConfetti();
+    document.getElementById("winnerOverlay").style.display="flex";
+    playVictory();
+    return;
+  }
   const tc=Object.values(state.territories).filter(o=>Number(o)===pn).length;
   document.getElementById("winnerText").textContent="Player "+pn+" Wins!";
   document.getElementById("winnerSubtext").innerHTML="Player "+pn+" controls <strong>"+tc+"</strong> territories with a Late-Hour Capture. Victory!";
@@ -489,9 +697,10 @@ function showVictory(pn){
   playVictory();
 }
 function buildConfetti(){const box=document.getElementById("confetti"),cols=["#ffd166","#00e5ff","#ff2cf0","#39ff8a","#ffffff","#ff4455"];box.innerHTML="";for(let i=0;i<65;i++){const s=document.createElement("span");s.style.cssText="left:"+Math.random()*100+"%;background:"+cols[i%cols.length]+";animation-duration:"+(2.2+Math.random()*2.6)+"s;animation-delay:"+Math.random()*1.5+"s;";box.appendChild(s);}}
-function nextTurn(){if(state.gameOver)return;state.currentPlayer=state.currentPlayer===1?2:1;state.quarterUsedThisTurn=false;randomTime();render();startTimer();}
+function nextTurn(){if(state.gameOver)return;if(!isSolo())state.currentPlayer=state.currentPlayer===1?2:1;else state.currentPlayer=1;state.quarterUsedThisTurn=false;randomTimeForMode();render();if(isSolo())stopTimer();else startTimer();}
 function openHowToPlay(){stopTimer();document.getElementById("howModal").style.display="flex";}
-function closeHowToPlay(){document.getElementById("howModal").style.display="none";if(!state.gameOver&&document.getElementById("mainApp").style.display!=="none")startTimer();}
+function closeHowToPlay(){document.getElementById("howModal").style.display="none";if(!isSolo()&&!state.gameOver&&document.getElementById("mainApp").style.display!=="none")startTimer();}
+updateStartOptions();
 </script>
 </body>
 </html>
