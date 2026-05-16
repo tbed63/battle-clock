@@ -260,7 +260,7 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
         <button class="dash" onclick="startAction('countdown')"><span class="btn-label">&#128168; Countdown Dash</span><span class="btn-sub">Earns 1.5x</span></button>
         <button class="blue" onclick="startAction('capture')"><span class="btn-label">&#127988; Capture Hour</span><span class="btn-sub">Cost: 1500</span></button>
         <button class="danger" id="challengeCleanseBtn" onclick="startChallengeOrCleanse()"><span class="btn-label" id="challengeCleanseLabel">&#9876; Challenge</span><span class="btn-sub" id="challengeCleanseSub">Cost: 2200</span></button>
-        <button class="shield" onclick="startAction('fortify')"><span class="btn-label">&#128737; Fortify</span><span class="btn-sub">Cost: 1000</span></button>
+        <button class="shield" onclick="startAction('fortify')"><span class="btn-label">&#128737; Fortify</span><span class="btn-sub">Cost: 500</span></button>
       </div>
     </section>
     <section class="kids-art-panel">
@@ -314,8 +314,8 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
       <li><strong>Countdown Dash:</strong> Type minutes remaining until next hour. Pays ~1.5x more than Harvest.</li>
       <li><strong>Capture Hour:</strong> Choose the active territory. Costs 1500 energy.</li>
       <li><strong>Challenge:</strong> In Two Player Mode, attack opponent\'s active territory. Costs 2200 energy. Breaks shield or removes control.</li>
-      <li><strong>Cleanse:</strong> In One Player Mode, remove corruption from the active territory. Costs 500 energy.</li>
-      <li><strong>Fortify:</strong> Shield your active territory. Costs 1000 energy.</li>
+      <li><strong>Cleanse:</strong> In One Player Mode, remove corruption from the active territory. Costs 500 energy and does not use up your regular turn.</li>
+      <li><strong>Fortify:</strong> Shield your active territory. Costs 500 energy.</li>
       <li><strong>Exact Hour Event:</strong> If the clock lands on :00, the current player gets a free shield on one captured territory. If the current player has no captured territories, they lose the turn.</li>
     </ul>
     <h3>Timer</h3>
@@ -331,7 +331,7 @@ const levelConfigs={
   4:{name:"Quarter Power",goal:7,stability:90,timeSet:"quarter",quarterGoal:2},
   5:{name:"Full Clock Battle",goal:12,stability:85,timeSet:"mixed"}
 };
-const state={mode:"two",level:1,levelConfig:levelConfigs[1],currentPlayer:1,hour:5,minute:58,players:{1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}},territories:{},fortified:{},threatened:{},corrupted:{},stability:100,quarterSuccesses:0,gameOver:false,pendingNextTurn:true,pendingVictory:null,quarterUsedThisTurn:false,exactHourHandledThisTurn:false,pendingBonusAction:false,turnDuration:60,timerSecs:60,timerInterval:null};
+const state={mode:"two",level:1,levelConfig:levelConfigs[1],currentPlayer:1,hour:5,minute:58,players:{1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}},territories:{},fortified:{},threatened:{},corrupted:{},stability:100,quarterSuccesses:0,gameOver:false,pendingNextTurn:true,pendingVictory:null,quarterUsedThisTurn:false,exactHourHandledThisTurn:false,pendingBonusAction:false,justCapturedHour:null,turnDuration:60,timerSecs:60,timerInterval:null};
 for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.corrupted[h]=false;}
 
 let audioCtx=null,zoodleBuf=null;
@@ -472,7 +472,7 @@ function applyExactHourShield(h){
 
 function startGame(){ensureAudio();loadZoodle();state.mode=document.getElementById("modeSel").value;state.level=parseInt(document.getElementById("levelSel").value,10)||1;state.levelConfig=levelConfigs[state.level]||levelConfigs[1];if(!isSolo())state.turnDuration=parseInt(document.getElementById("timerSel").value,10);document.getElementById("startScreen").style.display="none";document.getElementById("mainApp").style.display="";document.getElementById("kidsStrip").style.display=window.innerWidth<=699?"flex":"none";resetState();updateModeUI();randomTimeForMode();render();if(isSolo()){stopTimer();checkExactHourEvent();}else{startTimer();checkExactHourEvent();}}
 function goToStart(){stopTimer();closeAnswerPanel();closeFeedbackPanel();document.getElementById("winnerOverlay").style.display="none";document.getElementById("howModal").style.display="none";document.getElementById("mainApp").style.display="none";document.getElementById("startScreen").style.display="flex";}
-function resetState(){state.currentPlayer=1;state.gameOver=false;state.pendingNextTurn=true;state.pendingVictory=null;state.quarterUsedThisTurn=false;state.exactHourHandledThisTurn=false;state.pendingBonusAction=false;state.quarterSuccesses=0;state.stability=state.levelConfig.stability;state.players={1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}};for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.corrupted[h]=false;}if(isSolo())spawnThreat();}
+function resetState(){state.currentPlayer=1;state.gameOver=false;state.pendingNextTurn=true;state.pendingVictory=null;state.quarterUsedThisTurn=false;state.exactHourHandledThisTurn=false;state.pendingBonusAction=false;state.justCapturedHour=null;state.quarterSuccesses=0;state.stability=state.levelConfig.stability;state.players={1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}};for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.corrupted[h]=false;}if(isSolo())spawnThreat();}
 function openAnswerPanel(){document.getElementById("answerPanel").classList.add("open");document.getElementById("feedbackPanel").classList.remove("open");}
 function closeAnswerPanel(){document.getElementById("answerPanel").classList.remove("open");}
 function openFeedbackPanel(){document.getElementById("feedbackPanel").classList.add("open");document.getElementById("answerPanel").classList.remove("open");}
@@ -621,7 +621,7 @@ function resolveAction(atype,answer,correct,isCorrect){
     if(isSolo()&&state.corrupted[ah]){msg="Territory "+ah+" is corrupted. Cleanse it before you can capture it.";snd=playWrong;}
     else if(state.territories[ah]===p){msg="You already control Territory "+ah+". Try fortifying it.";snd=playWrong;}
     else if(state.players[p].energy<1500){msg="Need 1500 energy to capture Territory "+ah+".";snd=playWrong;}
-    else{state.players[p].energy-=1500;state.territories[ah]=Number(p);state.fortified[ah]=false;if(isSolo()&&state.threatened[ah]){state.threatened[ah]=false;}if(isLateHour())state.players[p].lateCaptures++;snd=playCapture;msg="<strong>"+activeName()+"</strong> captured <strong>"+(isLateHour()?"Late ":"")+"Territory "+ah+"</strong>!"+(isSolo()?" If it was in danger, capturing it kept it safe.":"");win=true;}
+    else{state.players[p].energy-=1500;state.territories[ah]=Number(p);state.fortified[ah]=false;if(isSolo()){state.threatened[ah]=false;state.corrupted[ah]=false;state.justCapturedHour=ah;}if(isLateHour())state.players[p].lateCaptures++;snd=playCapture;msg="<strong>"+activeName()+"</strong> captured <strong>"+(isLateHour()?"Late ":"")+"Territory "+ah+"</strong>!"+(isSolo()?" Capturing it kept that hour clean and safe from this enemy move.":"");win=true;}
   }
   else if(atype==="challenge"){
     if(state.territories[ah]!==opp){msg="Player "+opp+" doesn't control Territory "+ah+". No challenge.";snd=playWrong;}
@@ -632,13 +632,13 @@ function resolveAction(atype,answer,correct,isCorrect){
     if(!isSolo()){msg="Cleanse is only available in One Player Mode.";snd=playWrong;}
     else if(!state.corrupted[ah]){msg="Territory "+ah+" is not corrupted. No cleanse needed.";snd=playWrong;}
     else if(state.players[1].energy<500){msg="Need 500 energy to cleanse Territory "+ah+".";snd=playWrong;}
-    else{state.players[1].energy-=500;state.corrupted[ah]=false;state.threatened[ah]=false;state.territories[ah]=0;snd=playFortify;msg="<strong>Territory "+ah+"</strong> was cleansed! It is now open territory.";}
+    else{state.players[1].energy-=500;state.corrupted[ah]=false;state.threatened[ah]=false;state.territories[ah]=0;state.pendingBonusAction=true;snd=playFortify;msg="<strong>Territory "+ah+"</strong> was cleansed! It is now open territory. You still get your regular turn.";}
   }
   else if(atype==="fortify"){
     if(state.territories[ah]!==p){msg="You can only fortify a territory you control.";snd=playWrong;}
     else if(state.fortified[ah]){msg="Territory "+ah+" is already fortified.";snd=playWrong;}
-    else if(state.players[p].energy<1000){msg="Need 1000 energy to fortify Territory "+ah+".";snd=playWrong;}
-    else{state.players[p].energy-=1000;state.fortified[ah]=true;snd=playFortify;msg="<strong>"+activeName()+"</strong> fortified Territory "+ah+"! Next Challenge breaks shield instead of removing control.";}
+    else if(state.players[p].energy<500){msg="Need 500 energy to fortify Territory "+ah+".";snd=playWrong;}
+    else{state.players[p].energy-=500;state.fortified[ah]=true;snd=playFortify;msg="<strong>"+activeName()+"</strong> fortified Territory "+ah+"! Next Challenge breaks shield instead of removing control.";}
   }
   snd();render();
   showFB(title,isCorrect?"correct":"wrong",msg,revealExp(atype),win);
@@ -657,8 +657,16 @@ function spawnThreat(){
 function enemyTurnSolo(){
   if(!isSolo()||state.gameOver)return "";
   let notes=[];
+  const protectedHour=state.justCapturedHour;
+  state.justCapturedHour=null;
   for(let h=1;h<=12;h++){
     if(state.threatened[h]){
+      if(h===protectedHour){
+        state.threatened[h]=false;
+        state.corrupted[h]=false;
+        notes.push("Territory "+h+" stayed clean because you captured it.");
+        continue;
+      }
       state.threatened[h]=false;
       if(state.fortified[h]){
         state.fortified[h]=false;
