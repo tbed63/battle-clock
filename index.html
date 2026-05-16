@@ -314,7 +314,7 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
       <li><strong>Countdown Dash:</strong> Type minutes remaining until next hour. Pays ~1.5x more than Harvest.</li>
       <li><strong>Capture Hour:</strong> Choose the active territory. Costs 1500 energy.</li>
       <li><strong>Challenge:</strong> In Two Player Mode, attack opponent\'s active territory. Costs 2200 energy. Breaks shield or removes control.</li>
-      <li><strong>Cleanse:</strong> In One Player Mode, remove corruption from the active territory. Costs 1200 energy.</li>
+      <li><strong>Cleanse:</strong> In One Player Mode, remove corruption from the active territory. Costs 500 energy.</li>
       <li><strong>Fortify:</strong> Shield your active territory. Costs 1000 energy.</li>
       <li><strong>Exact Hour Event:</strong> If the clock lands on :00, the current player gets a free shield on one captured territory. If the current player has no captured territories, they lose the turn.</li>
     </ul>
@@ -397,7 +397,7 @@ function updateModeUI(){
     if(p2TerritoriesLabel)p2TerritoriesLabel.textContent="Goal";
     if(p2LateLabel)p2LateLabel.textContent="Corrupted";
     document.getElementById("challengeCleanseLabel").innerHTML="&#10024; Cleanse";
-    document.getElementById("challengeCleanseSub").textContent="Cost: 1200";
+    document.getElementById("challengeCleanseSub").textContent="Cost: 500";
   }else{
     if(p1t)p1t.textContent="Player 1";
     if(p2t)p2t.textContent="Player 2";
@@ -621,7 +621,7 @@ function resolveAction(atype,answer,correct,isCorrect){
     if(isSolo()&&state.corrupted[ah]){msg="Territory "+ah+" is corrupted. Cleanse it before you can capture it.";snd=playWrong;}
     else if(state.territories[ah]===p){msg="You already control Territory "+ah+". Try fortifying it.";snd=playWrong;}
     else if(state.players[p].energy<1500){msg="Need 1500 energy to capture Territory "+ah+".";snd=playWrong;}
-    else{state.players[p].energy-=1500;state.territories[ah]=Number(p);state.fortified[ah]=false;if(isLateHour())state.players[p].lateCaptures++;snd=playCapture;msg="<strong>"+activeName()+"</strong> captured <strong>"+(isLateHour()?"Late ":"")+"Territory "+ah+"</strong>!";win=true;}
+    else{state.players[p].energy-=1500;state.territories[ah]=Number(p);state.fortified[ah]=false;if(isSolo()&&state.threatened[ah]){state.threatened[ah]=false;}if(isLateHour())state.players[p].lateCaptures++;snd=playCapture;msg="<strong>"+activeName()+"</strong> captured <strong>"+(isLateHour()?"Late ":"")+"Territory "+ah+"</strong>!"+(isSolo()?" If it was in danger, capturing it kept it safe.":"");win=true;}
   }
   else if(atype==="challenge"){
     if(state.territories[ah]!==opp){msg="Player "+opp+" doesn't control Territory "+ah+". No challenge.";snd=playWrong;}
@@ -631,8 +631,8 @@ function resolveAction(atype,answer,correct,isCorrect){
   else if(atype==="cleanse"){
     if(!isSolo()){msg="Cleanse is only available in One Player Mode.";snd=playWrong;}
     else if(!state.corrupted[ah]){msg="Territory "+ah+" is not corrupted. No cleanse needed.";snd=playWrong;}
-    else if(state.players[1].energy<1200){msg="Need 1200 energy to cleanse Territory "+ah+".";snd=playWrong;}
-    else{state.players[1].energy-=1200;state.corrupted[ah]=false;state.threatened[ah]=false;state.territories[ah]=0;snd=playFortify;msg="<strong>Territory "+ah+"</strong> was cleansed! It is now open territory.";}
+    else if(state.players[1].energy<500){msg="Need 500 energy to cleanse Territory "+ah+".";snd=playWrong;}
+    else{state.players[1].energy-=500;state.corrupted[ah]=false;state.threatened[ah]=false;state.territories[ah]=0;snd=playFortify;msg="<strong>Territory "+ah+"</strong> was cleansed! It is now open territory.";}
   }
   else if(atype==="fortify"){
     if(state.territories[ah]!==p){msg="You can only fortify a territory you control.";snd=playWrong;}
