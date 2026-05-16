@@ -1,1335 +1,480 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Battle Clock!</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='35%25' r='65%25'%3E%3Cstop offset='0%25' stop-color='%23ffe66d'/%3E%3Cstop offset='45%25' stop-color='%23ff9f1c'/%3E%3Cstop offset='100%25' stop-color='%235a189a'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%23101018'/%3E%3Ccircle cx='32' cy='32' r='25' fill='url(%23g)' stroke='%23ffffff' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='3.2' fill='%23101018'/%3E%3Cpath d='M32 32 L32 15' stroke='%23101018' stroke-width='4.5' stroke-linecap='round'/%3E%3Cpath d='M32 32 L45 39' stroke='%23101018' stroke-width='4.5' stroke-linecap='round'/%3E%3Ctext x='32' y='55' text-anchor='middle' font-family='Arial, sans-serif' font-size='14' font-weight='900' fill='%23ffffff'%3EBC!%3C/text%3E%3C/svg%3E" />
-
-  <style>
-    :root {
-      --bg: #0a0a14;
-      --text: #f0f0ff;
-      --muted: #8888aa;
-      --p1: #00e5ff;
-      --p2: #ff2cf0;
-      --gold: #ffd166;
-      --danger: #ff4455;
-      --green: #39ff8a;
-      --font-display: 'Bangers', cursive;
-      --font-body: 'Nunito', sans-serif;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { height: 100%; }
-
-    body {
-      font-family: var(--font-body);
-      color: var(--text);
-      background: var(--bg);
-      background-image:
-        radial-gradient(ellipse at 15% 10%, rgba(0,229,255,0.09) 0%, transparent 45%),
-        radial-gradient(ellipse at 85% 15%, rgba(255,44,240,0.09) 0%, transparent 45%),
-        radial-gradient(ellipse at 50% 95%, rgba(255,209,102,0.06) 0%, transparent 40%);
-      min-height: 100%;
-    }
-
-    /* ═══════════════════════════════════
-       DESKTOP LAYOUT  (>= 700px)
-    ═══════════════════════════════════ */
-    .app {
-      display: grid;
-      grid-template-columns: 1fr 400px;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    .board-panel {
-      display: grid;
-      grid-template-rows: auto 1fr;
-      padding: 16px 10px 16px 16px;
-      gap: 8px;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      flex-shrink: 0;
-    }
-
-    .brand { display: flex; flex-direction: column; gap: 2px; }
-
-    .title-logo {
-      height: 180px;
-      width: auto;
-      max-width: 600px;
-      object-fit: contain;
-      object-position: left center;
-      filter: drop-shadow(0 4px 14px rgba(0,0,0,0.65));
-      display: block;
-    }
-
-    .title-fallback {
-      font-family: var(--font-display);
-      font-size: 3.6rem;
-      letter-spacing: 2px;
-      color: var(--gold);
-      text-shadow: 3px 3px 0 #111, 0 0 24px rgba(255,209,102,0.55);
-      line-height: 1;
-    }
-
-    .top-buttons { display: flex; gap: 8px; flex-shrink: 0; }
-
-    .clock-zone {
-      min-height: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-
-    .clock-zone::before {
-      content: "";
-      position: absolute;
-      inset: 10%;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(0,229,255,0.05) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    svg#clock {
-      width: 100%;
-      height: 100%;
-      max-width: min(calc(100vh - 120px), 100%);
-      max-height: min(calc(100vh - 120px), 100%);
-      display: block;
-      overflow: visible;
-      filter: drop-shadow(0 8px 28px rgba(0,0,0,0.7));
-    }
-
-    .control-panel {
-      background: linear-gradient(180deg, #111120 0%, #0c0c18 100%);
-      border-left: 1px solid rgba(255,255,255,0.06);
-      display: grid;
-      grid-template-rows: auto auto 1fr 130px;
-      gap: 10px;
-      padding: 16px 14px 14px 12px;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    /* ── Player cards ── */
-    .players { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-    .player {
-      border-radius: 14px;
-      padding: 11px 12px;
-      background: rgba(255,255,255,0.025);
-      border: 2px solid rgba(255,255,255,0.06);
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .player h2 {
-      font-family: var(--font-display);
-      font-size: 1.25rem;
-      letter-spacing: 1px;
-      margin-bottom: 7px;
-      line-height: 1;
-    }
-
-    .player.p1 h2 { color: var(--p1); }
-    .player.p2 h2 { color: var(--p2); }
-    .player.active.p1 { border-color: var(--p1); box-shadow: 0 0 16px rgba(0,229,255,0.22); }
-    .player.active.p2 { border-color: var(--p2); box-shadow: 0 0 16px rgba(255,44,240,0.22); }
-
-    .stat { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; margin: 4px 0; font-size: 0.78rem; color: var(--muted); }
-    .stat strong { color: var(--text); font-size: 0.9rem; font-weight: 900; }
-
-    .turn-badge {
-      display: block;
-      font-family: var(--font-display);
-      font-size: 1rem;
-      letter-spacing: 1px;
-      padding: 5px 12px;
-      border-radius: 999px;
-      background: rgba(255,209,102,0.10);
-      border: 1px solid rgba(255,209,102,0.28);
-      color: var(--gold);
-      text-align: center;
-    }
-
-    .actions-panel {
-      display: grid;
-      grid-template-rows: auto 1fr;
-      gap: 8px;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    .panel-title {
-      font-family: var(--font-display);
-      font-size: 1.05rem;
-      letter-spacing: 1.5px;
-      color: var(--gold);
-      text-transform: uppercase;
-      padding-bottom: 5px;
-      border-bottom: 1px solid rgba(255,209,102,0.13);
-      flex-shrink: 0;
-    }
-
-    .actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: repeat(3, 1fr);
-      gap: 7px;
-      min-height: 0;
-    }
-
-    .kids-art-panel {
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      min-height: 120px;
-      overflow: hidden;
-    }
-    .kids-art-panel img {
-      max-height: 100%;
-      max-width: 100%;
-      object-fit: contain;
-      object-position: center bottom;
-    }
-
-    /* ZoodleBug branding — fixed bottom-left */
-    .zoodlebug-badge {
-      position: fixed;
-      bottom: 28px;
-      left: 28px;
-      z-index: 10;
-      pointer-events: none;
-    }
-    .zoodlebug-badge img {
-      width: 180px;
-      height: auto;
-      display: block;
-      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.7));
-      opacity: 0.92;
-    }
-
-    /* ═══════════════════════════════════
-       BUTTONS
-    ═══════════════════════════════════ */
-    button {
-      appearance: none;
-      border: none;
-      border-radius: 12px;
-      padding: 9px 7px;
-      font-family: var(--font-body);
-      font-weight: 900;
-      font-size: 0.82rem;
-      cursor: pointer;
-      color: white;
-      background: linear-gradient(160deg, #2a2a45, #1a1a2e);
-      border: 2px solid rgba(255,255,255,0.07);
-      transition: transform 0.08s, filter 0.12s, box-shadow 0.12s;
-      box-shadow: 0 4px 0 rgba(0,0,0,0.45);
-      text-transform: uppercase;
-      letter-spacing: 0.2px;
-      line-height: 1.2;
-      -webkit-tap-highlight-color: transparent;
-      position: relative;
-      overflow: hidden;
-    }
-    button::before {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 38%;
-      background: rgba(255,255,255,0.055);
-      border-radius: 10px 10px 0 0;
-      pointer-events: none;
-    }
-    button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.14); box-shadow: 0 6px 0 rgba(0,0,0,0.45); }
-    button:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.45); }
-    button:disabled { opacity: 0.3; cursor: not-allowed; }
-
-    .btn-sm { font-size: 0.75rem; padding: 7px 11px; min-height: 34px; border-radius: 10px; }
-
-    .primary { background: linear-gradient(135deg, #ffc300, #e07000); color: #1a0f00; border-color: rgba(255,195,0,0.28); }
-    .danger  { background: linear-gradient(135deg, #ff4455, #aa0020); border-color: rgba(255,68,85,0.28); }
-    .blue    { background: linear-gradient(135deg, #00e5ff, #0077b6); color: #001a20; border-color: rgba(0,229,255,0.28); }
-    .green   { background: linear-gradient(135deg, #39ff8a, #00aa44); color: #001a0a; border-color: rgba(57,255,138,0.28); }
-    .shield  { background: linear-gradient(135deg, #ffd166, #7ec8e8); color: #141414; border-color: rgba(255,209,102,0.28); }
-    .dash    { background: linear-gradient(135deg, #c077ff, #5a189a); border-color: rgba(192,119,255,0.28); }
-    .quarter { background: linear-gradient(135deg, #ffe600, #ff2060); color: #1a0010; border-color: rgba(255,230,0,0.28); }
-
-    .actions button {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
-      text-align: center;
-    }
-
-    .btn-label { font-size: 0.8rem;  font-weight: 900; line-height: 1.15; }
-    .btn-sub   { font-size: 0.65rem; opacity: 0.88;    font-weight: 700;  }
-
-    /* ═══════════════════════════════════
-       MODALS
-    ═══════════════════════════════════ */
-    .modal, .winner, .how-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.58);
-      backdrop-filter: blur(3px);
-      z-index: 20;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
-    .modal-card, .winner-card, .how-card {
-      width: min(440px, 96vw);
-      max-height: 90vh;
-      overflow-y: auto;
-      background: linear-gradient(145deg, #1a1a2e, #101020);
-      border: 2px solid rgba(255,209,102,0.55);
-      border-radius: 22px;
-      padding: 22px;
-      box-shadow: 0 0 60px rgba(255,209,102,0.18), 0 20px 60px rgba(0,0,0,0.75);
-    }
-
-    .how-card { width: min(680px, 96vw); }
-
-    .modal-card h2, .winner-card h2, .how-card h2 {
-      font-family: var(--font-display);
-      letter-spacing: 1px;
-    }
-    .modal-card h2 { font-size: 1.7rem; margin-bottom: 10px; }
-    .how-card h2   { font-size: 1.9rem; color: var(--gold); margin-bottom: 12px; }
-    .how-card h3   { font-family: var(--font-display); font-size: 1.15rem; color: var(--p1); margin: 14px 0 6px; }
-
-    .modal-card p, .how-card p, .how-card li { color: #cccce8; font-size: 0.93rem; line-height: 1.55; }
-    .how-card ul { padding-left: 20px; }
-    .how-card li { margin-bottom: 6px; }
-
-    .choice-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-top: 14px;
-    }
-    .choice-grid button { font-family: var(--font-display); font-size: 1.3rem; padding: 11px 4px; letter-spacing: 1px; }
-
-    .answer-input {
-      width: 100%;
-      border-radius: 14px;
-      border: 2px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.06);
-      color: white;
-      font-family: var(--font-display);
-      font-size: 2.4rem;
-      letter-spacing: 2px;
-      padding: 12px;
-      margin-top: 12px;
-      text-align: center;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .answer-input:focus { border-color: var(--gold); }
-
-    .answer-row { display: flex; gap: 9px; margin-top: 12px; }
-    .answer-row button { flex: 1; }
-
-    .feedback-title.correct { color: var(--green); }
-    .feedback-title.wrong   { color: var(--danger); }
-
-    .reveal-box {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 13px;
-      padding: 13px;
-      margin-top: 12px;
-      font-size: 0.88rem;
-      line-height: 1.6;
-      color: #c8c8e8;
-    }
-
-    /* Winner */
-    .winner-card { text-align: center; position: relative; }
-    .winner-card h2 {
-      font-size: clamp(2rem, 5vw, 3.2rem);
-      letter-spacing: 2px;
-      color: var(--gold);
-      text-shadow: 0 0 28px rgba(255,209,102,0.5);
-    }
-    .winner-card p { color: #e0e0f5; font-size: 1rem; margin: 10px 0; }
-
-    .victory-clock {
-      width: 120px; height: 120px;
-      margin: 14px auto;
-      border-radius: 50%;
-      border: 7px solid var(--gold);
-      background: radial-gradient(circle, #1e1e38, #0d0d1a);
-      box-shadow: 0 0 28px rgba(255,209,102,0.48);
-      position: relative;
-      animation: pulseClock 1s infinite alternate ease-in-out;
-    }
-    .victory-clock::before, .victory-clock::after {
-      content: "";
-      position: absolute;
-      left: 50%; top: 50%;
-      transform-origin: 0 0;
-      border-radius: 999px;
-      background: white;
-    }
-    .victory-clock::before { width: 44px; height: 5px; transform: rotate(-90deg); animation: spinMinute 2s linear infinite; }
-    .victory-clock::after  { width: 30px; height: 9px; background: var(--gold); transform: rotate(-35deg); animation: spinHour 8s linear infinite; }
-
-    .confetti { pointer-events: none; position: absolute; inset: 0; overflow: hidden; border-radius: 22px; }
-    .confetti span { position: absolute; width: 8px; height: 13px; top: -20px; animation: fall linear infinite; }
-
-    @keyframes fall        { 0%   { transform: translateY(-30px) rotate(0deg); }
-                             100% { transform: translateY(700px)  rotate(720deg); } }
-    @keyframes pulseClock  { from { transform: scale(1); } to { transform: scale(1.07); } }
-    @keyframes spinMinute  { to   { transform: rotate(270deg); } }
-    @keyframes spinHour    { to   { transform: rotate(325deg); } }
-
-    /* Clock SVG elements */
-    .territory { transition: fill 0.22s, stroke 0.22s; }
-    .hand { stroke-linecap: round; filter: drop-shadow(0 0 5px rgba(255,255,255,0.3)); }
-    .center-dot { fill: var(--gold); stroke: #111; stroke-width: 4; }
-    .territory-label {
-      font-size: 48px;
-      font-weight: 900;
-      text-anchor: middle;
-      dominant-baseline: middle;
-      fill: white;
-      paint-order: stroke;
-      stroke: rgba(0,0,0,0.85);
-      stroke-width: 9px;
-      pointer-events: none;
-    }
-    .territory-token {
-      font-size: 21px;
-      font-weight: 900;
-      text-anchor: middle;
-      dominant-baseline: middle;
-      fill: #111;
-      pointer-events: none;
-    }
-
-    /* ═══════════════════════════════════
-       MOBILE  (<= 699px)
-    ═══════════════════════════════════ */
-    @media (max-width: 699px) {
-      html, body { height: 100%; overflow: hidden; }
-
-      .app {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        height: 100vh;
-        height: 100dvh;
-        overflow: hidden;
-      }
-
-      .board-panel {
-        display: flex;
-        flex-direction: column;
-        padding: 6px 10px 2px;
-        gap: 4px;
-        flex-shrink: 0;
-      }
-
-      .topbar { flex-wrap: wrap; gap: 8px; }
-
-      .title-logo     { height: 38px; max-width: 200px; }
-      .title-fallback { font-size: 1.6rem; }
-
-      .top-buttons .btn-sm { font-size: 0.65rem; padding: 5px 8px; min-height: 28px; border-radius: 8px; }
-
-      /* Clock: compact on mobile */
-      .clock-zone {
-        width: 100%;
-        height: min(44vw, 210px);
-        flex-shrink: 0;
-        padding: 2px;
-        position: relative;
-      }
-
-      svg#clock {
-        width: 100%;
-        height: 100%;
-        max-width: 100%;
-        max-height: 100%;
-      }
-
-      .control-panel {
-        display: flex;
-        flex-direction: column;
-        border-left: none;
-        border-top: 1px solid rgba(255,255,255,0.06);
-        padding: 6px 10px 8px;
-        gap: 6px;
-        overflow: hidden;
-        flex: 1;
-        min-height: 0;
-      }
-
-      .player       { padding: 6px 8px; border-radius: 10px; }
-      .player h2    { font-size: 0.88rem; margin-bottom: 3px; }
-      .stat         { font-size: 0.65rem; margin: 2px 0; }
-      .stat strong  { font-size: 0.72rem; }
-
-      .turn-badge   { font-size: 0.78rem; padding: 3px 8px; }
-      .panel-title  { font-size: 0.82rem; padding-bottom: 3px; }
-
-      /* Actions fill remaining space */
-      .actions-panel { overflow: hidden; flex: 1; min-height: 0; display: grid; grid-template-rows: auto 1fr; gap: 4px; }
-      .actions { grid-template-rows: repeat(3, 1fr); gap: 5px; min-height: 0; }
-
-      .actions button {
-        height: 100%;
-        min-height: 0;
-        padding: 5px 4px;
-      }
-
-      .btn-label { font-size: 0.68rem; }
-      .btn-sub   { font-size: 0.56rem; }
-
-      .kids-art-panel { display: none; }
-
-      /* Kids art overlaid in clock zone on mobile */
-      .clock-zone .kids-art-mobile {
-        display: flex !important;
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        height: 90%;
-        width: auto;
-        pointer-events: none;
-        z-index: 2;
-      }
-      .clock-zone .kids-art-mobile img {
-        height: 100%;
-        width: auto;
-        object-fit: contain;
-        object-position: right bottom;
-        display: block;
-      }
-
-      /* Modals slide up from bottom on mobile */
-      .modal, .winner, .how-modal {
-        align-items: flex-end;
-        padding: 0;
-      }
-      .modal-card, .winner-card, .how-card {
-        width: 100%;
-        max-height: 84vh;
-        border-radius: 22px 22px 0 0;
-        padding: 18px 16px 24px;
-        border-bottom: none;
-      }
-      .modal-card h2 { font-size: 1.4rem; }
-      .choice-grid   { gap: 6px; }
-      .choice-grid button { font-size: 1.1rem; padding: 10px 2px; }
-      .answer-input  { font-size: 2rem; padding: 10px; }
-    }
-
-    @media (max-width: 699px) {
-      .zoodlebug-badge img { width: 80px; }
-      .zoodlebug-badge { bottom: 12px; left: 12px; }
-    }
-
-    /* Very small phones */
-    @media (max-width: 380px) {
-      .territory-label  { font-size: 40px; stroke-width: 7px; }
-      .choice-grid      { grid-template-columns: repeat(3, 1fr); }
-      .player h2        { font-size: 0.95rem; }
-    }
-
-    /* Tablet (700–959px) */
-    @media (min-width: 700px) and (max-width: 959px) {
-      .app { grid-template-columns: 1fr 340px; }
-      .actions button { min-height: 56px; }
-      .btn-label { font-size: 0.76rem; }
-      .btn-sub   { font-size: 0.62rem; }
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Battle Clock!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a14;--text:#f0f0ff;--muted:#8888aa;--p1:#00e5ff;--p2:#ff2cf0;--gold:#ffd166;--danger:#ff4455;--green:#39ff8a;--font-display:'Bangers',cursive;--font-body:'Nunito',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:var(--font-body);color:var(--text);background:var(--bg);background-image:radial-gradient(ellipse at 15% 10%,rgba(0,229,255,.09) 0%,transparent 45%),radial-gradient(ellipse at 85% 15%,rgba(255,44,240,.09) 0%,transparent 45%),radial-gradient(ellipse at 50% 95%,rgba(255,209,102,.06) 0%,transparent 40%);min-height:100%;}
+#startScreen{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:#0a0a14;background-image:radial-gradient(ellipse at 20% 15%,rgba(0,229,255,.13) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(255,44,240,.13) 0%,transparent 50%);padding:24px;}
+.ss-logo img{max-height:200px;max-width:80vw;filter:drop-shadow(0 6px 24px rgba(0,0,0,.7));}
+.logo-fb{font-family:var(--font-display);font-size:clamp(3rem,10vw,6rem);color:var(--gold);text-shadow:4px 4px 0 #111,0 0 30px rgba(255,209,102,.6);letter-spacing:3px;display:none;}
+.ss-zoodle img{height:90px;filter:drop-shadow(0 3px 10px rgba(0,0,0,.6));opacity:.9;}
+.start-card{background:linear-gradient(145deg,#1a1a2e,#101020);border:2px solid rgba(255,209,102,.4);border-radius:24px;padding:26px 30px;width:min(400px,94vw);text-align:center;box-shadow:0 0 60px rgba(255,209,102,.12),0 20px 60px rgba(0,0,0,.6);}
+.start-card h2{font-family:var(--font-display);font-size:1.6rem;letter-spacing:1.5px;color:var(--gold);margin-bottom:16px;}
+.start-card label{display:block;font-size:.85rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
+.start-card select{width:100%;padding:11px 14px;border-radius:12px;border:2px solid rgba(255,209,102,.3);background:rgba(255,255,255,.06);color:var(--text);font-family:var(--font-body);font-size:1rem;font-weight:800;cursor:pointer;outline:none;appearance:none;margin-bottom:18px;}
+.start-card select option{background:#1a1a2e;}
+.app{display:grid;grid-template-columns:1fr 400px;width:100vw;height:100vh;overflow:hidden;}
+.board-panel{display:grid;grid-template-rows:auto 1fr;padding:14px 10px 14px 16px;gap:6px;min-height:0;overflow:hidden;}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;}
+.brand{display:flex;flex-direction:column;gap:2px;}
+.title-logo{height:180px;width:auto;max-width:600px;object-fit:contain;object-position:left center;filter:drop-shadow(0 4px 14px rgba(0,0,0,.65));display:block;}
+.title-fallback{font-family:var(--font-display);font-size:3.6rem;letter-spacing:2px;color:var(--gold);text-shadow:3px 3px 0 #111,0 0 24px rgba(255,209,102,.55);line-height:1;}
+.top-buttons{display:flex;gap:8px;flex-shrink:0;}
+.clock-zone{min-height:0;display:flex;align-items:center;justify-content:center;position:relative;}
+.clock-zone::before{content:"";position:absolute;inset:10%;border-radius:50%;background:radial-gradient(circle,rgba(0,229,255,.05) 0%,transparent 70%);pointer-events:none;}
+svg#clock{width:100%;height:100%;max-width:min(calc(100vh - 120px),100%);max-height:min(calc(100vh - 120px),100%);display:block;overflow:visible;filter:drop-shadow(0 8px 28px rgba(0,0,0,.7));}
+.control-panel{position:relative;background:linear-gradient(180deg,#111120 0%,#0c0c18 100%);border-left:1px solid rgba(255,255,255,.06);display:grid;grid-template-rows:auto auto 1fr 130px;gap:8px;padding:14px 14px 12px 12px;min-height:0;overflow:hidden;}
+.players{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.player{border-radius:14px;padding:10px 12px;background:rgba(255,255,255,.025);border:2px solid rgba(255,255,255,.06);transition:border-color .2s,box-shadow .2s;}
+.player h2{font-family:var(--font-display);font-size:1.2rem;letter-spacing:1px;margin-bottom:6px;line-height:1;}
+.player.p1 h2{color:var(--p1);}.player.p2 h2{color:var(--p2);}
+.player.active.p1{border-color:var(--p1);box-shadow:0 0 16px rgba(0,229,255,.22);}
+.player.active.p2{border-color:var(--p2);box-shadow:0 0 16px rgba(255,44,240,.22);}
+.stat{display:flex;justify-content:space-between;align-items:baseline;gap:4px;margin:3px 0;font-size:.76rem;color:var(--muted);}
+.stat strong{color:var(--text);font-size:.88rem;font-weight:900;}
+.turn-timer-row{display:flex;align-items:center;gap:8px;}
+.turn-badge{flex:1;font-family:var(--font-display);font-size:1rem;letter-spacing:1px;padding:5px 10px;border-radius:999px;background:rgba(255,209,102,.10);border:1px solid rgba(255,209,102,.28);color:var(--gold);text-align:center;}
+.timer-box{font-family:var(--font-display);font-size:1.5rem;letter-spacing:2px;min-width:70px;text-align:center;padding:4px 10px;border-radius:12px;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.1);color:var(--text);transition:color .3s,border-color .3s,background .3s;flex-shrink:0;}
+.timer-box.warn{color:var(--danger);border-color:var(--danger);background:rgba(255,68,85,.12);animation:tpulse .5s infinite alternate;}
+@keyframes tpulse{from{opacity:1}to{opacity:.5}}
+.actions-panel{display:grid;grid-template-rows:auto 1fr;gap:6px;min-height:0;overflow:hidden;}
+.panel-title{font-family:var(--font-display);font-size:1rem;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;padding-bottom:4px;border-bottom:1px solid rgba(255,209,102,.13);flex-shrink:0;}
+.actions{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:6px;min-height:0;}
+.kids-art-panel{display:flex;align-items:flex-end;justify-content:center;min-height:0;overflow:hidden;}
+.kids-art-panel img{max-height:100%;max-width:100%;object-fit:contain;object-position:center bottom;}
+.zoodlebug-badge{position:fixed;bottom:28px;left:28px;z-index:10;pointer-events:none;}
+.zoodlebug-badge img{width:180px;height:auto;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,.7));opacity:.92;}
+button{appearance:none;border:none;border-radius:12px;padding:8px 7px;font-family:var(--font-body);font-weight:900;font-size:.82rem;cursor:pointer;color:white;background:linear-gradient(160deg,#2a2a45,#1a1a2e);border:2px solid rgba(255,255,255,.07);transition:transform .08s,filter .12s,box-shadow .12s;box-shadow:0 4px 0 rgba(0,0,0,.45);text-transform:uppercase;letter-spacing:.2px;line-height:1.2;-webkit-tap-highlight-color:transparent;position:relative;overflow:hidden;}
+button::before{content:"";position:absolute;top:0;left:0;right:0;height:38%;background:rgba(255,255,255,.055);border-radius:10px 10px 0 0;pointer-events:none;}
+button:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.14);box-shadow:0 6px 0 rgba(0,0,0,.45);}
+button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.45);}
+button:disabled{opacity:.3;cursor:not-allowed;}
+.btn-sm{font-size:.72rem;padding:6px 10px;min-height:32px;border-radius:10px;}
+.primary{background:linear-gradient(135deg,#ffc300,#e07000);color:#1a0f00;border-color:rgba(255,195,0,.28);}
+.danger{background:linear-gradient(135deg,#ff4455,#aa0020);border-color:rgba(255,68,85,.28);}
+.blue{background:linear-gradient(135deg,#00e5ff,#0077b6);color:#001a20;border-color:rgba(0,229,255,.28);}
+.green{background:linear-gradient(135deg,#39ff8a,#00aa44);color:#001a0a;border-color:rgba(57,255,138,.28);}
+.shield{background:linear-gradient(135deg,#ffd166,#7ec8e8);color:#141414;border-color:rgba(255,209,102,.28);}
+.dash{background:linear-gradient(135deg,#c077ff,#5a189a);border-color:rgba(192,119,255,.28);}
+.quarter{background:linear-gradient(135deg,#ffe600,#ff2060);color:#1a0010;border-color:rgba(255,230,0,.28);}
+.actions button{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;}
+.btn-label{font-size:.78rem;font-weight:900;line-height:1.15;}.btn-sub{font-size:.62rem;opacity:.88;font-weight:700;}
+#answerPanel,#feedbackPanel{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(160deg,#13132a,#0a0a18);z-index:5;padding:18px 16px;flex-direction:column;gap:10px;overflow-y:auto;}
+#answerPanel.open,#feedbackPanel.open{display:flex;}
+.ap-title{font-family:var(--font-display);font-size:1.5rem;letter-spacing:1px;color:var(--gold);}
+.ap-prompt{font-size:.9rem;color:#cccce8;line-height:1.45;}
+.choice-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px;}
+.choice-grid button{font-family:var(--font-display);font-size:1.3rem;padding:11px 4px;letter-spacing:1px;}
+.answer-input{width:100%;border-radius:14px;border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:white;font-family:var(--font-display);font-size:2.4rem;letter-spacing:2px;padding:12px;margin-top:6px;text-align:center;outline:none;transition:border-color .15s;}
+.answer-input:focus{border-color:var(--gold);}
+.answer-row{display:flex;gap:9px;margin-top:10px;}
+.answer-row button{flex:1;}
+.fb-title{font-family:var(--font-display);font-size:1.8rem;letter-spacing:1px;}
+.fb-title.correct{color:var(--green);}.fb-title.wrong{color:var(--danger);}
+#fbMessage{font-size:.9rem;color:#cccce8;line-height:1.5;}
+.reveal-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:12px;font-size:.84rem;line-height:1.6;color:#c8c8e8;flex-shrink:0;}
+.winner{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);z-index:30;align-items:center;justify-content:center;padding:16px;}
+.winner-card{width:min(440px,96vw);background:linear-gradient(145deg,#1a1a2e,#101020);border:2px solid rgba(255,209,102,.55);border-radius:22px;padding:28px;text-align:center;position:relative;box-shadow:0 0 60px rgba(255,209,102,.18),0 20px 60px rgba(0,0,0,.75);}
+.winner-card h2{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);letter-spacing:2px;color:var(--gold);text-shadow:0 0 28px rgba(255,209,102,.5);}
+.winner-card p{color:#e0e0f5;font-size:1rem;margin:10px 0;}
+.victory-clock{width:120px;height:120px;margin:14px auto;border-radius:50%;border:7px solid var(--gold);background:radial-gradient(circle,#1e1e38,#0d0d1a);box-shadow:0 0 28px rgba(255,209,102,.48);position:relative;animation:pclock 1s infinite alternate ease-in-out;}
+.victory-clock::before,.victory-clock::after{content:"";position:absolute;left:50%;top:50%;transform-origin:0 0;border-radius:999px;background:white;}
+.victory-clock::before{width:44px;height:5px;transform:rotate(-90deg);animation:spinM 2s linear infinite;}
+.victory-clock::after{width:30px;height:9px;background:var(--gold);transform:rotate(-35deg);animation:spinH 8s linear infinite;}
+.confetti{pointer-events:none;position:absolute;inset:0;overflow:hidden;border-radius:22px;}
+.confetti span{position:absolute;width:8px;height:13px;top:-20px;animation:fall linear infinite;}
+.how-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);backdrop-filter:blur(3px);z-index:25;align-items:center;justify-content:center;padding:16px;}
+.how-card{width:min(680px,96vw);max-height:90vh;overflow-y:auto;background:linear-gradient(145deg,#1a1a2e,#101020);border:2px solid rgba(255,209,102,.55);border-radius:22px;padding:24px;box-shadow:0 0 60px rgba(255,209,102,.18),0 20px 60px rgba(0,0,0,.75);}
+.how-card h2{font-family:var(--font-display);font-size:1.9rem;color:var(--gold);margin-bottom:12px;letter-spacing:1px;}
+.how-card h3{font-family:var(--font-display);font-size:1.15rem;color:var(--p1);margin:14px 0 6px;}
+.how-card p,.how-card li{color:#cccce8;font-size:.93rem;line-height:1.55;}
+.how-card ul{padding-left:20px;}.how-card li{margin-bottom:6px;}
+@keyframes fall{0%{transform:translateY(-30px) rotate(0deg)}100%{transform:translateY(700px) rotate(720deg)}}
+@keyframes pclock{from{transform:scale(1)}to{transform:scale(1.07)}}
+@keyframes spinM{to{transform:rotate(270deg)}}
+@keyframes spinH{to{transform:rotate(325deg)}}
+.territory{transition:fill .22s,stroke .22s;}
+.hand{stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(255,255,255,.3));}
+.center-dot{fill:var(--gold);stroke:#111;stroke-width:4;}
+.territory-label{font-size:48px;font-weight:900;text-anchor:middle;dominant-baseline:middle;fill:white;paint-order:stroke;stroke:rgba(0,0,0,.85);stroke-width:9px;pointer-events:none;}
+.territory-token{font-size:21px;font-weight:900;text-anchor:middle;dominant-baseline:middle;fill:#111;pointer-events:none;}
+@media(max-width:699px){
+html,body{height:auto;overflow-y:auto;overflow-x:hidden;}
+.app{display:flex;flex-direction:column;width:100%;height:auto;min-height:100svh;overflow:visible;}
+.board-panel{display:flex;flex-direction:column;padding:8px 10px 4px;gap:4px;flex-shrink:0;}
+.topbar{flex-wrap:wrap;gap:6px;}
+.title-logo{height:42px;max-width:220px;}
+.title-fallback{font-size:1.8rem;}
+.top-buttons .btn-sm{font-size:.65rem;padding:5px 8px;min-height:28px;border-radius:8px;}
+.clock-zone{width:100%;height:min(52vw,220px);flex-shrink:0;padding:2px;}
+svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
+.kids-strip{display:flex;align-items:flex-end;justify-content:center;height:52px;flex-shrink:0;overflow:hidden;}
+.kids-strip img{height:100%;width:auto;object-fit:contain;}
+.kids-art-panel{display:none;}
+.control-panel{display:flex;flex-direction:column;border-left:none;border-top:1px solid rgba(255,255,255,.06);padding:6px 10px 16px;gap:5px;overflow:visible;flex-shrink:0;position:relative;}
+.players{gap:6px;}
+.player{padding:6px 8px;border-radius:10px;}
+.player h2{font-size:.88rem;margin-bottom:3px;}
+.stat{font-size:.65rem;margin:1px 0;}
+.stat strong{font-size:.72rem;}
+.turn-timer-row{gap:6px;}
+.turn-badge{font-size:.78rem;padding:3px 8px;}
+.timer-box{font-size:1.1rem;min-width:52px;padding:3px 7px;border-radius:9px;}
+.panel-title{font-size:.82rem;padding-bottom:3px;}
+.actions{grid-template-rows:repeat(3,auto);gap:5px;}
+.actions button{height:auto;min-height:36px;padding:5px 4px;flex-direction:row;gap:4px;}
+.btn-label{font-size:.7rem;}.btn-sub{font-size:.6rem;opacity:.8;}
+#answerPanel,#feedbackPanel{position:fixed;top:auto;left:0;right:0;bottom:0;max-height:62vh;border-radius:22px 22px 0 0;border-top:2px solid rgba(255,209,102,.5);z-index:50;padding:16px 14px 24px;}
+.ap-title{font-size:1.3rem;}
+.choice-grid{gap:6px;}
+.choice-grid button{font-size:1.1rem;padding:9px 2px;}
+.answer-input{font-size:1.8rem;padding:9px;}
+.fb-title{font-size:1.4rem;}
+.zoodlebug-badge img{width:80px;}
+.zoodlebug-badge{bottom:12px;left:12px;}
+.how-modal{align-items:flex-end;padding:0;}
+.how-card{width:100%;max-height:85vh;border-radius:22px 22px 0 0;border-bottom:none;padding:18px 14px 28px;}
+}
+@media(max-width:380px){.territory-label{font-size:40px;stroke-width:7px;}.choice-grid{grid-template-columns:repeat(3,1fr);}.player h2{font-size:.82rem;}}
+@media(min-width:700px) and (max-width:959px){.app{grid-template-columns:1fr 340px;}.btn-label{font-size:.74rem;}.btn-sub{font-size:.6rem;}}
+@media(max-width:699px){#startScreen .ss-logo img{max-height:130px;}.ss-zoodle img{height:65px !important;}.start-card{padding:18px 16px;}#startScreen{gap:16px;}}
+</style>
 </head>
 <body>
-<div class="app">
+<div id="startScreen">
+  <div class="ss-logo">
+    <img src="battle-clock-title.png" alt="Battle Clock!" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+    <div class="logo-fb">BATTLE CLOCK!</div>
+  </div>
+  <div class="start-card">
+    <h2>&#9881; Game Settings</h2>
+    <label for="timerSel">Turn Timer</label>
+    <select id="timerSel">
+      <option value="30">30 Seconds</option>
+      <option value="45">45 Seconds</option>
+      <option value="60" selected>1 Minute</option>
+      <option value="90">1 Min 30 Sec</option>
+      <option value="120">2 Minutes</option>
+    </select>
+    <button class="primary" style="width:100%;font-size:1.1rem;padding:14px;" onclick="startGame()">&#9876; Start Battle!</button>
+  </div>
+  <div class="ss-zoodle">
+    <img src="zoodlebug-game.png" alt="A ZoodleBug Game" onerror="this.parentElement.style.display='none'"/>
+  </div>
+</div>
 
-  <!-- LEFT: Clock -->
+<div class="app" id="mainApp" style="display:none">
   <main class="board-panel">
     <div class="topbar">
       <div class="brand">
-        <img class="title-logo" src="battle-clock-title.png" alt="Battle Clock!"
-             onerror="this.style.display='none';document.getElementById('titleFallback').style.display='block'"/>
+        <img class="title-logo" src="battle-clock-title.png" alt="Battle Clock!" onerror="this.style.display='none';document.getElementById('titleFallback').style.display='block'"/>
         <div class="title-fallback" id="titleFallback" style="display:none">BATTLE CLOCK!</div>
       </div>
       <div class="top-buttons">
-        <button class="btn-sm" onclick="openHowToPlay()">📖 Rules</button>
-        <button class="btn-sm primary" onclick="newGame()">↺ New Game</button>
+        <button class="btn-sm" onclick="openHowToPlay()">&#128218; Rules</button>
+        <button class="btn-sm primary" onclick="goToStart()">&#8635; New Game</button>
       </div>
     </div>
-
     <div class="clock-zone">
       <svg id="clock" viewBox="0 0 700 700" aria-label="Battle Clock game board"></svg>
-      <div class="kids-art-mobile" style="display:none">
-        <img src="battle-clock-kids-clean.png" alt="Two kids celebrating Battle Clock" />
-      </div>
     </div>
   </main>
 
-  <!-- RIGHT: Controls -->
-  <aside class="control-panel">
+  <aside class="control-panel" id="controlPanel">
     <div class="players">
       <div class="player p1 active" id="p1Panel">
         <h2>Player 1</h2>
-        <div class="stat"><span>Energy</span>     <strong id="p1Energy">500</strong></div>
-        <div class="stat"><span>Territories</span> <strong id="p1Territories">0</strong></div>
-        <div class="stat"><span>Late Caps</span>   <strong id="p1Late">0</strong></div>
+        <div class="stat"><span>Energy</span><strong id="p1Energy">500</strong></div>
+        <div class="stat"><span>Territories</span><strong id="p1Territories">0</strong></div>
+        <div class="stat"><span>Late Caps</span><strong id="p1Late">0</strong></div>
       </div>
       <div class="player p2" id="p2Panel">
         <h2>Player 2</h2>
-        <div class="stat"><span>Energy</span>     <strong id="p2Energy">500</strong></div>
-        <div class="stat"><span>Territories</span> <strong id="p2Territories">0</strong></div>
-        <div class="stat"><span>Late Caps</span>   <strong id="p2Late">0</strong></div>
+        <div class="stat"><span>Energy</span><strong id="p2Energy">500</strong></div>
+        <div class="stat"><span>Territories</span><strong id="p2Territories">0</strong></div>
+        <div class="stat"><span>Late Caps</span><strong id="p2Late">0</strong></div>
       </div>
     </div>
-
-    <div id="turnBadge" class="turn-badge">⚔️ Player 1's Turn</div>
-
+    <div class="turn-timer-row">
+      <div id="turnBadge" class="turn-badge">&#9876; Player 1's Turn</div>
+      <div id="timerBox" class="timer-box">1:00</div>
+    </div>
     <section class="actions-panel">
       <div class="panel-title">Choose Your Battle Move</div>
       <div class="actions">
-        <button class="quarter" onclick="startQuarterPower()">
-          <span class="btn-label">⚡ Quarter Power Up</span>
-          <span class="btn-sub">±25% Energy</span>
-        </button>
-        <button class="green" onclick="startAction('harvest')">
-          <span class="btn-label">🌿 Harvest Minute</span>
-          <span class="btn-sub">Earns Energy</span>
-        </button>
-        <button class="dash" onclick="startAction('countdown')">
-          <span class="btn-label">💨 Countdown Dash</span>
-          <span class="btn-sub">Earns 1.5×</span>
-        </button>
-        <button class="blue" onclick="startAction('capture')">
-          <span class="btn-label">🏴 Capture Hour</span>
-          <span class="btn-sub">Cost: 1500 Energy</span>
-        </button>
-        <button class="danger" onclick="startAction('challenge')">
-          <span class="btn-label">⚔️ Challenge</span>
-          <span class="btn-sub">Cost: 2200 Energy</span>
-        </button>
-        <button class="shield" onclick="startAction('fortify')">
-          <span class="btn-label">🛡️ Fortify</span>
-          <span class="btn-sub">Cost: 1000 Energy</span>
-        </button>
+        <button class="quarter" onclick="startQuarterPower()"><span class="btn-label">&#9889; Quarter Power</span><span class="btn-sub">+/-25% Energy</span></button>
+        <button class="green" onclick="startAction('harvest')"><span class="btn-label">&#127807; Harvest Minute</span><span class="btn-sub">Earns Energy</span></button>
+        <button class="dash" onclick="startAction('countdown')"><span class="btn-label">&#128168; Countdown Dash</span><span class="btn-sub">Earns 1.5x</span></button>
+        <button class="blue" onclick="startAction('capture')"><span class="btn-label">&#127988; Capture Hour</span><span class="btn-sub">Cost: 1500</span></button>
+        <button class="danger" onclick="startAction('challenge')"><span class="btn-label">&#9876; Challenge</span><span class="btn-sub">Cost: 2200</span></button>
+        <button class="shield" onclick="startAction('fortify')"><span class="btn-label">&#128737; Fortify</span><span class="btn-sub">Cost: 1000</span></button>
       </div>
     </section>
-
-    <section class="kids-art-panel" aria-label="Two students celebrating Battle Clock">
-      <img src="battle-clock-kids-clean.png" alt="Two kids celebrating Battle Clock" />
+    <section class="kids-art-panel">
+      <img src="battle-clock-kids-clean.png" alt="Two kids celebrating Battle Clock"/>
     </section>
-  </aside>
-</div>
-
-<!-- ZoodleBug branding badge -->
-<div class="zoodlebug-badge">
-  <img src="zoodlebug-game.png" alt="A ZoodleBug Game" />
-</div>
-
-<!-- ANSWER MODAL -->
-<div class="modal" id="answerModal">
-  <div class="modal-card">
-    <h2 id="answerTitle">Declare Your Move</h2>
-    <p id="answerPrompt"></p>
-    <div id="answerArea"></div>
-  </div>
-</div>
-
-<!-- FEEDBACK MODAL -->
-<div class="modal" id="feedbackModal">
-  <div class="modal-card">
-    <h2 id="feedbackTitle" class="feedback-title">Result</h2>
-    <p id="feedbackMessage"></p>
-    <div class="reveal-box" id="revealBox"></div>
-    <div class="answer-row">
-      <button class="primary" onclick="continueAfterFeedback()">Continue ▶</button>
+    <div id="answerPanel">
+      <div class="ap-title" id="apTitle">Declare Your Move</div>
+      <div class="ap-prompt" id="apPrompt"></div>
+      <div id="apArea"></div>
     </div>
+    <div id="feedbackPanel">
+      <div class="fb-title" id="fbTitle">Result</div>
+      <div id="fbMessage"></div>
+      <div class="reveal-box" id="revealBox"></div>
+      <div class="answer-row" style="margin-top:12px;">
+        <button class="primary" onclick="continueAfterFeedback()">Continue &#9654;</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="kids-strip" id="kidsStrip" style="display:none">
+    <img src="battle-clock-kids-clean.png" alt="Two kids celebrating"/>
   </div>
 </div>
 
-<!-- WINNER OVERLAY -->
+<div class="zoodlebug-badge">
+  <img src="zoodlebug-game.png" alt="A ZoodleBug Game" onerror="this.parentElement.style.display='none'"/>
+</div>
+
 <div class="winner" id="winnerOverlay">
   <div class="winner-card">
     <div class="confetti" id="confetti"></div>
     <h2 id="winnerText">Player Wins!</h2>
     <div class="victory-clock"></div>
     <p id="winnerSubtext"></p>
-    <button class="primary" style="margin-top:14px;width:100%;" onclick="newGame()">🔄 Play Again</button>
+    <button class="primary" style="margin-top:14px;width:100%;" onclick="goToStart()">&#128260; Play Again</button>
   </div>
 </div>
 
-<!-- HOW TO PLAY -->
 <div class="how-modal" id="howModal">
   <div class="how-card">
-    <h2>📖 Rules</h2>
-    <p><strong>Goal:</strong> Be the first player to control <strong>4 Hour Territories</strong> — with at least <strong>1 Late-Hour capture</strong> (at :45 or later).</p>
-
-    <h3>The Big Clock Idea</h3>
-    <p>The digital time is hidden while you move. Read the analog clock to power your strategy!</p>
-    <p>At <strong>5:58</strong>, the hour hand is near 6, but the active territory is still <strong>5</strong>. Territory 6 only opens when the minute hand reaches the top.</p>
-
+    <h2>&#128218; Rules</h2>
+    <p><strong>Goal:</strong> First player to control <strong>4 Hour Territories</strong> with at least <strong>1 Late-Hour capture</strong> (at :45 or later) wins.</p>
+    <h3>The Clock</h3>
+    <p>Digital time is hidden. At <strong>5:58</strong>, the hour hand is near 6, but active territory is still <strong>5</strong>. Territory 6 opens only when the minute hand reaches the top.</p>
     <h3>Battle Moves</h3>
     <ul>
-      <li><strong>⚡ Quarter Power Up:</strong> If the clock shows :15 or :45, pick the correct phrase and hour. Correct = +25% energy. Wrong timing = −25% energy. Doesn't use your regular turn.</li>
-      <li><strong>🌿 Harvest Minute Energy:</strong> Type how many minute ticks the long hand has traveled from the top. More ticks = more energy.</li>
-      <li><strong>💨 Countdown Dash:</strong> Type how many minutes remain until the next hour opens. Pays ~1.5× more than Harvest.</li>
-      <li><strong>🏴 Capture Current Hour:</strong> Choose the active Hour Territory. Costs <strong>1500 energy</strong>.</li>
-      <li><strong>⚔️ Challenge Territory:</strong> Choose the active territory your opponent owns. Costs <strong>2200 energy</strong>. Breaks a shield or removes control.</li>
-      <li><strong>🛡️ Fortify Territory:</strong> Choose your active territory. Costs <strong>1000 energy</strong>. Protects against one successful Challenge.</li>
+      <li><strong>Quarter Power:</strong> Clock shows :15 or :45? Pick the phrase and hour. Correct = +25% energy. Wrong timing = -25% energy. Does not use your regular turn.</li>
+      <li><strong>Harvest Minute:</strong> Type how many minute ticks the long hand has traveled. More = more energy.</li>
+      <li><strong>Countdown Dash:</strong> Type minutes remaining until next hour. Pays ~1.5x more than Harvest.</li>
+      <li><strong>Capture Hour:</strong> Choose the active territory. Costs 1500 energy.</li>
+      <li><strong>Challenge:</strong> Attack opponent's active territory. Costs 2200 energy. Breaks shield or removes control.</li>
+      <li><strong>Fortify:</strong> Shield your active territory. Costs 1000 energy.</li>
     </ul>
-
-    <h3>Wrong Answers</h3>
-    <p>Wrong answers reveal the correct time and explain why. The screen stays until you click Continue.</p>
-
-    <div class="answer-row" style="margin-top:18px;">
-      <button class="primary" onclick="closeHowToPlay()">Got It! ✓</button>
-    </div>
+    <h3>Timer</h3>
+    <p>Set at game start. Ticking sound at 10 seconds. Time out = turn passes automatically.</p>
+    <div class="answer-row" style="margin-top:18px;"><button class="primary" onclick="closeHowToPlay()">Got It! &#10003;</button></div>
   </div>
 </div>
-
 <script>
-// ═══════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════
-const state = {
-  currentPlayer: 1,
-  hour: 5,
-  minute: 58,
-  players: {
-    1: { energy: 500, lateCaptures: 0 },
-    2: { energy: 500, lateCaptures: 0 }
-  },
-  territories: {},
-  fortified: {},
-  gameOver: false,
-  pendingNextTurn: true,
-  pendingVictory: null,
-  quarterUsedThisTurn: false
-};
+const state={currentPlayer:1,hour:5,minute:58,players:{1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}},territories:{},fortified:{},gameOver:false,pendingNextTurn:true,pendingVictory:null,quarterUsedThisTurn:false,turnDuration:60,timerSecs:60,timerInterval:null};
+for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;}
 
-for (let h = 1; h <= 12; h++) {
-  state.territories[h] = 0;
-  state.fortified[h] = false;
-}
+let audioCtx=null,zoodleBuf=null;
+function ensureAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume();}
+function loadZoodle(){if(!audioCtx)return;fetch("ZoodleBugBrandSound.wav").then(r=>r.arrayBuffer()).then(b=>audioCtx.decodeAudioData(b)).then(d=>{zoodleBuf=d;}).catch(()=>{});}
+function playZoodle(){if(!audioCtx||!zoodleBuf)return;const s=audioCtx.createBufferSource();s.buffer=zoodleBuf;s.connect(audioCtx.destination);s.start();}
+function playTone(freq,dur,type,vol,off){if(!audioCtx)return;type=type||"sine";vol=vol||0.05;off=off||0;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.setValueAtTime(freq,audioCtx.currentTime+off);g.gain.setValueAtTime(0,audioCtx.currentTime+off);g.gain.linearRampToValueAtTime(vol,audioCtx.currentTime+off+0.02);g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+off+dur);o.connect(g);g.connect(audioCtx.destination);o.start(audioCtx.currentTime+off);o.stop(audioCtx.currentTime+off+dur+0.03);}
+function playCorrect(){ensureAudio();playTone(523,.11,"sine",.04,0);playTone(659,.11,"sine",.04,.11);playTone(784,.17,"sine",.04,.22);}
+function playWrong(){ensureAudio();playTone(200,.18,"sawtooth",.04,0);playTone(140,.26,"sawtooth",.04,.16);}
+function playCapture(){ensureAudio();playTone(440,.08,"square",.04,0);playTone(554,.08,"square",.04,.09);playTone(659,.12,"square",.04,.18);playTone(880,.20,"sine",.05,.30);}
+function playChallenge(){ensureAudio();playTone(300,.08,"sawtooth",.05,0);playTone(250,.08,"sawtooth",.05,.09);playTone(200,.15,"sawtooth",.05,.18);}
+function playFortify(){ensureAudio();playTone(392,.08,"triangle",.04,0);playTone(494,.08,"triangle",.04,.10);playTone(587,.15,"triangle",.04,.20);}
+function playEnergy(){ensureAudio();playTone(330,.07,"sine",.04,0);playTone(440,.07,"sine",.04,.08);playTone(550,.10,"sine",.04,.16);}
+function playTick(){ensureAudio();playTone(1200,.04,"square",.03,0);}
+function playTimerEnd(){ensureAudio();playTone(180,.15,"sawtooth",.05,0);playTone(140,.25,"sawtooth",.05,.14);playTone(100,.35,"sawtooth",.04,.28);}
+function playVictory(){playZoodle();ensureAudio();const n=[392,494,587,784,988,1175,1568];n.forEach((v,i)=>playTone(v,.20,i%2?"sawtooth":"square",.04,i*.17+.3));}
 
-// ═══════════════════════════════════════════════
-//  AUDIO
-// ═══════════════════════════════════════════════
-let audioCtx = null;
+function startTimer(){clearInterval(state.timerInterval);state.timerSecs=state.turnDuration;updateTimerDisplay();state.timerInterval=setInterval(()=>{state.timerSecs--;updateTimerDisplay();if(state.timerSecs<=10&&state.timerSecs>0)playTick();if(state.timerSecs<=0){clearInterval(state.timerInterval);playTimerEnd();handleTimerExpiry();}},1000);}
+function stopTimer(){clearInterval(state.timerInterval);state.timerInterval=null;}
+function updateTimerDisplay(){const b=document.getElementById("timerBox");if(!b)return;const s=Math.max(state.timerSecs,0),m=Math.floor(s/60),sec=s%60;b.textContent=(m>0?m+":":(""+"0:")+(sec<10?"0":"")+sec);b.classList.toggle("warn",s<=10);}
+function handleTimerExpiry(){closeAnswerPanel();if(!state.gameOver){document.getElementById("fbTitle").textContent="Time's Up!";document.getElementById("fbTitle").className="fb-title wrong";document.getElementById("fbMessage").innerHTML="<strong>"+activeName()+"</strong> ran out of time! Turn passes automatically.";document.getElementById("revealBox").innerHTML="<strong>Time:</strong> "+formatTime()+"<br><strong>Active territory:</strong> "+getHourTerritory(state.hour)+"<br><strong>Minute ticks:</strong> "+state.minute+"<br><strong>Minutes until next hour:</strong> "+countdownValue();openFeedbackPanel();state.pendingNextTurn=true;}}
 
-function ensureAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === "suspended") audioCtx.resume();
-}
+function startGame(){ensureAudio();loadZoodle();state.turnDuration=parseInt(document.getElementById("timerSel").value,10);document.getElementById("startScreen").style.display="none";document.getElementById("mainApp").style.display="";document.getElementById("kidsStrip").style.display=window.innerWidth<=699?"flex":"none";resetState();randomTime();render();startTimer();}
+function goToStart(){stopTimer();closeAnswerPanel();closeFeedbackPanel();document.getElementById("winnerOverlay").style.display="none";document.getElementById("howModal").style.display="none";document.getElementById("mainApp").style.display="none";document.getElementById("startScreen").style.display="flex";}
+function resetState(){state.currentPlayer=1;state.gameOver=false;state.pendingNextTurn=true;state.pendingVictory=null;state.quarterUsedThisTurn=false;state.players={1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}};for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;}}
+function openAnswerPanel(){document.getElementById("answerPanel").classList.add("open");document.getElementById("feedbackPanel").classList.remove("open");}
+function closeAnswerPanel(){document.getElementById("answerPanel").classList.remove("open");}
+function openFeedbackPanel(){document.getElementById("feedbackPanel").classList.add("open");document.getElementById("answerPanel").classList.remove("open");}
+function closeFeedbackPanel(){document.getElementById("feedbackPanel").classList.remove("open");}
+window.addEventListener("resize",()=>{const s=document.getElementById("kidsStrip");if(s&&document.getElementById("mainApp").style.display!=="none")s.style.display=window.innerWidth<=699?"flex":"none";});
+function polar(cx,cy,r,deg){const a=(deg-90)*Math.PI/180;return{x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)};}
+function sectorPath(cx,cy,rIn,rOut,s,e){const p1=polar(cx,cy,rOut,s),p2=polar(cx,cy,rOut,e),p3=polar(cx,cy,rIn,e),p4=polar(cx,cy,rIn,s),lg=(e-s)>180?1:0;return"M "+p1.x+" "+p1.y+" A "+rOut+" "+rOut+" 0 "+lg+" 1 "+p2.x+" "+p2.y+" L "+p3.x+" "+p3.y+" A "+rIn+" "+rIn+" 0 "+lg+" 0 "+p4.x+" "+p4.y+" Z";}
+function hourToAngle(h){return(h%12)*30;}
+function getHourTerritory(h){return h===0?12:h;}
+function getNextHour(h){return h===12?1:h+1;}
+function isLateHour(){return state.minute>=45;}
+function countdownValue(){return state.minute===0?0:60-state.minute;}
+function randomTime(){state.hour=Math.floor(Math.random()*12)+1;state.minute=Math.floor(Math.random()*60);}
+function formatTime(){return state.hour+":"+(state.minute<10?"0":"")+state.minute;}
+function activeName(){return"Player "+state.currentPlayer;}
+function roundToNearest50(v){return Math.round(v/50)*50;}
 
-function playTone(freq, dur, type = "sine", vol = 0.05, offset = 0) {
-  if (!audioCtx) return;
-  const osc  = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, audioCtx.currentTime + offset);
-  gain.gain.setValueAtTime(0, audioCtx.currentTime + offset);
-  gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + offset + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + offset + dur);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start(audioCtx.currentTime + offset);
-  osc.stop(audioCtx.currentTime + offset + dur + 0.03);
-}
-
-function playCorrect() {
-  ensureAudio();
-  playTone(523, 0.11, "sine", 0.04, 0);
-  playTone(659, 0.11, "sine", 0.04, 0.11);
-  playTone(784, 0.17, "sine", 0.04, 0.22);
-}
-
-function playWrong() {
-  ensureAudio();
-  playTone(200, 0.18, "sawtooth", 0.04, 0);
-  playTone(140, 0.26, "sawtooth", 0.04, 0.16);
-}
-
-function playVictoryMusic() {
-  ensureAudio();
-  const notes = [392,494,587,784,740,784,988,1175,988,1175,1568];
-  notes.forEach((n,i) => playTone(n, 0.20, i % 2 ? "sawtooth" : "square", 0.05, i * 0.17));
-  [196,247,294,392].forEach((n,i) => playTone(n, 0.7, "sawtooth", 0.03, i * 0.34));
-}
-
-// ═══════════════════════════════════════════════
-//  GEOMETRY HELPERS
-// ═══════════════════════════════════════════════
-function polar(cx, cy, r, deg) {
-  const a = (deg - 90) * Math.PI / 180;
-  return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
-}
-
-function sectorPath(cx, cy, rIn, rOut, startDeg, endDeg) {
-  const p1 = polar(cx, cy, rOut, startDeg);
-  const p2 = polar(cx, cy, rOut, endDeg);
-  const p3 = polar(cx, cy, rIn,  endDeg);
-  const p4 = polar(cx, cy, rIn,  startDeg);
-  const large = (endDeg - startDeg) > 180 ? 1 : 0;
-  return [
-    `M ${p1.x} ${p1.y}`,
-    `A ${rOut} ${rOut} 0 ${large} 1 ${p2.x} ${p2.y}`,
-    `L ${p3.x} ${p3.y}`,
-    `A ${rIn} ${rIn} 0 ${large} 0 ${p4.x} ${p4.y}`,
-    "Z"
-  ].join(" ");
-}
-
-// ═══════════════════════════════════════════════
-//  GAME HELPERS
-// ═══════════════════════════════════════════════
-function hourToAngle(h)         { return (h % 12) * 30; }
-function getHourTerritory(h)    { return h === 0 ? 12 : h; }
-function getNextHour(h)         { return h === 12 ? 1 : h + 1; }
-function isLateHour()           { return state.minute >= 45; }
-function countdownValue()       { return state.minute === 0 ? 0 : 60 - state.minute; }
-function randomTime()           { state.hour = Math.floor(Math.random()*12)+1; state.minute = Math.floor(Math.random()*60); }
-function formatTime()           { return `${state.hour}:${String(state.minute).padStart(2,"0")}`; }
-function activeName()           { return `Player ${state.currentPlayer}`; }
-function roundToNearest50(v)    { return Math.round(v / 50) * 50; }
-
-// ═══════════════════════════════════════════════
-//  RENDER
-// ═══════════════════════════════════════════════
-function render() {
-  const svg = document.getElementById("clock");
-  const cx = 350, cy = 350;
-  let html = "";
-
-  // Defs + clock face
-  html += `
-    <defs>
-      <radialGradient id="faceGrad" cx="50%" cy="42%" r="62%">
-        <stop offset="0%"   stop-color="#1e1e3a"/>
-        <stop offset="100%" stop-color="#080812"/>
-      </radialGradient>
-      <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-        <feGaussianBlur stdDeviation="4" result="blur"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-    </defs>
-    <circle cx="${cx}" cy="${cy}" r="338" fill="#09091a" stroke="rgba(255,255,255,0.05)" stroke-width="2"/>
-    <circle cx="${cx}" cy="${cy}" r="324" fill="url(#faceGrad)" stroke="rgba(255,255,255,0.09)" stroke-width="3"/>
-    <circle cx="${cx}" cy="${cy}" r="300" fill="none" stroke="rgba(255,255,255,0.035)" stroke-width="1"/>
-    <circle cx="${cx}" cy="${cy}" r="118" fill="none" stroke="rgba(255,255,255,0.03)"  stroke-width="1"/>
-  `;
-
-  // Territories
-  for (let h = 1; h <= 12; h++) {
-    const start = hourToAngle(h);
-    const end   = start + 30;
-    const owner = Number(state.territories[h]);
-
-    let fill, stroke, sw;
-    if (owner === 0) {
-      fill   = "rgba(55,55,88,0.35)";
-      stroke = "rgba(255,255,255,0.11)";
-      sw     = 1.5;
-    } else if (owner === 1) {
-      fill   = "rgba(0,229,255,0.48)";
-      stroke = "rgba(0,229,255,0.95)";
-      sw     = 4;
-    } else {
-      fill   = "rgba(255,44,240,0.48)";
-      stroke = "rgba(255,44,240,0.95)";
-      sw     = 4;
-    }
-
-    html += `<path class="territory" d="${sectorPath(cx,cy,116,256,start,end)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
-
-    if (owner !== 0) {
-      const tp    = polar(cx, cy, 200, start + 15);
-      const color = owner === 1 ? "#00e5ff" : "#ff2cf0";
-      html += `
-        <circle cx="${tp.x}" cy="${tp.y}" r="31" fill="${color}" stroke="white" stroke-width="3" filter="url(#glow)"/>
-        <text class="territory-token" x="${tp.x}" y="${tp.y+1}">P${owner}</text>
-      `;
-    }
-
-    if (state.fortified[h]) {
-      const fp = polar(cx, cy, 165, start + 15);
-      html += `<text x="${fp.x}" y="${fp.y}" text-anchor="middle" dominant-baseline="middle" font-size="22">🛡️</text>`;
-    }
+function render(){
+  const svg=document.getElementById("clock"),cx=350,cy=350;
+  let h="<defs><radialGradient id='fg' cx='50%' cy='42%' r='62%'><stop offset='0%' stop-color='#1e1e3a'/><stop offset='100%' stop-color='#080812'/></radialGradient><filter id='glow' x='-30%' y='-30%' width='160%' height='160%'><feGaussianBlur stdDeviation='4' result='b'/><feMerge><feMergeNode in='b'/><feMergeNode in='SourceGraphic'/></feMerge></filter></defs>";
+  h+="<circle cx='"+cx+"' cy='"+cy+"' r='338' fill='#09091a' stroke='rgba(255,255,255,0.05)' stroke-width='2'/>";
+  h+="<circle cx='"+cx+"' cy='"+cy+"' r='324' fill='url(#fg)' stroke='rgba(255,255,255,0.09)' stroke-width='3'/>";
+  h+="<circle cx='"+cx+"' cy='"+cy+"' r='300' fill='none' stroke='rgba(255,255,255,0.035)' stroke-width='1'/>";
+  h+="<circle cx='"+cx+"' cy='"+cy+"' r='118' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1'/>";
+  for(let hr=1;hr<=12;hr++){
+    const st=hourToAngle(hr),en=st+30,own=Number(state.territories[hr]);
+    let fill,stroke,sw;
+    if(own===0){fill="rgba(55,55,88,.35)";stroke="rgba(255,255,255,.11)";sw=1.5;}
+    else if(own===1){fill="rgba(0,229,255,.48)";stroke="rgba(0,229,255,.95)";sw=4;}
+    else{fill="rgba(255,44,240,.48)";stroke="rgba(255,44,240,.95)";sw=4;}
+    h+="<path class='territory' d='"+sectorPath(cx,cy,116,256,st,en)+"' fill='"+fill+"' stroke='"+stroke+"' stroke-width='"+sw+"'/>";
+    if(own!==0){const tp=polar(cx,cy,200,st+15),col=own===1?"#00e5ff":"#ff2cf0";h+="<circle cx='"+tp.x+"' cy='"+tp.y+"' r='31' fill='"+col+"' stroke='white' stroke-width='3' filter='url(#glow)'/><text class='territory-token' x='"+tp.x+"' y='"+(tp.y+1)+"'>P"+own+"</text>";}
+    if(state.fortified[hr]){const fp=polar(cx,cy,165,st+15);h+="<text x='"+fp.x+"' y='"+fp.y+"' text-anchor='middle' dominant-baseline='middle' font-size='22'>&#128737;</text>";}
   }
-
-  // Minute ticks — golden highlights at :15 and :45 to teach quarter-hours
-  for (let m = 0; m < 60; m++) {
-    const isBig     = m % 5 === 0;
-    const isQuarter = m === 15 || m === 45;
-    const outer = polar(cx, cy, 310, m * 6);
-    const inner = polar(cx, cy, isBig ? 283 : 295, m * 6);
-    const color = isQuarter ? "rgba(255,209,102,0.95)" : (isBig ? "#d0d0ee" : "rgba(190,190,215,0.45)");
-    const width = isBig ? 4 : 1.5;
-    html += `<line x1="${inner.x}" y1="${inner.y}" x2="${outer.x}" y2="${outer.y}"
-                   stroke="${color}" stroke-width="${width}" stroke-linecap="round"/>`;
-  }
-
-  // Hour numbers
-  for (let h = 1; h <= 12; h++) {
-    const lp = polar(cx, cy, 236, hourToAngle(h));
-    html += `<text class="territory-label" x="${lp.x}" y="${lp.y}">${h}</text>`;
-  }
-
-  // Clock hands
-  const ah          = getHourTerritory(state.hour);
-  const hourAngle   = hourToAngle(ah) + state.minute * 0.5;
-  const minuteAngle = state.minute * 6;
-  const hourEnd     = polar(cx, cy, 114, hourAngle);
-  const minuteEnd   = polar(cx, cy, 278, minuteAngle);
-
-  // Shadows
-  html += `<line x1="${cx}" y1="${cy}" x2="${hourEnd.x}"   y2="${hourEnd.y}"   stroke="rgba(0,0,0,0.55)" stroke-width="18" stroke-linecap="round"/>`;
-  html += `<line x1="${cx}" y1="${cy}" x2="${minuteEnd.x}" y2="${minuteEnd.y}" stroke="rgba(0,0,0,0.45)" stroke-width="10" stroke-linecap="round"/>`;
-  // Hands
-  html += `<line class="hand" x1="${cx}" y1="${cy}" x2="${hourEnd.x}"   y2="${hourEnd.y}"   stroke="#f0f0ff"       stroke-width="14"/>`;
-  html += `<line class="hand" x1="${cx}" y1="${cy}" x2="${minuteEnd.x}" y2="${minuteEnd.y}" stroke="var(--gold)" stroke-width="7"/>`;
-
-  // Center hub
-  html += `
-    <circle cx="${cx}" cy="${cy}" r="18" fill="#18183a" stroke="rgba(255,255,255,0.18)" stroke-width="3"/>
-    <circle class="center-dot" cx="${cx}" cy="${cy}" r="11"/>
-  `;
-
-  svg.innerHTML = html;
-  updateStats();
-  updateButtons();
+  for(let m=0;m<60;m++){const big=m%5===0,qtr=m===15||m===45,out=polar(cx,cy,310,m*6),inn=polar(cx,cy,big?283:295,m*6),col=qtr?"rgba(255,209,102,.95)":big?"#d0d0ee":"rgba(190,190,215,.45)";h+="<line x1='"+inn.x+"' y1='"+inn.y+"' x2='"+out.x+"' y2='"+out.y+"' stroke='"+col+"' stroke-width='"+(big?4:1.5)+"' stroke-linecap='round'/>";}
+  for(let hr=1;hr<=12;hr++){const lp=polar(cx,cy,236,hourToAngle(hr));h+="<text class='territory-label' x='"+lp.x+"' y='"+lp.y+"'>"+hr+"</text>";}
+  const ah=getHourTerritory(state.hour),ha=hourToAngle(ah)+state.minute*.5,ma=state.minute*6,he=polar(cx,cy,114,ha),me=polar(cx,cy,278,ma);
+  h+="<line x1='"+cx+"' y1='"+cy+"' x2='"+he.x+"' y2='"+he.y+"' stroke='rgba(0,0,0,.55)' stroke-width='18' stroke-linecap='round'/>";
+  h+="<line x1='"+cx+"' y1='"+cy+"' x2='"+me.x+"' y2='"+me.y+"' stroke='rgba(0,0,0,.45)' stroke-width='10' stroke-linecap='round'/>";
+  h+="<line class='hand' x1='"+cx+"' y1='"+cy+"' x2='"+he.x+"' y2='"+he.y+"' stroke='#f0f0ff' stroke-width='14'/>";
+  h+="<line class='hand' x1='"+cx+"' y1='"+cy+"' x2='"+me.x+"' y2='"+me.y+"' stroke='var(--gold)' stroke-width='7'/>";
+  h+="<circle cx='"+cx+"' cy='"+cy+"' r='18' fill='#18183a' stroke='rgba(255,255,255,.18)' stroke-width='3'/><circle class='center-dot' cx='"+cx+"' cy='"+cy+"' r='11'/>";
+  svg.innerHTML=h;
+  updateStats();updateButtons();
 }
 
-function updateStats() {
-  for (let p = 1; p <= 2; p++) {
-    const tc = Object.values(state.territories).filter(o => Number(o) === p).length;
-    document.getElementById(`p${p}Energy`).textContent      = state.players[p].energy;
-    document.getElementById(`p${p}Territories`).textContent = tc;
-    document.getElementById(`p${p}Late`).textContent        = state.players[p].lateCaptures;
-    document.getElementById(`p${p}Panel`).classList.toggle("active", state.currentPlayer === p);
-  }
-  document.getElementById("turnBadge").textContent =
-    state.gameOver ? "🏆 Game Over" : `⚔️ Player ${state.currentPlayer}'s Turn`;
+function updateStats(){
+  for(let p=1;p<=2;p++){const tc=Object.values(state.territories).filter(o=>Number(o)===p).length;document.getElementById("p"+p+"Energy").textContent=state.players[p].energy;document.getElementById("p"+p+"Territories").textContent=tc;document.getElementById("p"+p+"Late").textContent=state.players[p].lateCaptures;document.getElementById("p"+p+"Panel").classList.toggle("active",state.currentPlayer===p);}
+  document.getElementById("turnBadge").textContent=state.gameOver?"&#127942; Game Over":"&#9876; Player "+state.currentPlayer+"'s Turn";
 }
-
-function updateButtons() {
-  const controlKeywords = ["New Game","Play Again","Rules","Close","Continue","Got It"];
-  document.querySelectorAll("button").forEach(btn => {
-    const isControl = controlKeywords.some(k => btn.textContent.includes(k));
-    if (!isControl) btn.disabled = state.gameOver;
-  });
+function updateButtons(){const keys=["New Game","Play Again","Rules","Got It","Continue","Start"];document.querySelectorAll("button").forEach(b=>{if(!keys.some(k=>b.textContent.includes(k)))b.disabled=state.gameOver;});}
+function showHourChoices(title,prompt,atype){
+  document.getElementById("apTitle").textContent=title;
+  document.getElementById("apPrompt").innerHTML=prompt;
+  const btns=Array.from({length:12},(_,i)=>"<button onclick=\"submitAnswer('"+atype+"',"+(i+1)+")\">"+(i+1)+"</button>").join("");
+  document.getElementById("apArea").innerHTML="<div class='choice-grid'>"+btns+"</div><div class='answer-row'><button onclick='closeAnswerPanel()'>Cancel</button></div>";
+  openAnswerPanel();
 }
-
-// ═══════════════════════════════════════════════
-//  ANSWER MODALS
-// ═══════════════════════════════════════════════
-function showHourChoices(title, prompt, actionType) {
-  document.getElementById("answerTitle").textContent   = title;
-  document.getElementById("answerPrompt").innerHTML    = prompt;
-  const btns = Array.from({length:12}, (_,i) =>
-    `<button onclick="submitAnswer('${actionType}',${i+1})">${i+1}</button>`).join("");
-  document.getElementById("answerArea").innerHTML = `
-    <div class="choice-grid">${btns}</div>
-    <div class="answer-row"><button onclick="closeAnswerModal()">Cancel</button></div>
-  `;
-  document.getElementById("answerModal").dataset.cancelOutside = "true";
-  document.getElementById("answerModal").style.display = "flex";
+function showNumberInput(title,prompt,atype){
+  document.getElementById("apTitle").textContent=title;
+  document.getElementById("apPrompt").innerHTML=prompt;
+  document.getElementById("apArea").innerHTML="<input class='answer-input' id='numAns' type='number' min='0' max='59' inputmode='numeric'/><div class='answer-row'><button onclick='closeAnswerPanel()'>Cancel</button><button class='primary' onclick=\"submitNum('"+atype+"')\">Lock It In</button></div>";
+  openAnswerPanel();
+  setTimeout(()=>{const e=document.getElementById("numAns");if(e)e.focus();},60);
 }
-
-function showNumberInput(title, prompt, actionType) {
-  document.getElementById("answerTitle").textContent  = title;
-  document.getElementById("answerPrompt").innerHTML   = prompt;
-  document.getElementById("answerArea").innerHTML = `
-    <input class="answer-input" id="numberAnswer" type="number" min="0" max="59" inputmode="numeric"/>
-    <div class="answer-row">
-      <button onclick="closeAnswerModal()">Cancel</button>
-      <button class="primary" onclick="submitNumberAnswer('${actionType}')">Lock It In</button>
-    </div>
-  `;
-  document.getElementById("answerModal").dataset.cancelOutside = "true";
-  document.getElementById("answerModal").style.display = "flex";
-  setTimeout(() => { const el = document.getElementById("numberAnswer"); if (el) el.focus(); }, 60);
+function showQuarterChoices(){
+  document.getElementById("apTitle").textContent="Quarter Power Up";
+  document.getElementById("apPrompt").innerHTML="Pick the <strong>quarter phrase</strong> first, then the matching hour.";
+  const hb=Array.from({length:12},(_,i)=>"<button onclick='chooseQH("+(i+1)+")'>"+(i+1)+"</button>").join("");
+  document.getElementById("apArea").innerHTML="<div class='answer-row'><button class='primary' id='qpPast' onclick=\"chooseQT('past')\">Quarter Past</button><button class='primary' id='qpTo' onclick=\"chooseQT('to')\">Quarter To</button></div><div class='choice-grid'>"+hb+"</div><p style='margin-top:8px;font-size:.8rem;color:var(--muted)'>Pick a phrase first, then the hour.</p><div class='answer-row'><button onclick='closeAnswerPanel()'>Cancel</button></div>";
+  qp.type=null;qp.hour=null;
+  openAnswerPanel();
 }
+const qp={type:null,hour:null};
+function chooseQT(t){qp.type=t;document.getElementById("qpPast").style.filter=t==="past"?"brightness(1.35)":"brightness(.65)";document.getElementById("qpTo").style.filter=t==="to"?"brightness(1.35)":"brightness(.65)";}
+function chooseQH(h){if(!qp.type)return;qp.hour=h;submitQA();}
+function qCorrectType(){if(state.minute===15)return"past";if(state.minute===45)return"to";return null;}
+function qCorrectHour(){const ah=getHourTerritory(state.hour);if(state.minute===15)return ah;if(state.minute===45)return getNextHour(ah);return null;}
+function fmtQP(t,h){if(!t||!h)return"no answer";return t==="past"?"Quarter Past "+h:"Quarter To "+h;}
+function qReveal(isQt){const ah=getHourTerritory(state.hour),nh=getNextHour(ah);if(!isQt)return"<strong>Time:</strong> "+formatTime()+"<br>Not :15 or :45. Quarter Power was not available. -25% energy.";if(state.minute===15)return"<strong>Time:</strong> "+formatTime()+"<br>15 ticks = <strong>Quarter Past "+ah+"</strong>. Active territory: "+ah+".";return"<strong>Time:</strong> "+formatTime()+"<br>45 ticks, 15 remain = <strong>Quarter To "+nh+"</strong>. Active territory: "+ah+".";}
 
-function showQuarterChoices() {
-  document.getElementById("answerTitle").textContent = "Quarter Power Up";
-  document.getElementById("answerPrompt").innerHTML  = "Pick the <strong>quarter phrase</strong> first, then the matching hour.";
-  const hourBtns = Array.from({length:12}, (_,i) =>
-    `<button onclick="chooseQuarterHour(${i+1})">${i+1}</button>`).join("");
-  document.getElementById("answerArea").innerHTML = `
-    <div class="answer-row">
-      <button class="primary" id="qpPast" onclick="chooseQuarterType('past')">Quarter Past</button>
-      <button class="primary" id="qpTo"   onclick="chooseQuarterType('to')">Quarter To</button>
-    </div>
-    <div class="choice-grid">${hourBtns}</div>
-    <p style="margin-top:10px;font-size:0.8rem;color:var(--muted);">Pick a phrase first, then pick the hour.</p>
-    <div class="answer-row"><button onclick="closeAnswerModal()">Cancel</button></div>
-  `;
-  document.getElementById("answerModal").dataset.cancelOutside = "false";
-  document.getElementById("answerModal").style.display = "flex";
-  quarterPick.type = null;
-  quarterPick.hour = null;
-}
-
-function closeAnswerModal() { document.getElementById("answerModal").style.display = "none"; }
-
-document.getElementById("answerModal").addEventListener("click", function(e) {
-  if (e.target === this && this.dataset.cancelOutside === "true") closeAnswerModal();
-});
-
-// ═══════════════════════════════════════════════
-//  QUARTER POWER
-// ═══════════════════════════════════════════════
-const quarterPick = { type: null, hour: null };
-
-function quarterCorrectType() {
-  if (state.minute === 15) return "past";
-  if (state.minute === 45) return "to";
-  return null;
-}
-
-function quarterCorrectHour() {
-  const ah = getHourTerritory(state.hour);
-  if (state.minute === 15) return ah;
-  if (state.minute === 45) return getNextHour(ah);
-  return null;
-}
-
-function formatQuarterPhrase(type, hour) {
-  if (!type || !hour) return "no complete answer";
-  return type === "past" ? `Quarter Past ${hour}` : `Quarter To ${hour}`;
-}
-
-function quarterRevealExplanation(isQuarterTime) {
-  const ah = getHourTerritory(state.hour);
-  const nh = getNextHour(ah);
-  if (!isQuarterTime) {
-    return `<strong>Actual time:</strong> ${formatTime()}<br>This is not :15 or :45, so Quarter Power Up was not available. You lose 25% of current energy for taking the risk.`;
-  }
-  if (state.minute === 15) {
-    return `<strong>Actual time:</strong> ${formatTime()}<br>The minute hand has traveled 15 ticks — that's <strong>Quarter Past ${ah}</strong>. The active territory is still ${ah}.`;
-  }
-  return `<strong>Actual time:</strong> ${formatTime()}<br>The minute hand has traveled 45 ticks, meaning 15 remain before the next hour — so this is <strong>Quarter To ${nh}</strong>. The active territory is still ${ah}.`;
-}
-
-function startQuarterPower() {
-  ensureAudio();
-  if (state.gameOver) return;
-
-  if (state.quarterUsedThisTurn) {
-    showBonusFeedback(
-      "Quarter Power Already Used",
-      `<strong>${activeName()}</strong> already tried Quarter Power Up this turn. Choose your regular move.`,
-      "Quarter Power Up can only be attempted once per turn.",
-      false
-    );
-    return;
-  }
-
-  if (state.minute !== 15 && state.minute !== 45) {
-    state.quarterUsedThisTurn = true;
-    const p    = state.currentPlayer;
-    const loss = Math.min(state.players[p].energy, roundToNearest50(state.players[p].energy * 0.25));
-    state.players[p].energy -= loss;
-    playWrong();
-    render();
-    showBonusFeedback(
-      "Quarter Power Miss!",
-      `<strong>${activeName()}</strong> lost <strong>${loss} energy</strong> — the clock wasn't showing :15 or :45. You still get your regular turn.`,
-      quarterRevealExplanation(false),
-      false
-    );
-    return;
-  }
-
+function startQuarterPower(){
+  ensureAudio();if(state.gameOver)return;
+  if(state.quarterUsedThisTurn){showFB("Quarter Power Already Used","wrong","<strong>"+activeName()+"</strong> already used Quarter Power this turn.","Quarter Power can only be attempted once per turn.",false);return;}
+  if(state.minute!==15&&state.minute!==45){state.quarterUsedThisTurn=true;const p=state.currentPlayer,loss=Math.min(state.players[p].energy,roundToNearest50(state.players[p].energy*.25));state.players[p].energy-=loss;playWrong();render();showFB("Quarter Power Miss!","wrong","<strong>"+activeName()+"</strong> lost <strong>"+loss+" energy</strong> — not :15 or :45. Regular turn still available.",qReveal(false),false);return;}
   showQuarterChoices();
 }
-
-function chooseQuarterType(type) {
-  quarterPick.type = type;
-  document.getElementById("qpPast").style.filter = type === "past" ? "brightness(1.35)" : "brightness(0.65)";
-  document.getElementById("qpTo").style.filter   = type === "to"   ? "brightness(1.35)" : "brightness(0.65)";
+function submitQA(){
+  closeAnswerPanel();state.quarterUsedThisTurn=true;
+  const p=state.currentPlayer,ct=qCorrectType(),ch=qCorrectHour(),ok=qp.type===ct&&qp.hour===ch;
+  if(ok){const bonus=roundToNearest50(state.players[p].energy*.25);state.players[p].energy+=bonus;playCorrect();render();showFB("Quarter Power Up!","correct","<strong>"+activeName()+"</strong> identified <strong>"+fmtQP(ct,ch)+"</strong> and gained <strong>"+bonus+" energy</strong>! Regular turn still available.",qReveal(true),false);}
+  else{playWrong();render();showFB("Quarter Power Miss!","wrong","<strong>"+activeName()+"</strong> chose <strong>"+fmtQP(qp.type,qp.hour)+"</strong>, correct was <strong>"+fmtQP(ct,ch)+"</strong>. No bonus — regular turn available.",qReveal(true),false);}
 }
 
-function chooseQuarterHour(hour) {
-  if (!quarterPick.type) return;
-  quarterPick.hour = hour;
-  submitQuarterAnswer();
+function startAction(type){
+  ensureAudio();if(state.gameOver)return;
+  if(type==="capture")showHourChoices("Declare the Territory","Which <strong>Hour Territory</strong> is active right now?","capture");
+  else if(type==="challenge")showHourChoices("Declare the Battle Zone","Which <strong>Hour Territory</strong> is active right now?","challenge");
+  else if(type==="fortify")showHourChoices("Fortify Your Territory","Which <strong>Hour Territory</strong> is active right now?","fortify");
+  else if(type==="harvest")showNumberInput("Harvest Minute Energy","How many <strong>minute ticks</strong> has the long hand traveled from the top?","harvest");
+  else if(type==="countdown")showNumberInput("Countdown Dash","How many <strong>minutes remain</strong> until the next hour opens?","countdown");
 }
-
-function submitQuarterAnswer() {
-  closeAnswerModal();
-  state.quarterUsedThisTurn = true;
-  const p           = state.currentPlayer;
-  const correctType = quarterCorrectType();
-  const correctHour = quarterCorrectHour();
-  const correct     = quarterPick.type === correctType && quarterPick.hour === correctHour;
-
-  if (correct) {
-    const bonus = roundToNearest50(state.players[p].energy * 0.25);
-    state.players[p].energy += bonus;
-    playCorrect();
-    render();
-    showBonusFeedback(
-      "⚡ Quarter Power Up!",
-      `<strong>${activeName()}</strong> identified <strong>${formatQuarterPhrase(correctType,correctHour)}</strong> and gained <strong>${bonus} energy</strong>! You still get your regular turn.`,
-      quarterRevealExplanation(true),
-      true
-    );
-  } else {
-    playWrong();
-    render();
-    showBonusFeedback(
-      "Quarter Power Miss!",
-      `<strong>${activeName()}</strong> chose <strong>${formatQuarterPhrase(quarterPick.type,quarterPick.hour)}</strong>, but the correct answer was <strong>${formatQuarterPhrase(correctType,correctHour)}</strong>. No bonus — but you still get your regular turn.`,
-      quarterRevealExplanation(true),
-      false
-    );
-  }
-}
-
-function showBonusFeedback(title, message, reveal, isCorrect) {
-  document.getElementById("feedbackTitle").textContent   = title;
-  document.getElementById("feedbackTitle").className     = `feedback-title ${isCorrect ? "correct" : "wrong"}`;
-  document.getElementById("feedbackMessage").innerHTML   = message;
-  document.getElementById("revealBox").innerHTML         = reveal;
-  document.getElementById("feedbackModal").style.display = "flex";
-  state.pendingNextTurn = false;
-  state.pendingVictory  = null;
-}
-
-// ═══════════════════════════════════════════════
-//  ACTIONS
-// ═══════════════════════════════════════════════
-function startAction(type) {
-  ensureAudio();
-  if (state.gameOver) return;
-  if (type === "capture")   showHourChoices("Declare the Territory",   "Which <strong>Hour Territory</strong> is active right now?", "capture");
-  if (type === "challenge") showHourChoices("Declare the Battle Zone",  "Which <strong>Hour Territory</strong> is active right now?", "challenge");
-  if (type === "fortify")   showHourChoices("Fortify Your Territory",   "Which <strong>Hour Territory</strong> is active right now?", "fortify");
-  if (type === "harvest")   showNumberInput("Harvest Minute Energy",    "How many <strong>minute ticks</strong> has the long hand traveled from the top?", "harvest");
-  if (type === "countdown") showNumberInput("Countdown Dash",           "How many <strong>minutes remain</strong> until the next hour opens?", "countdown");
-}
-
-function submitNumberAnswer(actionType) {
-  const raw = document.getElementById("numberAnswer").value;
-  if (raw === "") return;
-  submitAnswer(actionType, Number(raw));
-}
-
-function submitAnswer(actionType, answer) {
-  closeAnswerModal();
+function submitNum(atype){const r=document.getElementById("numAns").value;if(r==="")return;submitAnswer(atype,Number(r));}
+function submitAnswer(atype,answer){
+  closeAnswerPanel();
   let correct;
-  if (["capture","challenge","fortify"].includes(actionType)) correct = getHourTerritory(state.hour);
-  if (actionType === "harvest")   correct = state.minute;
-  if (actionType === "countdown") correct = countdownValue();
-  resolveAction(actionType, Number(answer), correct, Number(answer) === correct);
+  if(["capture","challenge","fortify"].includes(atype))correct=getHourTerritory(state.hour);
+  else if(atype==="harvest")correct=state.minute;
+  else if(atype==="countdown")correct=countdownValue();
+  resolveAction(atype,Number(answer),correct,Number(answer)===correct);
 }
-
-function revealExplanation(actionType) {
-  const ah = getHourTerritory(state.hour);
-  const nh = getNextHour(ah);
-  const base = `<strong>Actual time:</strong> ${formatTime()}<br>
-                <strong>Active Hour Territory:</strong> ${ah}<br>
-                <strong>Minute ticks traveled:</strong> ${state.minute}<br>
-                <strong>Minutes until next hour:</strong> ${countdownValue()}`;
-  let why = "";
-  if (["capture","challenge","fortify"].includes(actionType))
-    why = `The correct territory is <strong>${ah}</strong>. Even if the hour hand looks close to ${nh}, the next hour doesn't open until the minute hand reaches the top.`;
-  if (actionType === "harvest")
-    why = `The long hand has traveled <strong>${state.minute}</strong> minute tick${state.minute===1?"":"s"} from the top.`;
-  if (actionType === "countdown")
-    why = `There are <strong>${countdownValue()}</strong> minute tick${countdownValue()===1?"":"s"} remaining before the next hour opens.`;
-  return `${base}<br><br>${why}`;
+function revealExp(atype){
+  const ah=getHourTerritory(state.hour),nh=getNextHour(ah);
+  let base="<strong>Time:</strong> "+formatTime()+"<br><strong>Active territory:</strong> "+ah+"<br><strong>Minute ticks:</strong> "+state.minute+"<br><strong>Minutes until next hour:</strong> "+countdownValue();
+  let why="";
+  if(["capture","challenge","fortify"].includes(atype))why="Correct territory: <strong>"+ah+"</strong>. Hour hand near "+nh+" but next hour doesn't open until minute hand reaches top.";
+  else if(atype==="harvest")why="Long hand traveled <strong>"+state.minute+"</strong> tick"+(state.minute===1?"":"s")+" from top.";
+  else if(atype==="countdown")why="<strong>"+countdownValue()+"</strong> tick"+(countdownValue()===1?"":"s")+" remain before next hour opens.";
+  return base+"<br><br>"+why;
 }
-
-function resolveAction(actionType, answer, correct, isCorrect) {
-  if (isCorrect) playCorrect(); else playWrong();
-
-  const p        = state.currentPlayer;
-  const opponent = p === 1 ? 2 : 1;
-  const ah       = getHourTerritory(state.hour);
-  let title          = isCorrect ? "✅ Correct!" : "❌ Not Quite";
-  let message        = "";
-  let shouldCheckWin = false;
-
-  if (!isCorrect) {
-    message = `<strong>${activeName()}</strong> answered <strong>${answer}</strong>, but the correct answer was <strong>${correct}</strong>. The move fails this turn.`;
-  } else if (actionType === "harvest") {
-    const gain = 100 + state.minute * 10;
-    state.players[p].energy += gain;
-    message = `<strong>${activeName()}</strong> read the minute hand correctly and harvested <strong>${gain} energy</strong>!`;
-  } else if (actionType === "countdown") {
-    const gain = 150 + countdownValue() * 15;
-    state.players[p].energy += gain;
-    message = `<strong>${activeName()}</strong> nailed the Countdown Dash and earned <strong>${gain} energy</strong>!`;
-  } else if (actionType === "capture") {
-    if (state.territories[ah] === p) {
-      message = `You already control Territory ${ah}. Try fortifying it instead.`;
-    } else if (state.players[p].energy < 1500) {
-      message = `You need 1500 energy to capture Territory ${ah}. Build more energy first.`;
-    } else {
-      state.players[p].energy  -= 1500;
-      state.territories[ah]     = Number(p);
-      state.fortified[ah]       = false;
-      if (isLateHour()) state.players[p].lateCaptures++;
-      message = `<strong>${activeName()}</strong> captured <strong>${isLateHour() ? "Late " : ""}Territory ${ah}</strong>! 🏴`;
-      shouldCheckWin = true;
-    }
-  } else if (actionType === "challenge") {
-    if (state.territories[ah] !== opponent) {
-      message = `You read the territory correctly, but Player ${opponent} doesn't control Territory ${ah}. No challenge available.`;
-    } else if (state.players[p].energy < 2200) {
-      message = `You need 2200 energy to challenge Territory ${ah}.`;
-    } else {
-      state.players[p].energy -= 2200;
-      if (state.fortified[ah]) {
-        state.fortified[ah] = false;
-        message = `<strong>${activeName()}</strong> challenged Territory ${ah} and <strong>broke the shield</strong>! Player ${opponent} still holds the territory.`;
-      } else {
-        state.territories[ah] = 0;
-        message = `<strong>${activeName()}</strong> challenged Territory ${ah} and knocked it to <strong>open territory</strong>! ⚔️`;
-      }
-    }
-  } else if (actionType === "fortify") {
-    if (state.territories[ah] !== p) {
-      message = `You can only fortify a territory you already control. Territory ${ah} isn't yours.`;
-    } else if (state.fortified[ah]) {
-      message = `Territory ${ah} is already fortified.`;
-    } else if (state.players[p].energy < 1000) {
-      message = `You need 1000 energy to fortify Territory ${ah}.`;
-    } else {
-      state.players[p].energy -= 1000;
-      state.fortified[ah]      = true;
-      message = `<strong>${activeName()}</strong> fortified Territory ${ah}! 🛡️ The next Challenge will break the shield instead of removing control.`;
-    }
+function resolveAction(atype,answer,correct,isCorrect){
+  const p=state.currentPlayer,opp=p===1?2:1,ah=getHourTerritory(state.hour);
+  let title=isCorrect?"Correct!":"Not Quite",msg="",win=false,snd=isCorrect?playCorrect:playWrong;
+  if(!isCorrect){msg="<strong>"+activeName()+"</strong> answered <strong>"+answer+"</strong>, correct was <strong>"+correct+"</strong>. Move fails.";}
+  else if(atype==="harvest"){const gain=100+state.minute*10;state.players[p].energy+=gain;snd=playEnergy;msg="<strong>"+activeName()+"</strong> harvested <strong>"+gain+" energy</strong>!";}
+  else if(atype==="countdown"){const gain=150+countdownValue()*15;state.players[p].energy+=gain;snd=playEnergy;msg="<strong>"+activeName()+"</strong> earned <strong>"+gain+" energy</strong> from Countdown Dash!";}
+  else if(atype==="capture"){
+    if(state.territories[ah]===p){msg="You already control Territory "+ah+". Try fortifying it.";snd=playWrong;}
+    else if(state.players[p].energy<1500){msg="Need 1500 energy to capture Territory "+ah+".";snd=playWrong;}
+    else{state.players[p].energy-=1500;state.territories[ah]=Number(p);state.fortified[ah]=false;if(isLateHour())state.players[p].lateCaptures++;snd=playCapture;msg="<strong>"+activeName()+"</strong> captured <strong>"+(isLateHour()?"Late ":"")+"Territory "+ah+"</strong>!";win=true;}
   }
-
-  render();
-  showFeedback(title, message, revealExplanation(actionType), isCorrect, shouldCheckWin);
-}
-
-function showFeedback(title, message, reveal, isCorrect, shouldCheckWin) {
-  document.getElementById("feedbackTitle").textContent   = title;
-  document.getElementById("feedbackTitle").className     = `feedback-title ${isCorrect ? "correct" : "wrong"}`;
-  document.getElementById("feedbackMessage").innerHTML   = message;
-  document.getElementById("revealBox").innerHTML         = reveal;
-  document.getElementById("feedbackModal").style.display = "flex";
-
-  state.pendingNextTurn = true;
-  if (shouldCheckWin) {
-    const winner = getWinner();
-    if (winner) {
-      state.gameOver        = true;
-      state.pendingNextTurn = false;
-      state.pendingVictory  = winner;
-    }
+  else if(atype==="challenge"){
+    if(state.territories[ah]!==opp){msg="Player "+opp+" doesn't control Territory "+ah+". No challenge.";snd=playWrong;}
+    else if(state.players[p].energy<2200){msg="Need 2200 energy to challenge Territory "+ah+".";snd=playWrong;}
+    else{state.players[p].energy-=2200;snd=playChallenge;if(state.fortified[ah]){state.fortified[ah]=false;msg="<strong>"+activeName()+"</strong> broke the shield on Territory "+ah+"! Player "+opp+" still holds it.";}else{state.territories[ah]=0;msg="<strong>"+activeName()+"</strong> knocked Territory "+ah+" to open territory!";}}
   }
-}
-
-function continueAfterFeedback() {
-  document.getElementById("feedbackModal").style.display = "none";
-  if (state.pendingVictory) {
-    showVictory(state.pendingVictory);
-    state.pendingVictory = null;
-    return;
+  else if(atype==="fortify"){
+    if(state.territories[ah]!==p){msg="You can only fortify a territory you control.";snd=playWrong;}
+    else if(state.fortified[ah]){msg="Territory "+ah+" is already fortified.";snd=playWrong;}
+    else if(state.players[p].energy<1000){msg="Need 1000 energy to fortify Territory "+ah+".";snd=playWrong;}
+    else{state.players[p].energy-=1000;state.fortified[ah]=true;snd=playFortify;msg="<strong>"+activeName()+"</strong> fortified Territory "+ah+"! Next Challenge breaks shield instead of removing control.";}
   }
-  if (!state.gameOver && state.pendingNextTurn) nextTurn();
+  snd();render();
+  showFB(title,isCorrect?"correct":"wrong",msg,revealExp(atype),win);
 }
 
-// ═══════════════════════════════════════════════
-//  WIN / LOSS
-// ═══════════════════════════════════════════════
-function getWinner() {
-  for (let p = 1; p <= 2; p++) {
-    const tc = Object.values(state.territories).filter(o => Number(o) === p).length;
-    if (tc >= 4 && state.players[p].lateCaptures >= 1) return p;
-  }
-  return null;
+function showFB(title,cls,msg,reveal,checkWin){
+  stopTimer();
+  document.getElementById("fbTitle").textContent=title;
+  document.getElementById("fbTitle").className="fb-title "+cls;
+  document.getElementById("fbMessage").innerHTML=msg;
+  document.getElementById("revealBox").innerHTML=reveal;
+  openFeedbackPanel();
+  state.pendingNextTurn=true;
+  if(checkWin){const w=getWinner();if(w){state.gameOver=true;state.pendingNextTurn=false;state.pendingVictory=w;}}
 }
-
-function showVictory(playerNumber) {
-  const tc = Object.values(state.territories).filter(o => Number(o) === playerNumber).length;
-  document.getElementById("winnerText").textContent   = `Player ${playerNumber} Wins! 🏆`;
-  document.getElementById("winnerSubtext").innerHTML  =
-    `Player ${playerNumber} controls <strong>${tc}</strong> territories with a Late-Hour Capture.<br>Victory goes to the master of the clock!`;
+function continueAfterFeedback(){
+  closeFeedbackPanel();
+  if(state.pendingVictory){showVictory(state.pendingVictory);state.pendingVictory=null;return;}
+  if(!state.gameOver&&state.pendingNextTurn)nextTurn();
+}
+function getWinner(){for(let p=1;p<=2;p++){const tc=Object.values(state.territories).filter(o=>Number(o)===p).length;if(tc>=4&&state.players[p].lateCaptures>=1)return p;}return null;}
+function showVictory(pn){
+  const tc=Object.values(state.territories).filter(o=>Number(o)===pn).length;
+  document.getElementById("winnerText").textContent="Player "+pn+" Wins!";
+  document.getElementById("winnerSubtext").innerHTML="Player "+pn+" controls <strong>"+tc+"</strong> territories with a Late-Hour Capture. Victory!";
   buildConfetti();
-  document.getElementById("winnerOverlay").style.display = "flex";
-  playVictoryMusic();
+  document.getElementById("winnerOverlay").style.display="flex";
+  playVictory();
 }
-
-function buildConfetti() {
-  const box    = document.getElementById("confetti");
-  const colors = ["#ffd166","#00e5ff","#ff2cf0","#39ff8a","#ffffff","#ff4455"];
-  box.innerHTML = "";
-  for (let i = 0; i < 65; i++) {
-    const s = document.createElement("span");
-    s.style.cssText = `left:${Math.random()*100}%;background:${colors[i%colors.length]};animation-duration:${2.2+Math.random()*2.6}s;animation-delay:${Math.random()*1.5}s;`;
-    box.appendChild(s);
-  }
-}
-
-// ═══════════════════════════════════════════════
-//  TURN / NEW GAME
-// ═══════════════════════════════════════════════
-function nextTurn() {
-  if (state.gameOver) return;
-  state.currentPlayer       = state.currentPlayer === 1 ? 2 : 1;
-  state.quarterUsedThisTurn = false;
-  randomTime();
-  render();
-}
-
-function newGame() {
-  ensureAudio();
-  state.currentPlayer       = 1;
-  state.gameOver            = false;
-  state.pendingNextTurn     = true;
-  state.pendingVictory      = null;
-  state.quarterUsedThisTurn = false;
-  state.players = { 1: { energy: 500, lateCaptures: 0 }, 2: { energy: 500, lateCaptures: 0 } };
-  for (let h = 1; h <= 12; h++) { state.territories[h] = 0; state.fortified[h] = false; }
-  ["winnerOverlay","feedbackModal","answerModal"].forEach(id =>
-    document.getElementById(id).style.display = "none");
-  randomTime();
-  render();
-}
-
-function openHowToPlay()  { document.getElementById("howModal").style.display = "flex"; }
-function closeHowToPlay() { document.getElementById("howModal").style.display = "none"; }
-
-// ═══════════════════════════════════════════════
-//  BOOT
-// ═══════════════════════════════════════════════
-randomTime();
-render();
+function buildConfetti(){const box=document.getElementById("confetti"),cols=["#ffd166","#00e5ff","#ff2cf0","#39ff8a","#ffffff","#ff4455"];box.innerHTML="";for(let i=0;i<65;i++){const s=document.createElement("span");s.style.cssText="left:"+Math.random()*100+"%;background:"+cols[i%cols.length]+";animation-duration:"+(2.2+Math.random()*2.6)+"s;animation-delay:"+Math.random()*1.5+"s;";box.appendChild(s);}}
+function nextTurn(){if(state.gameOver)return;state.currentPlayer=state.currentPlayer===1?2:1;state.quarterUsedThisTurn=false;randomTime();render();startTimer();}
+function openHowToPlay(){stopTimer();document.getElementById("howModal").style.display="flex";}
+function closeHowToPlay(){document.getElementById("howModal").style.display="none";if(!state.gameOver&&document.getElementById("mainApp").style.display!=="none")startTimer();}
 </script>
 </body>
 </html>
