@@ -639,6 +639,7 @@ function resolveAction(atype,answer,correct,isCorrect){
     else if(state.territories[ah]===p){msg="You already control Territory "+ah+". Try fortifying it.";snd=playWrong;}
     else{const captureCost=isSolo()?1000:1500;if(state.players[p].energy<captureCost){msg="Need "+captureCost+" energy to capture Territory "+ah+".";snd=playWrong;}
     else{state.players[p].energy-=captureCost;state.territories[ah]=Number(p);state.fortified[ah]=false;if(isSolo()){state.protectedThreatsThisTurn=[];for(let hh=1;hh<=12;hh++){if(state.threatened[hh])state.protectedThreatsThisTurn.push(hh);}state.threatened[ah]=false;state.threatAge[ah]=0;state.corrupted[ah]=false;state.justCapturedHour=ah;}if(isLateHour())state.players[p].lateCaptures++;snd=playCapture;msg="<strong>"+activeName()+"</strong> captured <strong>"+(isLateHour()?"Late ":"")+"Territory "+ah+"</strong>!"+(isSolo()?" Captured territories are now stable and safe from clock corruption.":"");win=true;}
+    }
   }
   else if(atype==="challenge"){
     if(state.territories[ah]!==opp){msg="Player "+opp+" doesn't control Territory "+ah+". No challenge.";snd=playWrong;}
