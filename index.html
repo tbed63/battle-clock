@@ -4,6 +4,17 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <title>Battle Clock!</title>
+<!-- ========================= -->
+<!-- FAVICON / APP ICON LINKS  -->
+<!-- ========================= -->
+<!-- Desktop browser tab icon. Put favicon.ico in the same GitHub folder as index.html. -->
+<link rel="icon" href="favicon.ico" sizes="any">
+<!-- PNG fallback for browsers that prefer a PNG icon. Put favicon.png in the same GitHub folder as index.html. -->
+<link rel="icon" type="image/png" href="favicon.png">
+<!-- Mobile / Apple home screen icon. Put apple-touch-icon.png in the same GitHub folder as index.html. -->
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<!-- Mobile browser theme color for the Battle Clock dark arcade look. -->
+<meta name="theme-color" content="#0a0a14">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -294,8 +305,8 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
         <button class="quarter action-quarter" onclick="startQuarterPower()"><span class="btn-label">&#9889; Quarter Power</span><span class="btn-sub">+/-25% Energy</span></button>
 
         <!-- TWO PLAYER ROW 3 RIGHT / ONE PLAYER ROW 2 RIGHT: Challenge becomes Cleanse in One Player Mode. -->
-        <!-- TWO PLAYER CHALLENGE / ONE PLAYER CLEANSE BUTTON: In Two Player Mode this button costs 400 energy. In One Player Mode it becomes Cleanse. -->
-        <button class="danger action-challenge-cleanse" id="challengeCleanseBtn" onclick="startChallengeOrCleanse()"><span class="btn-label" id="challengeCleanseLabel">&#9876; Challenge</span><span class="btn-sub" id="challengeCleanseSub">Cost: 400</span><!-- Two Player Challenge visible cost. --></button>
+        <!-- TWO PLAYER CHALLENGE / ONE PLAYER CLEANSE BUTTON: In Two Player Mode this button costs 600 energy. In One Player Mode it becomes Cleanse. -->
+        <button class="danger action-challenge-cleanse" id="challengeCleanseBtn" onclick="startChallengeOrCleanse()"><span class="btn-label" id="challengeCleanseLabel">&#9876; Challenge</span><span class="btn-sub" id="challengeCleanseSub">Cost: 600</span><!-- Two Player Challenge visible cost. --></button>
       </div>
     </section>
     <section class="kids-art-panel">
@@ -338,7 +349,7 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
 <div class="how-modal" id="howModal">
   <div class="how-card">
     <h2>&#128218; Rules</h2>
-    <p><strong>Two Player Goal:</strong> First player to control <strong>4 Hour Territories</strong> with at least <strong>1 Late-Hour capture</strong> (at :45 or later) wins.</p>
+    <p><strong>Two Player Goal:</strong> First player to control <strong>6 Hour Territories</strong> with at least <strong>1 Late-Hour capture</strong> (at :45 or later) wins.</p>
     <p><strong>One Player Goal:</strong> Capture the required number of territories before Clock Stability reaches 0. Threatened open territories now give you a warning turn before they corrupt. Captured territories are stable and safe from corruption.</p>
     <h3>The Clock</h3>
     <p>Digital time is hidden. At <strong>5:58</strong>, the hour hand is near 6, but active territory is still <strong>5</strong>. Territory 6 opens only when the minute hand reaches the top.</p>
@@ -348,8 +359,8 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
       <li><strong>Harvest Minute:</strong> Type how many minute ticks the long hand has traveled. More = more energy.</li>
       <li><strong>Countdown Dash:</strong> Type minutes remaining until next hour. Pays ~1.5x more than Harvest.</li>
       <li><strong>Capture Hour:</strong> Choose the active territory. Costs 1500 energy in Two Player Mode and 1000 energy in One Player Mode.</li>
-      <!-- RULES TEXT: Two Player Challenge costs 400 energy. -->
-      <li><strong>Challenge:</strong> In Two Player Mode, attack opponent\'s active territory. Costs 400 energy. Breaks shield or removes control.</li>
+      <!-- RULES TEXT: Two Player Challenge costs 600 energy. -->
+      <li><strong>Challenge:</strong> In Two Player Mode, attack opponent\'s active territory. Costs 600 energy. Breaks shield or removes control.</li>
       <li><strong>Cleanse:</strong> In One Player Mode, remove corruption from the active territory. Costs 500 energy and does not use up your regular turn.</li>
       <li><strong>Fortify / Rescue:</strong> In Two Player Mode, Fortify shields your active territory for 500 energy. In One Player Mode, this becomes Rescue: if the active hour is in danger, rescue it for 300 energy and still take your regular turn.</li>
       <li><strong>Exact Hour Event:</strong> If the clock lands on :00, the current player gets a free shield on one captured territory. If the current player has no captured territories, they lose the turn.</li>
@@ -395,6 +406,16 @@ function updateStartOptions(){
   twoPlayerOptions.style.display=mode==="two"?"block":"none";
 }
 function isSolo(){return state.mode==="solo";}
+
+/* ========================= */
+/* SOLO STARTING ENERGY      */
+/* ========================= */
+/* One Player Mode gets less starting energy as levels get harder. */
+/* Level 1 = 1000, Level 2 = 900, Level 3 = 800, Level 4 = 700, Level 5 = 600. */
+function soloStartingEnergy(){
+  return Math.max(100,1000-((state.level-1)*100));
+}
+
 function soloCapturedCount(){return Object.values(state.territories).filter(o=>Number(o)===1).length;}
 function soloCorruptedCount(){let c=0;for(let h=1;h<=12;h++)if(state.corrupted[h])c++;return c;}
 function soloThreatenedCount(){let c=0;for(let h=1;h<=12;h++)if(state.threatened[h])c++;return c;}
@@ -443,7 +464,7 @@ function updateModeUI(){
     if(fortBtn)fortBtn.innerHTML="&#128737; Rescue";
     if(fortSub)fortSub.textContent="Cost: 300";
     const capSub=document.querySelector("button.blue .btn-sub");
-    if(capSub)capSub.textContent="Cost: 400";
+    if(capSub)capSub.textContent="Cost: 1000";
   }else{
     if(p1t)p1t.textContent="Player 1";
     if(p2t)p2t.textContent="Player 2";
@@ -453,12 +474,13 @@ function updateModeUI(){
     if(p2LateLabel)p2LateLabel.textContent="Late Caps";
     document.getElementById("challengeCleanseLabel").innerHTML="&#9876; Challenge";
     // TWO PLAYER MODE UI: Show the correct Challenge cost on the action button.
-    document.getElementById("challengeCleanseSub").textContent="Cost: 400";
+    document.getElementById("challengeCleanseSub").textContent="Cost: 600";
     const fortBtn=document.querySelector("button.shield .btn-label");
     const fortSub=document.querySelector("button.shield .btn-sub");
     if(fortBtn)fortBtn.innerHTML="&#128737; Fortify";
     if(fortSub)fortSub.textContent="Cost: 500";
     const capSub=document.querySelector("button.blue .btn-sub");
+    /* TWO PLAYER MODE UI: Capture Hour costs 1500 energy in Two Player Mode. */
     if(capSub)capSub.textContent="Cost: 1500";
   }
 }
@@ -523,9 +545,11 @@ function applyExactHourShield(h){
   state.pendingNextTurn=false;
 }
 
-function startGame(){ensureAudio();loadZoodle();state.mode=document.getElementById("modeSel").value;state.level=parseInt(document.getElementById("levelSel").value,10)||1;state.levelConfig=levelConfigs[state.level]||levelConfigs[1];if(!isSolo())state.turnDuration=parseInt(document.getElementById("timerSel").value,10);document.getElementById("startScreen").style.display="none";document.getElementById("mainApp").style.display="";document.getElementById("kidsStrip").style.display=window.innerWidth<=699?"flex":"none";resetState();updateModeUI();randomTimeForMode();render();if(isSolo()){stopTimer();checkExactHourEvent();}else{startTimer();checkExactHourEvent();}}
+function startGame(){ensureAudio();loadZoodle();state.mode=document.getElementById("modeSel").value;/* SOLO LEVEL SELECTION: Read selected level so starting energy and level settings match the dropdown. */
+  state.level=parseInt(document.getElementById("levelSel").value,10)||1;state.levelConfig=levelConfigs[state.level]||levelConfigs[1];if(!isSolo())state.turnDuration=parseInt(document.getElementById("timerSel").value,10);document.getElementById("startScreen").style.display="none";document.getElementById("mainApp").style.display="";document.getElementById("kidsStrip").style.display=window.innerWidth<=699?"flex":"none";resetState();updateModeUI();randomTimeForMode();render();if(isSolo()){stopTimer();checkExactHourEvent();}else{startTimer();checkExactHourEvent();}}
 function goToStart(){stopTimer();closeAnswerPanel();closeFeedbackPanel();document.getElementById("winnerOverlay").style.display="none";document.getElementById("howModal").style.display="none";document.getElementById("mainApp").style.display="none";document.getElementById("startScreen").style.display="flex";}
-function resetState(){state.currentPlayer=1;state.gameOver=false;state.pendingNextTurn=true;state.pendingVictory=null;state.quarterUsedThisTurn=false;state.exactHourHandledThisTurn=false;state.pendingBonusAction=false;state.justCapturedHour=null;state.protectedThreatsThisTurn=[];state.quarterSuccesses=0;state.stability=state.levelConfig.stability;state.players={1:{energy:isSolo()?1000:500,lateCaptures:0},2:{energy:500,lateCaptures:0}};for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.threatAge[h]=0;state.corrupted[h]=false;}if(isSolo())spawnThreat();}
+function resetState(){state.currentPlayer=1;state.gameOver=false;state.pendingNextTurn=true;state.pendingVictory=null;state.quarterUsedThisTurn=false;state.exactHourHandledThisTurn=false;state.pendingBonusAction=false;state.justCapturedHour=null;state.protectedThreatsThisTurn=[];state.quarterSuccesses=0;state.stability=state.levelConfig.stability;/* RESET PLAYER ENERGY: Solo mode uses level-based starting energy. Two Player Mode still starts each player at 500. */
+  state.players={1:{energy:isSolo()?soloStartingEnergy():500,lateCaptures:0},2:{energy:500,lateCaptures:0}};for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.threatAge[h]=0;state.corrupted[h]=false;}if(isSolo())spawnThreat();}
 function openAnswerPanel(){document.getElementById("answerPanel").classList.add("open");document.getElementById("feedbackPanel").classList.remove("open");}
 function closeAnswerPanel(){document.getElementById("answerPanel").classList.remove("open");}
 function openFeedbackPanel(){document.getElementById("feedbackPanel").classList.add("open");document.getElementById("answerPanel").classList.remove("open");}
@@ -673,16 +697,17 @@ function resolveAction(atype,answer,correct,isCorrect){
   else if(atype==="capture"){
     if(isSolo()&&state.corrupted[ah]){msg="Territory "+ah+" is corrupted. Cleanse it before you can capture it.";snd=playWrong;}
     else if(state.territories[ah]===p){msg="You already control Territory "+ah+". Try fortifying it.";snd=playWrong;}
-    else{const captureCost=isSolo()?1000:1500;if(state.players[p].energy<captureCost){msg="Need "+captureCost+" energy to capture Territory "+ah+".";snd=playWrong;}
+    else{/* CAPTURE COST RULE: One Player capture costs 1000 energy; Two Player capture costs 1500 energy. */
+      const captureCost=isSolo()?1000:1500;if(state.players[p].energy<captureCost){msg="Need "+captureCost+" energy to capture Territory "+ah+".";snd=playWrong;}
     else{state.players[p].energy-=captureCost;state.territories[ah]=Number(p);state.fortified[ah]=false;if(isSolo()){state.protectedThreatsThisTurn=[];for(let hh=1;hh<=12;hh++){if(state.threatened[hh])state.protectedThreatsThisTurn.push(hh);}state.threatened[ah]=false;state.threatAge[ah]=0;state.corrupted[ah]=false;state.justCapturedHour=ah;}if(isLateHour())state.players[p].lateCaptures++;snd=playCapture;msg="<strong>"+activeName()+"</strong> captured <strong>"+(isLateHour()?"Late ":"")+"Territory "+ah+"</strong>!"+(isSolo()?" Captured territories are now stable and safe from clock corruption.":"");win=true;}
     }
   }
   else if(atype==="challenge"){
     if(state.territories[ah]!==opp){msg="Player "+opp+" doesn't control Territory "+ah+". No challenge.";snd=playWrong;}
-    // CHALLENGE COST CHECK: Player must have at least 400 energy to challenge an opponent territory.
-    else if(state.players[p].energy<400){msg="Need 400 energy to challenge Territory "+ah+".";snd=playWrong;}
-    // CHALLENGE PAYMENT: Subtract 400 energy after a valid Challenge is chosen.
-    else{state.players[p].energy-=400;snd=playChallenge;if(state.fortified[ah]){state.fortified[ah]=false;msg="<strong>"+activeName()+"</strong> broke the shield on Territory "+ah+"! Player "+opp+" still holds it.";}else{state.territories[ah]=0;msg="<strong>"+activeName()+"</strong> knocked Territory "+ah+" to open territory!";}}
+    // CHALLENGE COST CHECK: Player must have at least 600 energy to challenge an opponent territory.
+    else if(state.players[p].energy<600){msg="Need 600 energy to challenge Territory "+ah+".";snd=playWrong;}
+    // CHALLENGE PAYMENT: Subtract 600 energy after a valid Challenge is chosen.
+    else{state.players[p].energy-=600;snd=playChallenge;if(state.fortified[ah]){state.fortified[ah]=false;msg="<strong>"+activeName()+"</strong> broke the shield on Territory "+ah+"! Player "+opp+" still holds it.";}else{state.territories[ah]=0;msg="<strong>"+activeName()+"</strong> knocked Territory "+ah+" to open territory!";}}
   }
   else if(atype==="cleanse"){
     if(!isSolo()){msg="Cleanse is only available in One Player Mode.";snd=playWrong;}
@@ -832,7 +857,8 @@ function continueAfterFeedback(){
     }else nextTurn();
   }
 }
-function getWinner(){for(let p=1;p<=2;p++){const tc=Object.values(state.territories).filter(o=>Number(o)===p).length;if(tc>=4&&state.players[p].lateCaptures>=1)return p;}return null;}
+function getWinner(){for(let p=1;p<=2;p++){const tc=Object.values(state.territories).filter(o=>Number(o)===p).length;/* TWO PLAYER WIN CONDITION: Player must control at least 6 territories and have at least 1 late-hour capture. */
+    if(tc>=6&&state.players[p].lateCaptures>=1)return p;}return null;}
 function showVictory(pn){
   if(pn==="defeat"){
     document.getElementById("winnerText").textContent="Clock Corrupted!";
