@@ -316,6 +316,7 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
       <li><strong>Challenge:</strong> In Two Player Mode, attack opponent\'s active territory. Costs 2200 energy. Breaks shield or removes control.</li>
       <li><strong>Cleanse:</strong> In One Player Mode, remove corruption from the active territory. Costs 1200 energy.</li>
       <li><strong>Fortify:</strong> Shield your active territory. Costs 1000 energy.</li>
+      <li><strong>Exact Hour Event:</strong> If the clock lands on :00, the current player gets a free shield on one captured territory. If the current player has no captured territories, they lose the turn.</li>
     </ul>
     <h3>Timer</h3>
     <p>Set at game start. Ticking sound at 10 seconds. Time out = turn passes automatically.</p>
@@ -330,7 +331,7 @@ const levelConfigs={
   4:{name:"Quarter Power",goal:7,stability:90,timeSet:"quarter",quarterGoal:2},
   5:{name:"Full Clock Battle",goal:12,stability:85,timeSet:"mixed"}
 };
-const state={mode:"two",level:1,levelConfig:levelConfigs[1],currentPlayer:1,hour:5,minute:58,players:{1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}},territories:{},fortified:{},threatened:{},corrupted:{},stability:100,quarterSuccesses:0,gameOver:false,pendingNextTurn:true,pendingVictory:null,quarterUsedThisTurn:false,turnDuration:60,timerSecs:60,timerInterval:null};
+const state={mode:"two",level:1,levelConfig:levelConfigs[1],currentPlayer:1,hour:5,minute:58,players:{1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}},territories:{},fortified:{},threatened:{},corrupted:{},stability:100,quarterSuccesses:0,gameOver:false,pendingNextTurn:true,pendingVictory:null,quarterUsedThisTurn:false,exactHourHandledThisTurn:false,turnDuration:60,timerSecs:60,timerInterval:null};
 for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.corrupted[h]=false;}
 
 let audioCtx=null,zoodleBuf=null;
@@ -419,9 +420,59 @@ function stopTimer(){clearInterval(state.timerInterval);state.timerInterval=null
 function updateTimerDisplay(){const b=document.getElementById("timerBox");if(!b)return;const s=Math.max(state.timerSecs,0),m=Math.floor(s/60),sec=s%60;b.textContent=(m>0?m+":":(""+"0:")+(sec<10?"0":"")+sec);b.classList.toggle("warn",s<=10);}
 function handleTimerExpiry(){closeAnswerPanel();if(!state.gameOver){document.getElementById("fbTitle").textContent="Time's Up!";document.getElementById("fbTitle").className="fb-title wrong";document.getElementById("fbMessage").innerHTML="<strong>"+activeName()+"</strong> ran out of time! Turn passes automatically.";document.getElementById("revealBox").innerHTML="<strong>Time:</strong> "+formatTime()+"<br><strong>Active territory:</strong> "+getHourTerritory(state.hour)+"<br><strong>Minute ticks:</strong> "+state.minute+"<br><strong>Minutes until next hour:</strong> "+countdownValue();openFeedbackPanel();state.pendingNextTurn=true;}}
 
-function startGame(){ensureAudio();loadZoodle();state.mode=document.getElementById("modeSel").value;state.level=parseInt(document.getElementById("levelSel").value,10)||1;state.levelConfig=levelConfigs[state.level]||levelConfigs[1];if(!isSolo())state.turnDuration=parseInt(document.getElementById("timerSel").value,10);document.getElementById("startScreen").style.display="none";document.getElementById("mainApp").style.display="";document.getElementById("kidsStrip").style.display=window.innerWidth<=699?"flex":"none";resetState();updateModeUI();randomTimeForMode();render();if(isSolo())stopTimer();else startTimer();}
+
+function capturedTerritoriesForPlayer(playerNum){
+  const arr=[];
+  for(let h=1;h<=12;h++)if(Number(state.territories[h])===playerNum)arr.push(h);
+  return arr;
+}
+function checkExactHourEvent(){
+  if(state.gameOver||state.minute!==0||state.exactHourHandledThisTurn)return;
+  state.exactHourHandledThisTurn=true;
+  const p=state.currentPlayer;
+  const owned=capturedTerritoriesForPlayer(p);
+
+  if(owned.length===0){
+    playWrong();
+    const who=isSolo()?"you":"Player "+p;
+    showFB(
+      "Exact Hour Strike!",
+      "wrong",
+      "The clock landed exactly on the hour, but "+who+" does not control any territories yet. "+(isSolo()?"You lose this turn.":"Player "+p+" loses this turn."),
+      "<strong>Time:</strong> "+formatTime()+"<br>Exact-hour bonus requires at least one captured territory. Capture territories early so you can shield them when the clock lands on :00.",
+      false
+    );
+    state.pendingNextTurn=true;
+    return;
+  }
+
+  showExactHourShieldChoices(owned,p);
+}
+function showExactHourShieldChoices(owned,playerNum){
+  document.getElementById("apTitle").textContent="Exact Hour Shield";
+  document.getElementById("apPrompt").innerHTML="The clock landed exactly on the hour! "+(isSolo()?"Choose one of your captured territories":"Player "+playerNum+", choose one of your captured territories")+" to receive a free shield.";
+  const btns=owned.map(h=>"<button onclick='applyExactHourShield("+h+")'>"+h+"</button>").join("");
+  document.getElementById("apArea").innerHTML="<div class='choice-grid'>"+btns+"</div>";
+  openAnswerPanel();
+}
+function applyExactHourShield(h){
+  closeAnswerPanel();
+  state.fortified[h]=true;
+  playFortify();
+  render();
+  showFB(
+    "Free Shield!",
+    "correct",
+    "Territory <strong>"+h+"</strong> received a free shield because the clock landed exactly on the hour. "+(isSolo()?"You still get your regular move.":"Player "+state.currentPlayer+" still gets a regular move."),
+    "<strong>Time:</strong> "+formatTime()+"<br>Exact hour means the minute hand is at the top. Since the current player already controlled territory, they earned a free defensive bonus.",
+    false
+  );
+  state.pendingNextTurn=false;
+}
+
+function startGame(){ensureAudio();loadZoodle();state.mode=document.getElementById("modeSel").value;state.level=parseInt(document.getElementById("levelSel").value,10)||1;state.levelConfig=levelConfigs[state.level]||levelConfigs[1];if(!isSolo())state.turnDuration=parseInt(document.getElementById("timerSel").value,10);document.getElementById("startScreen").style.display="none";document.getElementById("mainApp").style.display="";document.getElementById("kidsStrip").style.display=window.innerWidth<=699?"flex":"none";resetState();updateModeUI();randomTimeForMode();render();if(isSolo()){stopTimer();checkExactHourEvent();}else{startTimer();checkExactHourEvent();}}
 function goToStart(){stopTimer();closeAnswerPanel();closeFeedbackPanel();document.getElementById("winnerOverlay").style.display="none";document.getElementById("howModal").style.display="none";document.getElementById("mainApp").style.display="none";document.getElementById("startScreen").style.display="flex";}
-function resetState(){state.currentPlayer=1;state.gameOver=false;state.pendingNextTurn=true;state.pendingVictory=null;state.quarterUsedThisTurn=false;state.quarterSuccesses=0;state.stability=state.levelConfig.stability;state.players={1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}};for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.corrupted[h]=false;}if(isSolo())spawnThreat();}
+function resetState(){state.currentPlayer=1;state.gameOver=false;state.pendingNextTurn=true;state.pendingVictory=null;state.quarterUsedThisTurn=false;state.exactHourHandledThisTurn=false;state.quarterSuccesses=0;state.stability=state.levelConfig.stability;state.players={1:{energy:500,lateCaptures:0},2:{energy:500,lateCaptures:0}};for(let h=1;h<=12;h++){state.territories[h]=0;state.fortified[h]=false;state.threatened[h]=false;state.corrupted[h]=false;}if(isSolo())spawnThreat();}
 function openAnswerPanel(){document.getElementById("answerPanel").classList.add("open");document.getElementById("feedbackPanel").classList.remove("open");}
 function closeAnswerPanel(){document.getElementById("answerPanel").classList.remove("open");}
 function openFeedbackPanel(){document.getElementById("feedbackPanel").classList.add("open");document.getElementById("answerPanel").classList.remove("open");}
@@ -697,7 +748,7 @@ function showVictory(pn){
   playVictory();
 }
 function buildConfetti(){const box=document.getElementById("confetti"),cols=["#ffd166","#00e5ff","#ff2cf0","#39ff8a","#ffffff","#ff4455"];box.innerHTML="";for(let i=0;i<65;i++){const s=document.createElement("span");s.style.cssText="left:"+Math.random()*100+"%;background:"+cols[i%cols.length]+";animation-duration:"+(2.2+Math.random()*2.6)+"s;animation-delay:"+Math.random()*1.5+"s;";box.appendChild(s);}}
-function nextTurn(){if(state.gameOver)return;if(!isSolo())state.currentPlayer=state.currentPlayer===1?2:1;else state.currentPlayer=1;state.quarterUsedThisTurn=false;randomTimeForMode();render();if(isSolo())stopTimer();else startTimer();}
+function nextTurn(){if(state.gameOver)return;if(!isSolo())state.currentPlayer=state.currentPlayer===1?2:1;else state.currentPlayer=1;state.quarterUsedThisTurn=false;state.exactHourHandledThisTurn=false;randomTimeForMode();render();if(isSolo()){stopTimer();checkExactHourEvent();}else{startTimer();checkExactHourEvent();}}
 function openHowToPlay(){stopTimer();document.getElementById("howModal").style.display="flex";}
 function closeHowToPlay(){document.getElementById("howModal").style.display="none";if(!isSolo()&&!state.gameOver&&document.getElementById("mainApp").style.display!=="none")startTimer();}
 updateStartOptions();
