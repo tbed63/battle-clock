@@ -499,6 +499,148 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
   }
 }
 
+
+/* ============================================================ */
+/* MOBILE PORTRAIT BOTTOM NAV UPDATE                           */
+/* ============================================================ */
+/* Mobile portrait gameplay:
+   - Rules and New Game move from the top to the bottom of the screen.
+   - ZoodleBug stays bottom center.
+   - Rules and New Game sit on either side of the ZoodleBug logo.
+   - The extra fixed bottom-left ZoodleBug badge is hidden on mobile.
+   - Battle Clock logo is larger and centered at the top without overlapping the clock.
+*/
+@media(max-width:699px) and (orientation:portrait){
+  .board-panel{
+    padding-top:8px;
+    padding-bottom:2px;
+  }
+
+  .topbar{
+    justify-content:center;
+    align-items:center;
+    flex-wrap:nowrap;
+    width:100%;
+    gap:0;
+    padding-top:0;
+  }
+
+  .brand{
+    width:100%;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .title-logo{
+    height:96px;
+    max-width:92vw;
+    object-fit:contain;
+    object-position:center center;
+    margin:0 auto;
+  }
+
+  .top-buttons{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:12px;
+    z-index:80;
+    display:grid;
+    grid-template-columns:1fr 116px 1fr;
+    align-items:center;
+    gap:8px;
+    padding:0 12px;
+    pointer-events:none;
+  }
+
+  .top-buttons button{
+    pointer-events:auto;
+    min-height:42px;
+    font-size:.7rem;
+    padding:7px 8px;
+  }
+
+  .top-buttons button:first-child{
+    grid-column:1;
+    justify-self:end;
+    width:96px;
+  }
+
+  .top-buttons button:last-child{
+    grid-column:3;
+    justify-self:start;
+    width:102px;
+  }
+
+  .clock-zone{
+    height:min(48vw,205px);
+    padding-top:0;
+  }
+
+  .kids-strip{
+    position:fixed;
+    left:50%;
+    bottom:5px;
+    transform:translateX(-50%);
+    z-index:79;
+    height:72px;
+    width:116px;
+    margin:0;
+    pointer-events:none;
+  }
+
+  .kids-strip img{
+    height:70px;
+    max-width:116px;
+    width:auto;
+    object-fit:contain;
+  }
+
+  .zoodlebug-badge{
+    display:none;
+  }
+
+  .control-panel{
+    padding-bottom:92px;
+  }
+}
+
+/* Extra-small portrait phones: keep everything inside the screen. */
+@media(max-width:380px) and (orientation:portrait){
+  .title-logo{
+    height:86px;
+    max-width:90vw;
+  }
+
+  .clock-zone{
+    height:min(46vw,190px);
+  }
+
+  .top-buttons{
+    grid-template-columns:1fr 96px 1fr;
+    gap:6px;
+    padding:0 8px;
+  }
+
+  .top-buttons button:first-child{
+    width:82px;
+  }
+
+  .top-buttons button:last-child{
+    width:90px;
+  }
+
+  .kids-strip{
+    width:96px;
+    height:62px;
+  }
+
+  .kids-strip img{
+    height:60px;
+    max-width:96px;
+  }
+}
+
 </style>
 </head>
 <body>
