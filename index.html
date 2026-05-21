@@ -441,6 +441,64 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
   }
 }
 
+
+/* ============================================================ */
+/* MOBILE PORTRAIT LOGO / BRANDING UPDATE                      */
+/* ============================================================ */
+/* Mobile portrait gameplay:
+   - Battle Clock game logo is doubled from the previous mobile gameplay size.
+   - The bottom kids image area is reused for the ZoodleBug brand.
+   - The ZoodleBug brand is made larger and centered cleanly.
+*/
+@media(max-width:699px) and (orientation:portrait){
+  .title-logo{
+    height:84px;
+    max-width:88vw;
+    object-fit:contain;
+    object-position:left center;
+  }
+
+  .topbar{
+    align-items:flex-start;
+    padding-top:6px;
+  }
+
+  .brand{
+    max-width:100%;
+  }
+
+  .kids-strip{
+    height:78px;
+    align-items:center;
+    justify-content:center;
+    margin-top:2px;
+  }
+
+  .kids-strip img{
+    height:76px;
+    width:auto;
+    max-width:80vw;
+    object-fit:contain;
+  }
+}
+
+/* Extra small portrait phones: keep the larger logo, but prevent cramming. */
+@media(max-width:380px) and (orientation:portrait){
+  .title-logo{
+    height:76px;
+    max-width:86vw;
+  }
+
+  .kids-strip{
+    height:70px;
+  }
+
+  .kids-strip img{
+    height:68px;
+    max-width:78vw;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -582,7 +640,7 @@ svg#clock{width:100%;height:100%;max-width:100%;max-height:100%;}
   </aside>
 
   <div class="kids-strip" id="kidsStrip" style="display:none">
-    <img src="battle-clock-kids-clean.png" alt="Two kids celebrating"/>
+    <img src="zoodlebug-game.png" alt="A ZoodleBug Game"/>
   </div>
 </div>
 
@@ -765,7 +823,7 @@ function updateModeUI(){
   const p2EnergyLabel=document.getElementById("p2EnergyLabel"),p2TerritoriesLabel=document.getElementById("p2TerritoriesLabel"),p2LateLabel=document.getElementById("p2LateLabel");
   if(isSolo()){
     if(p1t)p1t.textContent="Player";
-    if(p2t)p2t.textContent="Clock Enemy";
+    if(p2t)p2t.textContent="Punk Clocker";
     if(p1LateLabel)p1LateLabel.textContent="Late Caps";
     if(p2EnergyLabel)p2EnergyLabel.textContent="Stability";
     if(p2TerritoriesLabel)p2TerritoriesLabel.textContent="Goal";
@@ -1088,7 +1146,7 @@ function resolveAction(atype,answer,correct,isCorrect){
 
 
 /* ========================= */
-/* SOLO CLOCK ENEMY          */
+/* SOLO PUNK CLOCKER          */
 /* ========================= */
 /* Handles threats, corruption, and clock stability damage. */
 function spawnThreat(){
